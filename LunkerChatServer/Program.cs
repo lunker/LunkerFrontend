@@ -13,10 +13,11 @@ namespace LunkerChatServer
         private static ILog logger = Logger.GetLoggerInstance();
         static void Main(string[] args)
         {
+            logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
             ChatServer chatServer = new ChatServer();
             chatServer.Start();
 
-            logger.Debug("--------------------------------------------START PROGRAM--------------------------------------------");
+            
         }
     }
 }

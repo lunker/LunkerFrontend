@@ -13,6 +13,7 @@ public class MessageState
 public enum MessageState
 {
     Request = 100,
+    Response = 200,
     Success = 300,
     Fail = 400
 }

@@ -113,6 +113,13 @@ namespace LunkerLibrary.common.Utils
             clientConnections.Remove(id);
         }
 
+        public Socket GetClientConnection(string id)
+        {
+            Socket tmp = null;
+            clientConnections.TryGetValue(id, out tmp);
+            return tmp;
+        }
+
         public int GetClientConnectionCount()
         {
             return clientConnections.Count;

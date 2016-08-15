@@ -14,6 +14,7 @@ using RabbitMQ.Client;
 using LunkerChatServer.src.utils;
 using LunkerLibrary.common.protocol;
 using LunkerLibrary.common.Utils;
+using LunkerChatServer.src.workers;
 
 namespace LunkerChatServer
 {
@@ -38,6 +39,8 @@ namespace LunkerChatServer
 
         private Socket beConnection = null;
         Task<Socket> getAcceptTask = null;
+
+        //private ChatWorker chatWorker;
 
         private MainWorker()
         {
@@ -82,9 +85,7 @@ namespace LunkerChatServer
 
             while (threadState)
             {
-                //GetClientRequest(); // isCOmplete를 사용하자!!!! 메모리터진다지금 
                 // Accept Client Connection Request 
-
                 HandleAccept();
 
                 // 접속한 client가 있을 경우에만 수행.
@@ -147,24 +148,53 @@ namespace LunkerChatServer
                     // 200: chatting 
                     case MessageType.Chatting:
 
-                        // read chatting body 
-
-                        // broadcast
                         break;
                     // room : 400 
                     case MessageType.CreateRoom:
-                        // send create request
-                        // read 
-                        //beConnection.Send
-                        HandleCreateRoomRequest(peer);
-
-                        break;
+                        if(header.State == MessageState.Request)
+                        {
+                            // send create request
+                            ChatWorker.HandleCreateRoomRequest();
+                            
+                            break;
+                        }
+                        else
+                        {
+                            //connectionManager.GetClientConnection();
+                            ChatWorker.HandleCreateRoomResponse();
+                            
+                            break;
+                        }
 
                     case MessageType.JoinRoom:
-                        break;
+                        if (header.State == MessageState.Request)
+                        {
+
+                            // send create request
+                            // read 
+                            //beConnection.Send
+                            HandleCreateRoomRequest(peer);
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
 
                     case MessageType.LeaveRoom:
-                        break;
+                        if (header.State == MessageState.Request)
+                        {
+
+                            // send create request
+                            // read 
+                            //beConnection.Send
+                            HandleCreateRoomRequest(peer);
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
 
                     case MessageType.ListRoom:
                         break;

@@ -83,14 +83,58 @@ namespace LunkerLibrary.common.Utils
                 return NetworkManager.ByteToStructure(buff, type);
             });
             return null;
-
         }// end 
+
+        public static byte[] ReadAsync(Socket peer, int msgLength)
+        {
+            //logger.Debug("[ChatServer][ReadAsync()] start");
+            int headerLength = msgLength;
+
+            byte[] buff = new byte[headerLength];
+
+            Task readTask = Task.Factory.FromAsync(peer.BeginReceive(buff, 0, buff.Length, SocketFlags.None, null, peer), peer.EndReceive); // 생성과 동시에 실행됨
+            readTask.Wait();
+            return buff;
+        }
+
+        public static Task ReadAsyncTask(Socket peer, int msgLength, Type type)
+        {
+            int headerLength = msgLength;
+
+            byte[] buff = new byte[headerLength];
+
+            Task readTask = Task.Factory.FromAsync(peer.BeginReceive(buff, 0, buff.Length, SocketFlags.None, null, peer), peer.EndReceive); // 생성과 동시에 실행됨
+           
+            return readTask;
+        }
 
         public static void SendAsync(Socket peer, Object message)
         {
+            if(!(message is byte[]))
+            {
+                message = StructureToByte(message);
+            }
 
+            Task sendTask = Task.Factory.FromAsync(
+                peer.BeginSend((byte[])message, 0, ((byte[])message).Length, SocketFlags.None, null, peer), 
+                peer.EndSend);
+            sendTask.Wait();
+
+        }// end method
+
+        public static Task SendAsyncTask(Socket peer, Object message)
+        {
+            if (!(message is byte[]))
+            {
+                message = StructureToByte(message);
+            }
+
+            Task sendTask = Task.Factory.FromAsync(
+                peer.BeginSend((byte[])message, 0, ((byte[])message).Length, SocketFlags.None, null, peer),
+                peer.EndSend);
+
+            return sendTask;
         }
-
 
     }
 }

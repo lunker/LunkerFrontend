@@ -85,6 +85,8 @@
     <Compile Include="src\MainWorker.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\workers\BEWorker.cs" />
+    <Compile Include="src\workers\ChatWorker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -114,9 +116,7 @@
       <Name>LunkerLibrary</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\workers\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -29,6 +29,7 @@ namespace LunkerChatServer
         {
 
         }
+
         public static BackendListener GetInstance()
         {
             if(backListener == null)

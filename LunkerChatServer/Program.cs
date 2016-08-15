@@ -28,9 +28,6 @@ namespace LunkerChatServer
                 string close = Console.ReadLine();
                 if (close.Equals("y") || close.Equals("Y"))
                 {
-
-                    
-
                     Console.Clear();
                     Console.Write("어플리케이션을 종료중입니다 . . .");
                     chatServer.Stop();

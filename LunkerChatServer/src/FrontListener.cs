@@ -12,8 +12,8 @@ using System.Threading.Tasks;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client;
 using LunkerChatServer.src.utils;
-using LunkerLibrary.common.Utils;
 using LunkerLibrary.common.protocol;
+using LunkerLibrary.common.Utils;
 
 namespace LunkerChatServer
 {
@@ -28,12 +28,16 @@ namespace LunkerChatServer
 
         private static FrontListener frontListener = null;
         private bool threadState = Constants.ThreadRun;
+
         private Socket sockListener = null;
 
         private ConnectionManager connectionManager = null;
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
+
+
+        private Socket beConnection = null;
 
 
         private FrontListener()
@@ -55,6 +59,9 @@ namespace LunkerChatServer
         {
 
             logger.Debug("[ChatServer][FrontListener][Start()] start");
+            Initialize();
+            InitializeBEConnection();
+
             MainProcess();
 
             logger.Debug("[ChatServer][FrontListener][Start()] end");
@@ -130,10 +137,19 @@ namespace LunkerChatServer
                 {
                     // 200: chatting 
                     case MessageType.Chatting:
-                        break;
 
+                        // read chatting body 
+
+                        // broadcast
+                        break;
                     // room : 400 
                     case MessageType.CreateRoom:
+
+                        // send create request
+                        // read 
+                        //beConnection.Send
+
+                        HandleCreateRoomRequest(peer);
 
                         break;
 
@@ -157,7 +173,6 @@ namespace LunkerChatServer
 
             }
         }
-
 
         public void Initialize()
         {
@@ -204,9 +219,18 @@ namespace LunkerChatServer
                                      noAck: true,
                                      consumer: consumer);
 
-               
             }
         }// end method 
+
+        public void InitializeBEConnection()
+        {
+            beConnection = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Backendserverip), AppConfig.GetInstance().Backendserverport);
+
+            beConnection.Connect(ep);
+
+        }
 
         public async void GetClientRequest()
         {
@@ -270,73 +294,13 @@ namespace LunkerChatServer
 
         }
 
-        public void AcceptCallback(IAsyncResult ar)
+
+        public void HandleCreateRoomRequest(Socket peer)
         {
-            // Get the socket that handles the client request.
-            Socket listener = (Socket)ar.AsyncState;
-            Socket handler = listener.EndAccept(ar);
+            // 1) request to be 
+            // 2) read response 
 
-            // Create the state object.
-            IPEndPoint ep = (IPEndPoint)handler.RemoteEndPoint;
-            StringBuilder idBuilder = new StringBuilder();
-            idBuilder.Append(ep.Address);
-            idBuilder.Append(":");
-            idBuilder.Append(ep.Port);
-
-            //clientSocketDic.Add(idBuilder.ToString(), handler);
-            //connectionManager.Add
-            //logger.Debug("[ChatServer][AcceptAsync()][AcceptCallback()] aceept client connect request");
-            return;
-        }// end method
-    
-
-        public void GenerateHeader(Task parent)
-        {
-
-        }
-
-        public Task<CCHeader> ReadAsyncTask(Socket peer)
-        {
-            logger.Debug("[ChatServer][ReadAsyncTask()] start");
-            int headerLength = 8;
-
-            byte[] buff = new byte[headerLength];
-
-            try
-            {
-                Task readTask = Task.Factory.FromAsync(peer.BeginReceive(buff, 0, buff.Length, SocketFlags.None, null, peer), peer.EndReceive);
-                Task convertTask = null;
-
-                //readTask.ContinueWith(GenerateHeader);
-                readTask.ContinueWith((parent) =>
-                {
-                    string getMsg = Encoding.UTF8.GetString(buff);
-                    Console.WriteLine(getMsg);
-                });
-
-                readTask.Wait();
-            }
-            catch (SocketException se)
-            {
-                Console.WriteLine("disconnected");
-
-                IPEndPoint ep = (IPEndPoint)peer.RemoteEndPoint;
-                string key = ep.Address + ":" + ep.Port;
-
-                connectionManager.DeleteClientConnection();
-                //clientSocketDic.Remove(key);
-                peer.Close();
-            }
-
-            //return readTask;
-            logger.Debug("[ChatServer][ReadAsyncTask()] end");
-            //return;
-            return null;
-        }
-
-        public void SendAsync()
-        {
-
+            // 3) 
         }
 
     }

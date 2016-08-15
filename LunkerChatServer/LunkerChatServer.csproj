@@ -80,9 +80,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BackendListener.cs" />
-    <Compile Include="ChatServer.cs" />
-    <Compile Include="FrontListener.cs" />
+    <Compile Include="src\utils\AppConfig.cs" />
+    <Compile Include="src\BackendListener.cs" />
+    <Compile Include="src\ChatServer.cs" />
+    <Compile Include="src\FrontListener.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -109,13 +110,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="src\" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\LunkerLibrary\LunkerLibrary.csproj">
       <Project>{79ae82ed-b2aa-410b-8099-248b5493d276}</Project>
       <Name>LunkerLibrary</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\workers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

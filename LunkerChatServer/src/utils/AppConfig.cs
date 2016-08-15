@@ -5,10 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using log4net;
+using LunkerLibrary.common.Utils;
 
-
-
-namespace LunkerLibrary.common.Utils
+namespace LunkerChatServer.src.utils
 {
     public class AppConfig
     {
@@ -16,6 +15,8 @@ namespace LunkerLibrary.common.Utils
         private int frontport = 0;
         private int backport = 0;
         private int backlog = 0;
+        private string backendserverip = "";
+        private int backendserverport = 0;
 
         private static ILog logger = Logger.GetLoggerInstance();
         private static AppConfig appConfig = null;
@@ -28,7 +29,7 @@ namespace LunkerLibrary.common.Utils
             XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
             while (reader.Read())
             {
-
+                
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
                 {
                     reader.Read();
@@ -68,6 +69,27 @@ namespace LunkerLibrary.common.Utils
                     }
                     reader.Read(); // delete close element
                 }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverip"))
+                {
+                    reader.Read();
+                    backendserverip = reader.Value;
+                    
+                    reader.Read(); // delete close element
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverport"))
+                {
+                    reader.Read();
+                    if (Int32.TryParse(reader.Value, out backendserverport))
+                    {
+                        logger.Debug("");
+                    }
+                    else
+                    {
+                        logger.Debug("");
+                    }
+                    reader.Read(); // delete close element
+                }
+
             }
         }// set configs 
 
@@ -93,6 +115,16 @@ namespace LunkerLibrary.common.Utils
         public int Backlog
         {
             get { return this.backlog; }
+        }
+
+        public string Backendserverip
+        {
+            get { return backendserverip; }
+        }
+
+        public int Backendserverport
+        {
+            get { return backendserverport; }
         }
     }
 }

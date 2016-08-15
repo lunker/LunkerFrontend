@@ -60,7 +60,6 @@
     <Compile Include="common\protocol\MessageType.cs" />
     <Compile Include="common\protocol\Packet.cs" />
     <Compile Include="common\protocol\UserInfo.cs" />
-    <Compile Include="common\utils\AppConfig.cs" />
     <Compile Include="common\utils\ConnectionManager.cs" />
     <Compile Include="common\utils\Constants.cs" />
     <Compile Include="common\utils\Logger.cs" />
@@ -71,6 +70,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="config\DebugLogconfig.xml" />
+    <Content Include="config\ReleaseLogconfig.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

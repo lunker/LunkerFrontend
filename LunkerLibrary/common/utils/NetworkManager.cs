@@ -86,6 +86,11 @@ namespace LunkerLibrary.common.Utils
 
         }// end 
 
+        public static void SendAsync(Socket peer, Object message)
+        {
+
+        }
+
 
     }
 }

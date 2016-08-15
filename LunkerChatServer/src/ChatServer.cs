@@ -22,26 +22,20 @@ namespace LunkerChatServer
     {
         private ILog logger = Logger.GetLoggerInstance();
         
-        private FrontListener frontListener = FrontListener.GetInstance();
-        private BackendListener backListener = BackendListener.GetInstance();
+        private MainWorker mainWorker = MainWorker.GetInstance();
         
         public void Start()
         {
-            Thread frontThread = new Thread(new ThreadStart(frontListener.Start));
+            Thread frontThread = new Thread(new ThreadStart(mainWorker.Start));
             frontThread.Start();
-
-            Thread backThread = new Thread(new ThreadStart(backListener.Start));
-            backThread.Start();
-
         }
 
         public void Stop()
         {
-            frontListener.Stop();
-            backListener.Stop();
+            mainWorker.Stop();
 
-            frontListener = null;
-            backListener = null;
+            mainWorker = null;
+     
             //appState = Constants.AppStop;
         }
     }// end class 

@@ -20,13 +20,13 @@ namespace LunkerChatServer
     /**
      * Socket Listener for Front Component - client 
      */
-    class FrontListener
+    class MainWorker
     {
         private delegate void RequestHandler(int bodyLength); // message type에 따라 해당되는 함수를 찾아서, delegate를 통해 호출한다! 
 
         private ILog logger = Logger.GetLoggerInstance();
 
-        private static FrontListener frontListener = null;
+        private static MainWorker mainWorker = null;
         private bool threadState = Constants.ThreadRun;
 
         private Socket sockListener = null;
@@ -36,35 +36,34 @@ namespace LunkerChatServer
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
 
-
         private Socket beConnection = null;
+        Task<Socket> getAcceptTask = null;
 
-
-        private FrontListener()
+        private MainWorker()
         {
 
         }
 
-        public static FrontListener GetInstance()
+        public static MainWorker GetInstance()
         {
-            if (frontListener == null)
+            if (mainWorker == null)
             {
-                frontListener = new FrontListener();
+                mainWorker = new MainWorker();
             }
-            return frontListener;
+            return mainWorker;
         }
 
         // chat server main thread
         public void Start()
         {
 
-            logger.Debug("[ChatServer][FrontListener][Start()] start");
+            logger.Debug("[ChatServer][MainWorker][Start()] start");
             Initialize();
             InitializeBEConnection();
 
             MainProcess();
 
-            logger.Debug("[ChatServer][FrontListener][Start()] end");
+            logger.Debug("[ChatServer][MainWorker][Start()] end");
             Console.ReadKey();
         }
 
@@ -79,27 +78,14 @@ namespace LunkerChatServer
         public void MainProcess()
         {
             logger.Debug("[ChatServer][HandleRequest()] start");
-            Task<Socket> getAcceptTask = null;
+           
 
             while (threadState)
             {
                 //GetClientRequest(); // isCOmplete를 사용하자!!!! 메모리터진다지금 
                 // Accept Client Connection Request 
-                if (getAcceptTask != null)
-                {
-                    if (getAcceptTask.IsCompleted)
-                    {
-                        logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
-                        // 다시 task run 
-                        getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
-                    }
-                }
-                else
-                {
-                    logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                    getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
-                    //getAcceptTask.Start();
-                }
+
+                HandleAccept();
 
                 // 접속한 client가 있을 경우에만 수행.
                 if (0 != connectionManager.GetClientConnectionCount())
@@ -124,6 +110,28 @@ namespace LunkerChatServer
             }// end loop 
         }
 
+        public void HandleAccept()
+        {
+            if (getAcceptTask != null)
+            {
+                if (getAcceptTask.IsCompleted)
+                {
+                    logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+
+                    // Add accepted connections
+                    // getAcceptTask.Result;
+                    // 다시 task run 
+                    getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
+                }
+            }
+            else
+            {
+                logger.Debug("[ChatServer][HandleRequest()] start accept task ");
+                getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
+                //getAcceptTask.Start();
+            }
+        }
+
         // 요청을 읽고, 작업을 처리하는 비동기 작업을 만들어야함!!!
         // 여기에서 case나눠서 처리 !!!!
         public void HandleRequest(Socket peer)
@@ -131,6 +139,7 @@ namespace LunkerChatServer
             if(peer!=null && peer.Connected)
             {
                 // 정상 연결상태 
+                // 일단 CCHeader로 전체 header 사용 
                 CCHeader header = (CCHeader) NetworkManager.ReadAsync(peer, 8, typeof(CCHeader));
  
                 switch (header.Type)
@@ -144,11 +153,9 @@ namespace LunkerChatServer
                         break;
                     // room : 400 
                     case MessageType.CreateRoom:
-
                         // send create request
                         // read 
                         //beConnection.Send
-
                         HandleCreateRoomRequest(peer);
 
                         break;

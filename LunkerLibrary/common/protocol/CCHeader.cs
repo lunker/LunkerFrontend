@@ -11,16 +11,26 @@ namespace LunkerLibrary.common.protocol
         MessageType type;
         MessageState state;
         int bodyLength;
-        Cookie cookie;
+        // Cookie cookie;
 
+        
+        public CCHeader(MessageType type, MessageState state, int bodyLength)
+        {
+            this.type = type;
+            this.state = state;
+            this.bodyLength = bodyLength;
+
+        }
+        
+        /*
         public CCHeader(MessageType type, MessageState state, int bodyLength, Cookie cookie)
         {
             this.type = type;
             this.state = state;
             this.bodyLength = bodyLength;
             this.cookie = cookie;
-
         }
+        */
 
         public MessageState State
         {
@@ -34,16 +44,14 @@ namespace LunkerLibrary.common.protocol
             set { type = value; }
         }
 
-        public int BodyLength
-        {
-            get { return bodyLength; }
-            set { bodyLength = value; }
-        }
-        public Cookie Cookie
+        /*
+         * public Cookie Cookie
         {
             get { return cookie; }
             set { cookie = value; }
         }
+        */
 
     }
+
 }

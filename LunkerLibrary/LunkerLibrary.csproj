@@ -4,17 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{60FA3AD2-1ACF-4408-AA76-F8FF45663128}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{79AE82ED-B2AA-410B-8099-248B5493D276}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LunkerLoginServer</RootNamespace>
-    <AssemblyName>LunkerLoginServer</AssemblyName>
+    <RootNamespace>LunkerLibrary</RootNamespace>
+    <AssemblyName>LunkerLibrary</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -33,8 +30,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net">
+    <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="RabbitMQ.Client, Version=3.6.5.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
+      <HintPath>..\packages\RabbitMQ.Client.3.6.5\lib\net45\RabbitMQ.Client.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -46,27 +48,32 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LoginServer.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="common\protocol\CBHeader.cs" />
+    <Compile Include="common\protocol\CCHeader.cs" />
+    <Compile Include="common\protocol\ChattingRoom.cs" />
+    <Compile Include="common\protocol\Cookie.cs" />
+    <Compile Include="common\protocol\frame\Body.cs" />
+    <Compile Include="common\protocol\frame\Header.cs" />
+    <Compile Include="common\protocol\login-chat\LCNotifyUserRequestBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCNotifyUserResponseBody.cs" />
+    <Compile Include="common\protocol\MessageState.cs" />
+    <Compile Include="common\protocol\MessageType.cs" />
+    <Compile Include="common\protocol\Packet.cs" />
+    <Compile Include="common\protocol\UserInfo.cs" />
+    <Compile Include="common\utils\ConnectionManager.cs" />
+    <Compile Include="common\utils\Constants.cs" />
+    <Compile Include="common\utils\Logger.cs" />
+    <Compile Include="common\utils\MessageBroker.cs" />
+    <Compile Include="common\utils\NetworkManager.cs" />
+    <Compile Include="common\utils\SocketConnectionPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="config\AppConfig.xml" />
     <Content Include="config\DebugLogconfig.xml" />
     <Content Include="config\ReleaseLogconfig.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\LunkerLibrary\LunkerLibrary.csproj">
-      <Project>{79ae82ed-b2aa-410b-8099-248b5493d276}</Project>
-      <Name>LunkerLibrary</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

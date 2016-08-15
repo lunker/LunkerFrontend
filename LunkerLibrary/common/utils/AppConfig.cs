@@ -5,13 +5,16 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using log4net;
-using LunkerRedis.src.Utils;
 
-namespace LunkerChatServer.src.Utils
+
+
+namespace LunkerLibrary.common.Utils
 {
     public class AppConfig
     {
-        private int port = 0;
+        //private int port = 0;
+        private int frontport = 0;
+        private int backport = 0;
         private int backlog = 0;
 
         private static ILog logger = Logger.GetLoggerInstance();
@@ -26,10 +29,23 @@ namespace LunkerChatServer.src.Utils
             while (reader.Read())
             {
 
-                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("port"))
+                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
                 {
                     reader.Read();
-                    if(Int32.TryParse( reader.Value, out port))
+                    if(Int32.TryParse( reader.Value, out frontport))
+                    {
+                        logger.Debug("");
+                    }
+                    else
+                    {
+                        logger.Debug("");
+                    }
+                    reader.Read(); // delete close element
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backport"))
+                {
+                    reader.Read();
+                    if (Int32.TryParse(reader.Value, out backport))
                     {
                         logger.Debug("");
                     }
@@ -64,9 +80,14 @@ namespace LunkerChatServer.src.Utils
             return appConfig;
         }
 
-        public int Port
+        public int Backport
         {
-            get { return this.port; }
+            get { return this.Backport; }
+        }
+
+        public int FrontPort
+        {
+            get { return this.frontport; }
         }
         
         public int Backlog

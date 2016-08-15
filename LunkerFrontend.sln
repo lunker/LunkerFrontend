@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatServer", "LunkerC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerLoginServer", "LunkerLoginServer\LunkerLoginServer.csproj", "{60FA3AD2-1ACF-4408-AA76-F8FF45663128}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerLibrary", "LunkerLibrary\LunkerLibrary.csproj", "{79AE82ED-B2AA-410B-8099-248B5493D276}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{60FA3AD2-1ACF-4408-AA76-F8FF45663128}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60FA3AD2-1ACF-4408-AA76-F8FF45663128}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60FA3AD2-1ACF-4408-AA76-F8FF45663128}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79AE82ED-B2AA-410B-8099-248B5493D276}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79AE82ED-B2AA-410B-8099-248B5493D276}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79AE82ED-B2AA-410B-8099-248B5493D276}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79AE82ED-B2AA-410B-8099-248B5493D276}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

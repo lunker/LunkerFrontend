@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <log4net>
   <appender name="exlog" type="log4net.Appender.RollingFileAppender">
-    <file value="c:\log\frontend\login\" />
+    <file value="c:\log\frontend\chat\" />
     <datePattern value="yyyy-MM-dd'_exlog.log'"/>
     <preserveLogFileNameExtension value="true" />
     <staticLogFileName value="false" />

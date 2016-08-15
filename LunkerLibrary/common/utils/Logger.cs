@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using log4net;
 using log4net.Config;
 
-namespace LunkerRedis.src.Utils
+namespace LunkerLibrary.common.Utils
 {
     public static class Logger
     {

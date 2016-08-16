@@ -1,13 +1,14 @@
-﻿using System;
+﻿using log4net;
+using LunkerLibrary.common.protocol;
+using LunkerLibrary.common.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-using log4net;
-using LunkerLibrary.common.Utils;
 
-namespace LunkerChatServer.src.utils
+namespace LunkerLoginServer.src.utils
 {
     public class AppConfig
     {
@@ -15,24 +16,30 @@ namespace LunkerChatServer.src.utils
         private int frontport = 0;
         private int backport = 0;
         private int backlog = 0;
+
         private string backendserverip = "";
         private int backendserverport = 0;
 
         private static ILog logger = Logger.GetLoggerInstance();
         private static AppConfig appConfig = null;
 
+        private Dictionary<string, ServerInfo> chatServerInfo = null;
+       
+
         private AppConfig()
         {
             // read config xml 
             //StringBuilder sb = new StringBuilder();
+            //chatServerInfo.Select();
 
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
             while (reader.Read())
             {
+
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
                 {
                     reader.Read();
-                    if(Int32.TryParse( reader.Value, out frontport))
+                    if (Int32.TryParse(reader.Value, out frontport))
                     {
                         logger.Debug("");
                     }
@@ -72,7 +79,7 @@ namespace LunkerChatServer.src.utils
                 {
                     reader.Read();
                     backendserverip = reader.Value;
-                    
+
                     reader.Read(); // delete close element
                 }
                 else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverport"))
@@ -94,7 +101,7 @@ namespace LunkerChatServer.src.utils
 
         public static AppConfig GetInstance()
         {
-            if(appConfig == null)
+            if (appConfig == null)
             {
                 appConfig = new AppConfig();
             }
@@ -110,7 +117,7 @@ namespace LunkerChatServer.src.utils
         {
             get { return this.frontport; }
         }
-        
+
         public int Backlog
         {
             get { return this.backlog; }

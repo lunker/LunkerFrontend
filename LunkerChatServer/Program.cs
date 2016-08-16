@@ -11,8 +11,6 @@ namespace LunkerChatServer
     class Program
     {
         private static ILog logger = Logger.GetLoggerInstance();
- 
-        
 
         static void Main(string[] args)
         {
@@ -44,6 +42,6 @@ namespace LunkerChatServer
                 }
             }
             
-        }
-    }
+        }// end method
+    }// end class
 }

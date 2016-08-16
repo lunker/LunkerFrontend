@@ -11,8 +11,6 @@ namespace LunkerLibrary.common.Utils
     {
         private static List<Socket> connectionList = null;
 
-
-
         private SocketConnectionPool() { }
         
         public static List<Socket> GetAllConnection()

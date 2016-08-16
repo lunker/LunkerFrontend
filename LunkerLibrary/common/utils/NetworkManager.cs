@@ -107,6 +107,13 @@ namespace LunkerLibrary.common.Utils
            
             return readTask;
         }
+        
+        public static Task ReadAsyncTask(Socket peer, int msgLength, ref byte[] buff)
+        {
+            Task readTask = Task.Factory.FromAsync(peer.BeginReceive(buff, 0, buff.Length, SocketFlags.None, null, peer), peer.EndReceive); // 생성과 동시에 실행됨
+
+            return readTask;
+        }
 
         public static void SendAsync(Socket peer, Object message)
         {

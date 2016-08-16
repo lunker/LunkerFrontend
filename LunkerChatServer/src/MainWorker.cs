@@ -38,9 +38,10 @@ namespace LunkerChatServer
         private List<Socket> errorSocketList = null;
 
         private Socket beConnection = null;
-        Task<Socket> getAcceptTask = null;
+        private Task<Socket> getAcceptTask = null;
 
         //private ChatWorker chatWorker;
+        private BEWorker beWorker = BEWorker.GetInstance();
 
         private MainWorker()
         {
@@ -59,7 +60,6 @@ namespace LunkerChatServer
         // chat server main thread
         public void Start()
         {
-
             logger.Debug("[ChatServer][MainWorker][Start()] start");
             Initialize();
             InitializeBEConnection();
@@ -106,7 +106,7 @@ namespace LunkerChatServer
                             HandleRequest(peer);
                         }
                     }
-                }
+                }// end if
               
             }// end loop 
         }
@@ -135,45 +135,49 @@ namespace LunkerChatServer
 
         // 요청을 읽고, 작업을 처리하는 비동기 작업을 만들어야함!!!
         // 여기에서 case나눠서 처리 !!!!
-        public void HandleRequest(Socket peer)
+        public async void HandleRequest(Socket peer)
         {
             if(peer!=null && peer.Connected)
             {
                 // 정상 연결상태 
                 // 일단 CCHeader로 전체 header 사용 
-                CCHeader header = (CCHeader) NetworkManager.ReadAsync(peer, 8, typeof(CCHeader));
+                CommonHeader header = (CommonHeader) NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
  
                 switch (header.Type)
                 {
-                    // 200: chatting 
-                    case MessageType.Chatting:
+
+                    case MessageType.ConnectionSetup:
+
+                        // 인증된 유저가 들어와야 
+                        // connectionDic에 저장된다. 
 
                         break;
+                    // 200: chatting 
+                    // ok 
+                    case MessageType.Chatting:
+                        await HandleChattingRequestAsync(peer, header);
+                        break;
+
                     // room : 400 
+                    // ok 
                     case MessageType.CreateRoom:
                         if(header.State == MessageState.Request)
                         {
                             // send create request
-                            ChatWorker.HandleCreateRoomRequest();
-                            
+                            //ChatWorker.HandleCreateRoomRequest();
+                            await HandleCreateRoomRequestAsync(peer, header);
                             break;
                         }
                         else
                         {
                             //connectionManager.GetClientConnection();
-                            ChatWorker.HandleCreateRoomResponse();
-                            
+                            await HandleCreateRoomResponseAsync(peer, header);
                             break;
                         }
 
                     case MessageType.JoinRoom:
                         if (header.State == MessageState.Request)
                         {
-
-                            // send create request
-                            // read 
-                            //beConnection.Send
-                            HandleCreateRoomRequest(peer);
                             break;
                         }
                         else
@@ -185,10 +189,6 @@ namespace LunkerChatServer
                         if (header.State == MessageState.Request)
                         {
 
-                            // send create request
-                            // read 
-                            //beConnection.Send
-                            HandleCreateRoomRequest(peer);
                             break;
                         }
                         else
@@ -203,7 +203,6 @@ namespace LunkerChatServer
                     default:
                         break;
                 }
-            
             }
             else
             {
@@ -295,6 +294,7 @@ namespace LunkerChatServer
 
             logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] accept client request");
             return handler;
+
             /*
             Task delay = Task.Delay(TimeSpan.FromSeconds(5));
             var result = await Task.WhenAny(delay, Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true)).ConfigureAwait(false);
@@ -332,13 +332,86 @@ namespace LunkerChatServer
         }
 
 
-        public void HandleCreateRoomRequest(Socket peer)
+        /// <summary>
+        /// handle chatting request from client 
+        /// be에 보내는 logic 추가해야함 
+        /// </summary>
+        /// <param name="peer"></param>
+        public async void HandleChattingRequest(Socket peer, CommonHeader header)
         {
-            // 1) request to be 
-            // 2) read response 
+            byte[] messageBuff = new byte[header.BodyLength];
+            
+            // read message
+            await NetworkManager.ReadAsyncTask(peer, header.BodyLength, ref messageBuff);
+                
+            // Get User Entered Room 
+            ChattingRoom enteredRoom = connectionManager.GetChattingRoomJoinInfo(new string(header.UserInfo.Id)); // room info ~ user id 
 
-            // 3) 
+            // broadcast
+            Socket client = null;
+            foreach (string user in connectionManager.GetChattingRoomListInfo(enteredRoom))
+            {
+                client = connectionManager.GetClientConnection(user);
+
+                // broadcast to each client
+                await NetworkManager.SendAsyncTask(client, messageBuff);
+            }
+
+            // Send chatting to BE 
+            string sendingUser = new string(header.UserInfo.Id);
+
+            // worker에게 위임? 
+            beWorker.HandleChatting(header);
         }
+
+        public Task HandleChattingRequestAsync(Socket peer, CommonHeader header)
+        {
+            return Task.Run(()=> HandleChattingRequest(peer, header));
+        }
+
+
+        /// <summary>
+        /// 
+        /// Handle request from client - create chatting room 
+        /// </summary>
+        /// <param name="peer"></param>
+        public void HandleCreateRoomRequest(Socket peer, CommonHeader header)
+        {
+            // send request to BE server
+            beWorker.HandleCreateRoomRequest(header);
+        }
+
+        public Task HandleCreateRoomRequestAsync(Socket peer, CommonHeader header)
+        {
+            return Task.Run(()=> HandleCreateRoomRequest(peer,header));
+        }
+
+        // Message From BE Server
+        public async void HandleCreateRoomResponse(Socket peer, CommonHeader header)
+        {
+            // read from be socket
+            CBCreateRoomResponseBody body = (CBCreateRoomResponseBody) NetworkManager.ReadAsync(peer, header.BodyLength, typeof(CBCreateRoomResponseBody)); // Get ResponseBody
+
+            // get requested client socket 
+            Socket client = connectionManager.GetClientConnection(new string(header.UserInfo.Id));
+
+            // Send Response To Client 
+            // send header
+            Task sendHeaderTask = NetworkManager.SendAsyncTask(client, header);
+            // send body
+            await sendHeaderTask.ContinueWith((parent)=> 
+            {
+                 NetworkManager.SendAsyncTask(client, body);
+            });
+        }
+        public Task HandleCreateRoomResponseAsync(Socket peer, CommonHeader header)
+        {
+            return Task.Run( ()=> HandleCreateRoomResponse(peer, header) );
+        }
+
+
+
+
 
     }
 }

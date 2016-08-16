@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
-public struct LCNotifyUserResponseBody
+namespace LunkerLoginServer.src.utils
 {
-    
+    class LoadBalancer
+    {
+    }
 }
-

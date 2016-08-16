@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ChatServerConfig>
+  <ip>10.10.0.157</ip>
+  <port>43320</port>
+</ChatServerConfig>

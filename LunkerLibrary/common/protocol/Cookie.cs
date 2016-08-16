@@ -2,7 +2,7 @@
 {
     // not yet 
     int value;
-
+    
     public Cookie(int value)
     {
         this.value = value;

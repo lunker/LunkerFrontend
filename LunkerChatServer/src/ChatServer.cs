@@ -17,7 +17,6 @@ namespace LunkerChatServer
     /**
      * Chatting Server 
      */
-
     public class ChatServer
     {
         private ILog logger = Logger.GetLoggerInstance();

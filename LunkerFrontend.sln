@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerLoginServer", "Lunker
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerLibrary", "LunkerLibrary\LunkerLibrary.csproj", "{79AE82ED-B2AA-410B-8099-248B5493D276}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerAgent", "LunkerAgent\LunkerAgent.csproj", "{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{79AE82ED-B2AA-410B-8099-248B5493D276}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79AE82ED-B2AA-410B-8099-248B5493D276}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79AE82ED-B2AA-410B-8099-248B5493D276}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

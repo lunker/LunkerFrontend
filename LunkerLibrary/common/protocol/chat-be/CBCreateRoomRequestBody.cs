@@ -1,6 +1,6 @@
 ﻿using LunkerLibrary.common.protocol;
 
-public struct CBCreateRoomRequestBody
+public struct CBCreateRoomRequestBody :Body
 {
-    UserInfo userInfo;
+    //UserInfo userInfo;// ?필요한가?
 }

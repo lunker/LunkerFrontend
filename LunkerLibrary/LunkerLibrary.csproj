@@ -49,6 +49,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="common\protocol\CBHeader.cs" />
+    <Compile Include="common\protocol\chat-be\CBListRoomRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBListRoomResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCCreateRoomRequestBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCCreateRoomResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCListRoomRequestBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCListRoomResponseBody.cs" />
     <Compile Include="common\protocol\client-login\CLDeleteRequestBody.cs" />
     <Compile Include="common\protocol\client-login\CLDeleteResponseBody.cs" />
     <Compile Include="common\protocol\client-login\CLModifyRequestBody.cs" />
@@ -80,7 +86,6 @@
     <Compile Include="common\utils\ConnectionManager.cs" />
     <Compile Include="common\utils\Constants.cs" />
     <Compile Include="common\utils\Logger.cs" />
-    <Compile Include="common\utils\MessageBroker.cs" />
     <Compile Include="common\utils\NetworkManager.cs" />
     <Compile Include="common\utils\SocketConnectionPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

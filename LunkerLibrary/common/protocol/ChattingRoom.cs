@@ -1,6 +1,4 @@
-﻿public class ChattingRoom
-{
-
-    private int roomNo;
-
+﻿public struct ChattingRoom
+{ 
+    int roomNo;
 }

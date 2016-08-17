@@ -28,19 +28,22 @@ namespace LunkerLibrary.common.Utils
         // client가 id, cookie를 보내어 인증을 거친다.
         // 그 후에 완료된 client를 자료구조에 저장!!! 
         // 저장할때에는 사용자id, socket으로!
-        // user id - socket
-        private Dictionary<string, Socket> clientConnections = null;
-        
+        private Dictionary<string, Socket> clientConnections = null;// user id - socket
+
         private Dictionary<string, Cookie> authInfos = null;// user id - cookie
 
-        private Dictionary<ChattingRoom, HashSet<string>> chattingRoomInfo = null;// roominfo ~ entered user info 
+        private Dictionary<string, ChattingRoom> chattingRoomJoinInfo = null; // user id - chatting room info 
+
+        private Dictionary<ChattingRoom, HashSet<string>> chattingRoomListInfo = null;// roominfo ~ entered user info 
 
         private ConnectionManager()
         {
             clientConnections = new Dictionary<string, Socket>();
             clientInfos = new Dictionary<string, UserInfo>();
             authInfos = new Dictionary<string, Cookie>();
-            chattingRoomInfo = new Dictionary<ChattingRoom, HashSet<string>>();
+
+            chattingRoomJoinInfo = new Dictionary<string, ChattingRoom>();
+            chattingRoomListInfo = new Dictionary<ChattingRoom, HashSet<string>>();
         }
 
         public static ConnectionManager GetInstance()
@@ -55,7 +58,7 @@ namespace LunkerLibrary.common.Utils
         public void ReleaseAll()
         {
             /*
-             * string release?
+             string release?
             foreach (string key in clientConnections.Keys)
             {
                 key = null;
@@ -125,6 +128,7 @@ namespace LunkerLibrary.common.Utils
             return clientConnections.Count;
         }
 
+        //-------------------------------------------------------------------------------------//
         public Dictionary<string, Cookie> GetAuthInfoDic()
         {
             return authInfos;
@@ -138,9 +142,72 @@ namespace LunkerLibrary.common.Utils
             authInfos.Add(id,cookie);
         }
 
-        
 
+        //-------------------------------------------------------------------------------------//
+        //chattingRoomJoinInfo
+        public Dictionary<string, ChattingRoom> GetChattingRoomJoinInfoDic()
+        {
+            return chattingRoomJoinInfo;
+        }
 
+        public void AddChattingRoomJoinInfo(string id, ChattingRoom room)
+        {
+            chattingRoomJoinInfo.Add(id, room);
+        }
 
+        public void DeleteChattingRoomJoinInfo(string id)
+        {
+            chattingRoomJoinInfo.Remove(id);
+        }
+
+        public ChattingRoom GetChattingRoomJoinInfo(string id)
+        {
+            ChattingRoom tmp = default(ChattingRoom);
+            chattingRoomJoinInfo.TryGetValue(id, out tmp );
+
+            return tmp;
+        }
+
+        public void ReleaseChattingRoomJoinInfo()
+        {
+            /*
+            foreach (ChattingRoom chatRoom in chattingRoomJoinInfo.Values)
+            {
+                chatRoom = null;
+            }
+            */
+
+        }
+
+        //-------------------------------------------------------------------------------------//
+        //chattingRoomListInfo
+        public Dictionary<ChattingRoom, HashSet<string>> GetChattingRoomListInfoDic()
+        {
+            return chattingRoomListInfo;
+        }
+
+        public void AddChattingRoomListInfo(ChattingRoom chatRoom, string id)
+        {
+            HashSet<string> userInfo = null;
+
+            chattingRoomListInfo.TryGetValue(chatRoom, out userInfo);
+            userInfo.Add(id);
+        }
+
+        public void DeleteChattingRoomListInfo(ChattingRoom chatRoom, string id)
+        {
+            HashSet<string> userInfo = null;
+
+            chattingRoomListInfo.TryGetValue(chatRoom, out userInfo);
+            userInfo.Remove(id);
+        }
+
+        public HashSet<string> GetChattingRoomListInfo(ChattingRoom chatRoom)
+        {
+            HashSet<string> userInfo = null;
+            chattingRoomListInfo.TryGetValue(chatRoom, out userInfo);
+
+            return userInfo;
+        }
     }
 }

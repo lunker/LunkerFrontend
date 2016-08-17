@@ -14,6 +14,18 @@ namespace LunkerLibrary.common.protocol
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 18)]
         char[] pwd;
 
+        public UserInfo(char[] id, char[] pwd)
+        {
+            this.id = id;
+            this.pwd = pwd;
+        }
+
+        public UserInfo(string id)
+        {
+            this.id = id.ToCharArray();
+            this.pwd = new char[18];
+        }
+
         public char[] Id
         {
             get { return id; }

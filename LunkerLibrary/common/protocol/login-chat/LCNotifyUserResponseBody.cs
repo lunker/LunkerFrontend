@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LunkerLibrary.common.protocol.login_chat
+
+public struct LCNotifyUserResponseBody
 {
-    public struct LCNotifyUserResponseBody
-    {
-        // none
-    }
+    
 }
+

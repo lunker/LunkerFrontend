@@ -80,6 +80,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\agent\MessageBroker.cs" />
+    <Compile Include="src\Power.cs" />
     <Compile Include="src\utils\AppConfig.cs" />
     <Compile Include="src\ChatServer.cs" />
     <Compile Include="src\MainWorker.cs" />

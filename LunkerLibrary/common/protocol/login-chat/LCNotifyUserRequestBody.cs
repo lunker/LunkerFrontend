@@ -1,30 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using LunkerLibrary.common.protocol;
 
-namespace LunkerLibrary.common.protocol.login_chat
+public struct LCNotifyUserRequestBody
 {
-    public struct LCNotifyUserRequestBody
+    Cookie cookie;
+    UserInfo userInfo; // use only id 
+
+    /*
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 18)] 
+    char[] id;
+    */
+
+    public LCNotifyUserRequestBody(Cookie cookie, UserInfo userInfo)
     {
-        Cookie cookie;
-        UserInfo userInfo; // use only id 
-        /*
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 18)] 
-        char[] id;
-        */
+        this.cookie = cookie;
+        this.userInfo = userInfo;
+    }
 
-        public Cookie Cookie
-        {
-            get { return cookie; }
-            set { this.cookie = value; }
-        }
+    public Cookie Cookie
+    {
+        get { return cookie; }
+        set { this.cookie = value; }
+    }
 
-        public UserInfo UserInfo
-        {
-            get { return userInfo; }
-            set { userInfo = value; }
-        }
+    public UserInfo UserInfo
+    {
+        get { return userInfo; }
+        set { userInfo = value; }
     }
 }
+

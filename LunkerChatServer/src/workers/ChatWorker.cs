@@ -13,7 +13,7 @@ namespace LunkerChatServer.src.workers
         private static BEWorker beWorker = BEWorker.GetInstance();
         private ConnectionManager connectionManager = ConnectionManager.GetInstance();
 
-
+        /*
         public static void HandleCreateRoomRequest()
         {
             beWorker.HandleCreateRoomRequest();
@@ -24,5 +24,7 @@ namespace LunkerChatServer.src.workers
         {
             NetworkManager.ReadAsync();        
         }
+        */
+
     }
 }

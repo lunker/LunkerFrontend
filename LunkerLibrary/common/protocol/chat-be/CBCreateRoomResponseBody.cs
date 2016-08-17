@@ -1,7 +1,7 @@
 ﻿using LunkerLibrary.common.protocol;
 
-public struct CBCreateRoomResponseBody
+public struct CBCreateRoomResponseBody : Body
 {
-    UserInfo userInfo;
+    //UserInfo userInfo;
     ChattingRoom chattingRoom;
 }

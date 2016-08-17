@@ -15,8 +15,12 @@ namespace LunkerChatServer.src.utils
         private int frontport = 0;
         private int backport = 0;
         private int backlog = 0;
-        private string backendserverip = "";
-        private int backendserverport = 0;
+
+        private string backendServerIp = "";
+        private int backendServerPort = 0;
+
+        private string loginServerIp = "";
+        private int loginServerPort = 0;
 
         private static ILog logger = Logger.GetLoggerInstance();
         private static AppConfig appConfig = null;
@@ -26,10 +30,9 @@ namespace LunkerChatServer.src.utils
             // read config xml 
             //StringBuilder sb = new StringBuilder();
 
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
             while (reader.Read())
             {
-                
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
                 {
                     reader.Read();
@@ -69,17 +72,17 @@ namespace LunkerChatServer.src.utils
                     }
                     reader.Read(); // delete close element
                 }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverip"))
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendServerIp"))
                 {
                     reader.Read();
-                    backendserverip = reader.Value;
+                    backendServerIp = reader.Value;
                     
                     reader.Read(); // delete close element
                 }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverport"))
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendServerPort"))
                 {
                     reader.Read();
-                    if (Int32.TryParse(reader.Value, out backendserverport))
+                    if (Int32.TryParse(reader.Value, out backendServerPort))
                     {
                         logger.Debug("");
                     }
@@ -89,7 +92,26 @@ namespace LunkerChatServer.src.utils
                     }
                     reader.Read(); // delete close element
                 }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("loginServerIp"))
+                {
+                    reader.Read();
+                    loginServerIp = reader.Value;
 
+                    reader.Read(); // delete close element
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("loginServerPort"))
+                {
+                    reader.Read();
+                    if (Int32.TryParse(reader.Value, out loginServerPort))
+                    {
+                        logger.Debug("");
+                    }
+                    else
+                    {
+                        logger.Debug("");
+                    }
+                    reader.Read(); // delete close element
+                }
             }
         }// set configs 
 
@@ -117,14 +139,24 @@ namespace LunkerChatServer.src.utils
             get { return this.backlog; }
         }
 
-        public string Backendserverip
+        public string BackendServerIp
         {
-            get { return backendserverip; }
+            get { return backendServerIp; }
         }
 
-        public int Backendserverport
+        public int BackendServerPort
         {
-            get { return backendserverport; }
+            get { return backendServerPort; }
+        }
+
+        public string LoginServerIp
+        {
+            get { return loginServerIp; }
+
+        }
+        public int LoginServerPort
+        {
+            get { return loginServerPort; }
         }
     }
 }

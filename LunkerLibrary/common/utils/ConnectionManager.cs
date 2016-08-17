@@ -162,7 +162,7 @@ namespace LunkerLibrary.common.Utils
 
         public ChattingRoom GetChattingRoomJoinInfo(string id)
         {
-            ChattingRoom tmp = null;
+            ChattingRoom tmp = default(ChattingRoom);
             chattingRoomJoinInfo.TryGetValue(id, out tmp );
 
             return tmp;

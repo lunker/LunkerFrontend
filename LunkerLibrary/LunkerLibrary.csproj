@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="common\protocol\admin-agent\AAHeader.cs" />
     <Compile Include="common\protocol\CBHeader.cs" />
     <Compile Include="common\protocol\chat-be\CBListRoomRequestBody.cs" />
     <Compile Include="common\protocol\chat-be\CBListRoomResponseBody.cs" />

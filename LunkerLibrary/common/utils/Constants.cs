@@ -15,6 +15,7 @@ namespace LunkerLibrary.common.Utils
         public static bool AppStop = false;
 
         public static int HeaderSize = 48;
+        public static int AdminHeaderSize = 4;
         public static int None = 0;
     }
 }

@@ -1,34 +1,33 @@
-﻿using LunkerLibrary.common.Utils;
+﻿using log4net;
+using LunkerLibrary.common.Utils;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LunkerChatServer.src.agent
+namespace LunkerAgent.src.utils
 {
-    /// <summary>
-    /// Publish & Subscribe Message between agent & chat server
-    /// </summary>
     class MessageBroker
     {
         private static MessageBroker instance = null;
+        private ILog logger = Logger.GetLoggerInstance();
+        public delegate void MessageConumer(Object model, BasicDeliverEventArgs events, Socket admin); // subscriber
+
         private string chatQueueName = "ChatQueue"; // to chatqueue.subscribe. request from agent
         private string agentQueueName = "AgentQueue"; // to agent queue. publish. response to agent.
 
         
-        //private IModel chatQueue = null;
-        //private IModel agentQueue = null;
-
         private IModel channel = null;
 
         private MessageBroker() { }
 
         public static MessageBroker GetInstance()
-        {   
-            if(instance == null)
+        {
+            if (instance == null)
             {
                 instance = new MessageBroker();
             }
@@ -55,11 +54,10 @@ namespace LunkerChatServer.src.agent
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
+
             
-            factory = null;
-
             RegisterSubscribe();
-
+            factory = null;
             /*
             chatQueue = factory.CreateConnection().CreateModel();
             agentQueue = factory.CreateConnection().CreateModel();
@@ -84,47 +82,39 @@ namespace LunkerChatServer.src.agent
             channel.Dispose();
             instance = null;
         }
-
+        
+        /// <summary>
+        /// publish message to agentQueue
+        /// </summary>
+        /// <param name="message"></param>
         public void Publish(Object message)
         {
-            if(message is string)
-            {
-                channel.BasicPublish(exchange: "",
-                        routingKey: agentQueueName,
+            channel.BasicPublish(exchange: "",
+                        routingKey: chatQueueName,
                         basicProperties: null,
                         body: NetworkManager.StructureToByte(message));
 
-            }
+            logger.Debug($"[MessageBroker][Publish()] publish message : {message}");
         }// end method
 
+        
         public void RegisterSubscribe()
         {
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
                 var body = ea.Body;
+                AAHeader responseHeader = (AAHeader) NetworkManager.ByteToStructure(body, typeof(AAHeader));
 
-                AAHeader message = (AAHeader) NetworkManager.ByteToStructure(body,typeof(AAHeader));
-
-                // 
-                HandleRequest(message.Type);
+                // send result to admin tool 
+                // call send method
+                AdminAgent.GetInstance().HandleResponse(responseHeader);
             };
-            channel.BasicConsume(queue: chatQueueName,
+            
+            channel.BasicConsume(queue: agentQueueName,
                                     noAck: true,
                                     consumer: consumer);
         }// end method
-
-        public void HandleRequest(MessageType type)
-        {
-            switch (type)
-            {
-                case MessageType.RestartApp:
-                case MessageType.ShutdownApp:
-
-                    Power.Off();
-                    break;
-            }
-        }
-
+       
     }
 }

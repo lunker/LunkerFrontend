@@ -21,7 +21,7 @@ namespace LunkerChatServer
     /**
      * Socket Listener for Front Component - client 
      */
-    class MainWorker
+    public class MainWorker
     {
         private delegate void RequestHandler(int bodyLength); // message type에 따라 해당되는 함수를 찾아서, delegate를 통해 호출한다! 
 
@@ -345,7 +345,6 @@ namespace LunkerChatServer
         {
             return Task.Run(()=>HandleConnectionSetup(peer, header));
         }
-
 
         /// <summary>
         /// handle chatting request from client 

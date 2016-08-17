@@ -20,9 +20,21 @@ namespace LunkerChatServer
     public class ChatServer
     {
         private ILog logger = Logger.GetLoggerInstance();
-        
+        private static ChatServer instance = null;
+
         private MainWorker mainWorker = MainWorker.GetInstance();
         
+        public static ChatServer GetInstance()
+        {
+            if(instance == null)
+            {
+                instance = new ChatServer();
+            }
+            return instance;
+        }
+
+        private ChatServer() { }
+
         public void Start()
         {
             Thread frontThread = new Thread(new ThreadStart(mainWorker.Start));

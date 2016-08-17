@@ -66,6 +66,7 @@ namespace LunkerLibrary.common.Utils
             return data; // 배열을 리턴
         }
 
+        /*
         public static Object ReadAsync(Socket peer, int msgLength, Type type)
         {
             //logger.Debug("[ChatServer][ReadAsync()] start");
@@ -142,6 +143,118 @@ namespace LunkerLibrary.common.Utils
 
             return sendTask;
         }
+        */
+        public static Object Read(Socket peer, int msgLength, Type type)
+        {
+            Object obj = null;
+            int rc = 0;
+            byte[] buff = new byte[msgLength];
 
-    }
+            rc = peer.Receive(buff);
+
+            if (rc == 0)
+            {
+                throw new SocketException();
+            }
+            else if (rc > 0)
+            {
+                ;
+            }
+            else
+            {
+                ;
+            }
+
+            obj = ByteToStructure(buff, type);
+
+            return obj;
+        }
+
+        /// <summary>
+        /// Type 형식의 Object를 반환 
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="msgLength"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static Task<Object> ReadAsync(Socket peer, int msgLength, Type type)
+        {
+            return Task.Run(()=>Read(peer, msgLength, type));
+        }// end 
+
+        public static byte[] Read(Socket peer, int msgLength)
+        {
+            int rc = 0;
+            byte[] buff = new byte[msgLength];
+
+            rc = peer.Receive(buff);
+
+            if (rc == 0)
+            {
+                throw new SocketException();
+            }
+            else if (rc > 0)
+            {
+                ;
+            }
+            else
+            {
+                ;
+            }
+
+            return buff;
+        }
+
+        public static Task<byte[]> ReadAsync(Socket peer, int msgLength)
+        {
+            return Task.Run(()=>Read(peer, msgLength));
+        }
+
+        public static void Send(Socket peer, Object obj)
+        {
+            int rc = default(int);
+
+            try
+            {
+                if (obj is byte[])
+                {
+                    rc = peer.Send((byte[])obj);
+                }
+                else
+                {
+                    rc = peer.Send(StructureToByte(obj));
+                }
+
+                if (rc == 0)
+                {
+                    //Console.WriteLine("");
+                }
+                else if (rc > 0)
+                {
+
+                }
+                else
+                {
+
+                }
+            }
+            catch (SocketException se)
+            {
+                throw se;
+            }
+        }// end method
+
+        /// <summary>
+        /// send message
+        /// 
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="message">any object or byte[]</param>
+        /// <returns></returns>
+        public static Task SendAsync(Socket peer, Object message)
+        {
+            return Task.Run(()=> Send(peer, message));
+
+        }// end method
+    }// end class
 }

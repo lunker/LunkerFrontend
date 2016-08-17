@@ -77,9 +77,10 @@ namespace LunkerAgent.src
             }// end loop 
         }// end method
 
-        public void HandleRequestAsync(Socket peer)
+        public async void HandleRequestAsync(Socket peer)
         {
-            AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
+            //AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
+            AAHeader requestHeader = (AAHeader) await NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
 
             switch (requestHeader.Type)
             {
@@ -100,7 +101,8 @@ namespace LunkerAgent.src
 
         public async void HandleResponse(AAHeader responseHeader)
         {
-            await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+            //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+            await NetworkManager.SendAsync(adminSocket, responseHeader);
         }
 
         /// <summary>
@@ -122,7 +124,8 @@ namespace LunkerAgent.src
 
                 // send result
                 AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Success);
-                await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+                //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+                await NetworkManager.SendAsync(adminSocket, responseHeader);
             }
             else
             {
@@ -130,7 +133,8 @@ namespace LunkerAgent.src
                 {
                     // already start
                     AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Fail);
-                    await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+                    //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+                    await NetworkManager.SendAsync(adminSocket, responseHeader);
                 }
             }
         }
@@ -155,7 +159,7 @@ namespace LunkerAgent.src
         /// <para></para>
         /// </summary>
         /// <param name="peer"></param>
-        public async void HandleRestartApp()
+        public void HandleRestartApp()
         {
             if (chatProcess == null)
             {

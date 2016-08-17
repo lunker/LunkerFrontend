@@ -137,7 +137,7 @@ namespace LunkerLoginServer.src.workers
 
                     // Add accepted connections
                     clientConnection.Add(getAcceptTask.Result);
-                    // getAcceptTask.Result;
+                 
                     // 다시 task run 
                     getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
                 }
@@ -159,8 +159,8 @@ namespace LunkerLoginServer.src.workers
             {
                 // 정상 연결상태 
                 // 일단 CCHeader로 전체 header 사용 
-                CommonHeader header = (CommonHeader)NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
-
+                //CommonHeader header = (CommonHeader)NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
+                CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
                 switch (header.Type)
                 {
                     case MessageType.Signin:
@@ -204,7 +204,7 @@ namespace LunkerLoginServer.src.workers
             Cookie cookie;
 
             // read body from client
-            CLSigninRequestBody body = (CLSigninRequestBody) NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLSigninRequestBody));
+            CLSigninRequestBody body = (CLSigninRequestBody) await NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLSigninRequestBody));
             signinUser = body.UserInfo;
            
             CommonHeader requestHeader = new CommonHeader();
@@ -212,31 +212,31 @@ namespace LunkerLoginServer.src.workers
                 묶어야함!!
              */
             // send header+body to be
-            await NetworkManager.SendAsyncTask(beSocket, requestHeader);
-            await NetworkManager.SendAsyncTask(beSocket, body);
+            await NetworkManager.SendAsync(beSocket, requestHeader);
+            await NetworkManager.SendAsync(beSocket, body);
 
             /***
              * 위험요소! 
              */
             // read header from be 
-            CommonHeader responseHeader = (CommonHeader) NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader) );
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader) );
 
             // read body from be
             // cookie in body 
-            LBSigninResponseBody responseBody = (LBSigninResponseBody) NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
+            LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
             cookie = responseBody.Cookie;
             
             // send result to client
-            await NetworkManager.SendAsyncTask(client, responseHeader);
-            await NetworkManager.SendAsyncTask(client, responseBody);
+            await NetworkManager.SendAsync(client, responseHeader);
+            await NetworkManager.SendAsync(client, responseBody);
 
             // !!!!!! loadbalancing 
             // send auth to Chat Server
             CommonHeader feRequestHeader = new CommonHeader(MessageType.Auth, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
             LCNotifyUserRequestBody feRequestBody = new LCNotifyUserRequestBody(cookie, signinUser);
 
-            await NetworkManager.SendAsyncTask(feSocket, feRequestHeader);
-            await NetworkManager.SendAsyncTask(feSocket, feRequestBody);
+            await NetworkManager.SendAsync(feSocket, feRequestHeader);
+            await NetworkManager.SendAsync(feSocket, feRequestBody);
         }
         
         public Task HandleSigninAsync(Socket client, CommonHeader header)
@@ -247,20 +247,20 @@ namespace LunkerLoginServer.src.workers
         public async void HandleSignup(Socket client, CommonHeader header)
         {
             // read body from client
-            CLSignupRequestBody requestBody = (CLSignupRequestBody)NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLSignupRequestBody));
+            CLSignupRequestBody requestBody = (CLSignupRequestBody) await NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLSignupRequestBody));
 
             // create request header
             // send request header to be
-            await NetworkManager.SendAsyncTask(beSocket, header);
+            await NetworkManager.SendAsync(beSocket, header);
 
             // send request body to be 
-            await NetworkManager.SendAsyncTask(beSocket, requestBody);
+            await NetworkManager.SendAsync(beSocket, requestBody);
 
             // read header from be
-            CommonHeader responseHeader = (CommonHeader) NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // send result(header) to client 
-            await NetworkManager.SendAsyncTask(client, responseHeader);
+            await NetworkManager.SendAsync(client, responseHeader);
         }
 
         public Task HandleSignupAsync(Socket client, CommonHeader header)
@@ -283,17 +283,17 @@ namespace LunkerLoginServer.src.workers
         public async void HandleDelete(Socket client, CommonHeader header)
         {
             // 1) 
-            CLDeleteRequestBody clRequestBody = (CLDeleteRequestBody) NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLDeleteRequestBody));
+            CLDeleteRequestBody clRequestBody = (CLDeleteRequestBody) await NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLDeleteRequestBody));
 
             // 2)
-            await NetworkManager.SendAsyncTask(beSocket, header );
-            await NetworkManager.SendAsyncTask(beSocket, clRequestBody);
+            await NetworkManager.SendAsync(beSocket, header );
+            await NetworkManager.SendAsync(beSocket, clRequestBody);
 
             // 3)
-            CommonHeader responseHeader =(CommonHeader) NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader =(CommonHeader)await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // 4) 
-            await NetworkManager.SendAsyncTask(client, responseHeader);
+            await NetworkManager.SendAsync(client, responseHeader);
         }
 
         public Task HandleDeleteAsync(Socket client, CommonHeader header)
@@ -313,17 +313,17 @@ namespace LunkerLoginServer.src.workers
         public async void HandleModify(Socket client, CommonHeader header)
         {
             // 1) 
-            CLModifyRequestBody clRequestBody = (CLModifyRequestBody)NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLModifyRequestBody));
+            CLModifyRequestBody clRequestBody = (CLModifyRequestBody) await NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLModifyRequestBody));
 
             // 2)
-            await NetworkManager.SendAsyncTask(beSocket, header);
-            await NetworkManager.SendAsyncTask(beSocket, clRequestBody);
+            await NetworkManager.SendAsync(beSocket, header);
+            await NetworkManager.SendAsync(beSocket, clRequestBody);
 
             // 3)
-            CommonHeader responseHeader = (CommonHeader)NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader)await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // 4) 
-            await NetworkManager.SendAsyncTask(client, responseHeader);
+            await NetworkManager.SendAsync(client, responseHeader);
         }
         
         public Task HandleModifyAsync(Socket client, CommonHeader header)
@@ -334,7 +334,7 @@ namespace LunkerLoginServer.src.workers
         public async void HandleError(Socket client, CommonHeader header)
         {
             CommonHeader responseHeader = new CommonHeader(header.Type, MessageState.Error,Constants.None, new Cookie(), new UserInfo() );
-            await NetworkManager.SendAsyncTask(client, responseHeader);
+            await NetworkManager.SendAsync(client, responseHeader);
         }
         public Task HandleErrorAsync(Socket client, CommonHeader header)
         {

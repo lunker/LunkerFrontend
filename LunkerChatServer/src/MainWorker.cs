@@ -33,6 +33,7 @@ namespace LunkerChatServer
         private Socket clientListener = null;
 
         private ConnectionManager connectionManager = null;
+
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
@@ -40,15 +41,12 @@ namespace LunkerChatServer
         private Socket beSocket = null;
         private Socket loginSocket = null;
 
-        private Task<Socket> getAcceptTask = null;
+        private Task<Socket> clientAcceptTask = null;
 
         //private ChatWorker chatWorker;
         private BEWorker beWorker = BEWorker.GetInstance();
 
-        private MainWorker()
-        {
-
-        }
+        private MainWorker(){ }
 
         public static MainWorker GetInstance()
         {
@@ -60,13 +58,21 @@ namespace LunkerChatServer
         }
 
         // chat server main thread
-        public void Start()
+        public async void Start()
         {
             logger.Debug("[ChatServer][MainWorker][Start()] start");
             Initialize();
-            InitializebeSocket();
-            InitializeLoginSocket();
+            try
+            {
+                await Task.WhenAll(BindClientSocketListenerAsync(), ConnectBESocketAsync(), ConnectLoginSocketAsync());
 
+            }
+            catch (Exception e)
+            {
+                // error
+
+            }
+ 
             MainProcess();
 
             logger.Debug("[ChatServer][MainWorker][Start()] end");
@@ -84,19 +90,18 @@ namespace LunkerChatServer
         public void MainProcess()
         {
             logger.Debug("[ChatServer][HandleRequest()] start");
-           
 
             while (threadState)
             {
                 // Accept Client Connection Request 
-                HandleAccept();
+                HandleClientAcceptAsync();
 
                 // 접속한 client가 있을 경우에만 수행.
                 if (0 != connectionManager.GetClientConnectionCount())
                 {
                     // select client connection
                     readSocketList = connectionManager.GetClientConnectionDic().Values.ToList();
-                    // select login coinnection
+                    // select login connection
                     readSocketList.Add(loginSocket);
                     //writeSocketList = clientSocketDic.Values.ToList();
                     //errorSocketList = clientSocketDic.Values.ToList();
@@ -113,30 +118,37 @@ namespace LunkerChatServer
                         }
                     }
                 }// end if
-              
             }// end loop 
         }
 
-        public void HandleAccept()
+        public void HandleClientAcceptAsync()
         {
-            if (getAcceptTask != null)
+
+            if (clientAcceptTask != null)
             {
-                if (getAcceptTask.IsCompleted)
+                if (clientAcceptTask.IsCompleted)
                 {
                     logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+                    
+                    // 나중에 auth 인증을 거친 후 해당 사용자의 connection을 저장시킨다.  
 
-                    // Add accepted connections
-                    // getAcceptTask.Result;
                     // 다시 task run 
-                    getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                    //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                    clientAcceptTask = Task.Run(() => {
+                        return clientListener.Accept();
+                    });
                 }
             }
             else
             {
                 logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                //getAcceptTask.Start();
+                //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                clientAcceptTask = Task.Run(() => {
+                    return clientListener.Accept();
+                });
             }
+
+
         }
 
         // 요청을 읽고, 작업을 처리하는 비동기 작업을 만들어야함!!!
@@ -147,87 +159,79 @@ namespace LunkerChatServer
             {
                 // 정상 연결상태 
                 // 일단 CCHeader로 전체 header 사용 
-                CommonHeader header = (CommonHeader) await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
- 
-                switch (header.Type)
+                try
                 {
-                    // Login Server
-                    // request from login server
-                    // ok 
-                    case MessageType.ConnectionSetup:
-                        // 인증된 유저가 들어와야 
-                        // connectionDic에 저장된다. 
-                        await HandleConnectionSetupAsync(peer, header);
-                        break;
-
-                    // 200: chatting 
-                    // ok 
-                    case MessageType.Chatting:
-                        await HandleChattingRequestAsync(peer, header);
-                        break;
-
-                    // room : 400 
-                    // ok 
-                    case MessageType.CreateRoom:
-                        await HandleCreateRoomAsync(peer, header);
-                        break;
-
-                        /*
-                        if(header.State == MessageState.Request)
-                        {
-                            // send create request
-                            //ChatWorker.HandleCreateRoomRequest();
-                            await HandleCreateRoomRequestAsync(peer, header);
+                    CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                    switch (header.Type)
+                    {
+                        // Login Server
+                        // request from login server
+                        // ok 
+                        case MessageType.ConnectionSetup:
+                            // 인증된 유저가 들어와야 
+                            // connectionDic에 저장된다. 
+                            await HandleConnectionSetupAsync(peer, header);
                             break;
-                        }
-                        else
-                        {
-                            //connectionManager.GetClientConnection();
-                            await HandleCreateRoomResponseAsync(peer, header);
-                            break;
-                        }
-                        */
 
-                    /*
-                    case MessageType.JoinRoom:
-                        if (header.State == MessageState.Request)
-                        {
+                        // 200: chatting 
+                        // ok 
+                        case MessageType.Chatting:
+                            await HandleChattingRequestAsync(peer, header);
                             break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    */
 
-                    case MessageType.LeaveRoom:
-                        /*
-                        if (header.State == MessageState.Request)
-                        {
-
+                        // room : 400 
+                        // ok 
+                        case MessageType.CreateRoom:
+                            await HandleCreateRoomAsync(peer, header);
                             break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                        */
 
-                    // not yet 
-                    case MessageType.ListRoom:
-                        break;
+                        case MessageType.JoinRoom:
+                            break;
+
+                        case MessageType.LeaveRoom:
+                            break;
+
+                        // not yet 
+                        case MessageType.ListRoom:
+                            break;
 
                         // default
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
                 }
+                catch (Exception e)
+                {
+                    // errorr
+                }
+                
             }
             else
             {
+                // clear connection infos 
+                // delete socket in connection list 
+
+                IPEndPoint endPoint = (IPEndPoint) peer.RemoteEndPoint;
+                string ip = endPoint.Address.ToString();
+                int port = endPoint.Port;
+                string key = ip + ":" + port;
+
+                UserInfo userInfo = connectionManager.GetClientInfo(key);
+
+                if (!userInfo.Equals(default(UserInfo)))
+                {
+                    connectionManager.LogoutClient(key);
+
+                }
 
             }
-        }
+        }// end method 
 
+        /// <summary>
+        /// <para>Initialize variable </para>
+        /// <para></para>
+        /// <para></para>
+        /// </summary>
         public void Initialize()
         {
             connectionManager = ConnectionManager.GetInstance();
@@ -236,93 +240,41 @@ namespace LunkerChatServer
             writeSocketList = new List<Socket>();
             errorSocketList = new List<Socket>();
 
-            // initialiize client socket listener
-            IPEndPoint ep = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().FrontPort);
-
-            clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            clientListener.Bind(ep);
-            clientListener.Listen(AppConfig.GetInstance().Backlog);
-
         }// end method 
 
-        public void InitializebeSocket()
+        public Task BindClientSocketListenerAsync()
         {
-            beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            return Task.Run(()=> {
+                // initialiize client socket listener
+                IPEndPoint ep = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().FrontPort);
 
-            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
-
-            beSocket.Connect(ep);
+                clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                clientListener.Bind(ep);
+                clientListener.Listen(AppConfig.GetInstance().Backlog);
+            });
         }
 
-        public void InitializeLoginSocket()
+        public Task ConnectBESocketAsync()
         {
-            loginSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            return Task.Run(()=> {
+                beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
 
-            loginSocket.Connect(ep);
+                beSocket.Connect(ep);
+            });
         }
 
-        public async void GetClientRequest()
+        public Task ConnectLoginSocketAsync()
         {
-            //logger.Debug("[ChatServer][GetClientRequest()] start");
-            Socket handler = await AcceptAsync();
-            logger.Debug("[ChatServer][GetClientRequest()] get client conenction ");
+            return Task.Run(()=> {
+                loginSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-            IPEndPoint ep = (IPEndPoint)handler.RemoteEndPoint;
-            StringBuilder idBuilder = new StringBuilder();
-            idBuilder.Append(ep.Address);
-            idBuilder.Append(":");
-            idBuilder.Append(ep.Port);
+                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
 
-            //clientSocketDic.Add(idBuilder.ToString(), handler);
-
-            logger.Debug("[ChatServer][AcceptAsync()] add handler to list");
-            return;
+                loginSocket.Connect(ep);
+            });
         }
-
-        public async Task<Socket> AcceptAsync()
-        {
-            //logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] start accept");
-            Socket handler = await Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-
-            logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] accept client request");
-            return handler;
-
-            /*
-            Task delay = Task.Delay(TimeSpan.FromSeconds(5));
-            var result = await Task.WhenAny(delay, Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true)).ConfigureAwait(false);
-
-       
-            if (result == delay)
-            {
-                // timeout
-                return null;
-            }
-            else
-            {
-                return (Task)result.;
-            }
-            */
-            /*
-            Socket handler = await Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-
-            logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] accept client request");
-            return handler;
-            */
-            /*
-            IPEndPoint ep = (IPEndPoint)handler.RemoteEndPoint;
-            StringBuilder idBuilder = new StringBuilder();
-            idBuilder.Append(ep.Address);
-            idBuilder.Append(":");
-            idBuilder.Append(ep.Port);
-
-            clientSocketDic.Add(idBuilder.ToString(), handler);
-
-            logger.Debug("[ChatServer][AcceptAsync()] accept client request");
-            return;
-            */
-        }// end method
 
         /// <summary>
         /// <para>1) read body from login server</para>
@@ -429,14 +381,14 @@ namespace LunkerChatServer
 
             //// 여기 에러 밭 ㅠㅠㅠㅠ 
             CBListRoomResponseBody responseBody = (CBListRoomResponseBody)await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBListRoomResponseBody));
-
-
         }
 
         public Task HandleListChattingRoomAsync(Socket peer, CommonHeader header)
         {
             return Task.Run(()=>HandleChattingRequest(peer, header));
         }
+
+
         /*
         public void HandleCreateRoomRequest(Socket peer, CommonHeader header)
         {

@@ -48,7 +48,7 @@ namespace LunkerLibrary.common.Utils
 
         public static ConnectionManager GetInstance()
         {
-            if(instance == null)
+            if (instance == null)
             {
                 instance = new ConnectionManager();
             }
@@ -77,12 +77,49 @@ namespace LunkerLibrary.common.Utils
             GC.Collect();
         }
 
+        /// <summary>
+        /// Logout Client User Connection
+        /// </summary>
+        /// <param name="endpoint"></param>
+        public void LogoutClient(string endpoint)
+        {
+            // 1)
+            UserInfo userInfo = GetClientInfo(endpoint);
 
-        /**
-         * Client Info
-         */
+            string userId = new string(userInfo.Id);
 
-        public Dictionary<string, UserInfo>  GetClientInfo()
+            // 2) 
+            Socket clientSocket = null;
+            clientConnections.TryGetValue(userId, out clientSocket);
+            if (clientSocket.Connected)
+                clientSocket.Close();
+            clientSocket.Dispose();
+            clientSocket = null;
+            //clientConnections.Remove(userId);        
+            DeleteClientConnection(userId);
+
+            // 3) 
+            DeleteClientConnection(userId);
+
+            // 4)
+            ChattingRoom enteredRoom = GetChattingRoomJoinInfo(userId);
+
+            DeleteChattingRoomListInfoValue(enteredRoom, userId);
+            // delete room 
+            if (GetChattingRoomListInfoCount(enteredRoom) == 0)
+            {
+                DeleteChattingRoomListInfoKey(enteredRoom);
+            }
+
+            DeleteChattingRoomJoinInfo(userId);
+   
+        }
+
+    /**
+     * Client Info
+     */
+
+    public Dictionary<string, UserInfo>  GetClientInfoDic()
         {
             return clientInfos;
         }
@@ -92,10 +129,20 @@ namespace LunkerLibrary.common.Utils
             clientInfos.Add(endpoint, userInfo);
         }
 
+        public UserInfo GetClientInfo(string endpoint)
+        {
+            UserInfo userInfo = default(UserInfo);
+
+            clientInfos.TryGetValue(endpoint, out userInfo);
+
+            return userInfo;
+        }
+
         public void DeleteClientInfo(string endpoint)
         {
             clientInfos.Remove(endpoint);
         }
+
 
         /*
          * Client Connection 
@@ -141,6 +188,10 @@ namespace LunkerLibrary.common.Utils
         {
             authInfos.Add(id,cookie);
         }
+        public void DeleteAuthInfo(string id)
+        {
+            authInfos.Remove(id);
+        }
 
 
         //-------------------------------------------------------------------------------------//
@@ -185,6 +236,22 @@ namespace LunkerLibrary.common.Utils
         {
             return chattingRoomListInfo;
         }
+        /// <summary>
+        /// 해당 채팅방에 접속해 있는 유저의 수 
+        /// </summary>
+        /// <param name="chatRoom"></param>
+        /// <returns></returns>
+        public int GetChattingRoomListInfoCount(ChattingRoom chatRoom)
+        {
+            HashSet<string> userInfo = null;
+
+            if(chattingRoomListInfo.TryGetValue(chatRoom, out userInfo))
+            {
+                return Constants.NonExistedRoom; // 해당 채팅방이 없음 .
+            }
+            else
+                return userInfo.Count;
+        }
 
         public void AddChattingRoomListInfo(ChattingRoom chatRoom, string id)
         {
@@ -194,15 +261,27 @@ namespace LunkerLibrary.common.Utils
             userInfo.Add(id);
         }
 
-        public void DeleteChattingRoomListInfo(ChattingRoom chatRoom, string id)
+        /// <summary>
+        /// 해당 chattingroom에서 user를 나가기 시킨다.
+        /// <para>remove된것이 dic에도 반영이 될지는 모르겠다. . . .</para>
+        /// </summary>
+        /// <param name="chatRoom"></param>
+        /// <param name="id"></param>
+        public void DeleteChattingRoomListInfoValue(ChattingRoom chatRoom, string id)
         {
             HashSet<string> userInfo = null;
 
             chattingRoomListInfo.TryGetValue(chatRoom, out userInfo);
             userInfo.Remove(id);
+            
         }
 
-        public HashSet<string> GetChattingRoomListInfo(ChattingRoom chatRoom)
+        public void DeleteChattingRoomListInfoKey(ChattingRoom chatRoom)
+        {
+            chattingRoomListInfo.Remove(chatRoom);
+        }
+
+        public HashSet<string> GetChattingRoomListInfoKey(ChattingRoom chatRoom)
         {
             HashSet<string> userInfo = null;
             chattingRoomListInfo.TryGetValue(chatRoom, out userInfo);

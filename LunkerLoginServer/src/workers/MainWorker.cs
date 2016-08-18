@@ -32,8 +32,6 @@ namespace LunkerLoginServer.src.workers
         private Socket clientListener = null;
         private Socket feListener = null;
         private Socket beSocket = null;
-        
-
         private MainWorker() { }
         public static MainWorker GetInstance()
         {
@@ -120,7 +118,6 @@ namespace LunkerLoginServer.src.workers
                 {
                     readSocketList = clientConnection.ToList();
                     
-
                     // Check Inputs 
                     // select target : client
                     Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
@@ -218,39 +215,45 @@ namespace LunkerLoginServer.src.workers
             // peer : client 
             if (peer != null && peer.Connected)
             {
-                // 정상 연결상태 
-                //CommonHeader header = (CommonHeader)NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
-                CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
-                switch (header.Type)
+                try
                 {
+                    // 정상 연결상태 
+                    //CommonHeader header = (CommonHeader)NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
+                    CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                    switch (header.Type)
+                    {
+                        // login에서 request를 날린다.
+                        case MessageType.FENotice:
+                            await HandleFENoticeAsync(peer, header);
+                            break;
 
-                    // login에서 request를 날린다.
-                    case MessageType.FENotice:
-                        await HandleFENoticeAsync(peer, header);
-                        break;
-
-                    case MessageType.Signin:
-                        await HandleSigninAsync(peer, header);
-                        break;
-                    case MessageType.Signup:
-                        await HandleSignupAsync(peer, header);
-                        break;
-                    case MessageType.Delete:
-                        await HandleDeleteAsync(peer, header);
-                        break;
-                    case MessageType.Modify:
-                        await HandleModifyAsync(peer, header);
-                        break;
-                    // default
-                    default:
-                        await HandleErrorAsync(peer, header);
-                        break;
+                        case MessageType.Signin:
+                            await HandleSigninAsync(peer, header);
+                            break;
+                        case MessageType.Signup:
+                            await HandleSignupAsync(peer, header);
+                            break;
+                        case MessageType.Delete:
+                            await HandleDeleteAsync(peer, header);
+                            break;
+                        case MessageType.Modify:
+                            await HandleModifyAsync(peer, header);
+                            break;
+                        // default
+                        default:
+                            await HandleErrorAsync(peer, header);
+                            break;
+                    }
                 }
+                catch (Exception e)
+                {
+                    // handling .
+                }
+               
             }
             else
             {
-                // peer is disconnected.
-                // handling 
+                
             }
         }// end method
 
@@ -328,9 +331,8 @@ namespace LunkerLoginServer.src.workers
             CommonHeader feRequestHeader = new CommonHeader(MessageType.Auth, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
             LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
 
-
             // LoadBalancing
-
+            // pick FE 
             int index = LoadBalancer.RoundRobin();
   
             CLSigninResponseBody clientResponseBdoy = new CLSigninResponseBody();

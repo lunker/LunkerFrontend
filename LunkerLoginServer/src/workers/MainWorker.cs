@@ -186,6 +186,9 @@ namespace LunkerLoginServer.src.workers
                     // await 할 필요가 있나 ?
                     RequestFEInfoAsync(feAcceptTask.Result);
 
+                    // add fe count
+                    LoadBalancer.AddFE();
+
                     // FE Info Setup이 끝나면, 다음 accept 수행
                     feAcceptTask = Task.Run(() => {
                         return feListener.Accept();
@@ -270,7 +273,6 @@ namespace LunkerLoginServer.src.workers
 
             // 3) 
             CommonHeader responseHeader = new CommonHeader(MessageType.FENotice, MessageState.Response, Constants.None, new Cookie(), new UserInfo());
-
         }
 
         public Task HandleFENoticeAsync(Socket peer, CommonHeader header)
@@ -326,9 +328,18 @@ namespace LunkerLoginServer.src.workers
             CommonHeader feRequestHeader = new CommonHeader(MessageType.Auth, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
             LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
 
+
+            // LoadBalancing
+
+            int index = LoadBalancer.RoundRobin();
+  
+            CLSigninResponseBody clientResponseBdoy = new CLSigninResponseBody();
+            byte[] bodyArr = NetworkManager.StructureToByte(clientResponseBdoy);
+            CommonHeader clientResponseHeader = new CommonHeader(MessageType.Signin, MessageState.Response, bodyArr.Length, new Cookie(), new UserInfo());
+
             // select FE Server to connect with client
-            await NetworkManager.SendAsync(, feRequestHeader);
-            await NetworkManager.SendAsync(, feRequestBody);
+            await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Value, clientResponseHeader);
+            await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Value, bodyArr);
         }
         
         public Task HandleSigninAsync(Socket client, CommonHeader header)

@@ -48,46 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="common\protocol\admin-agent\AAHeader.cs" />
-    <Compile Include="common\protocol\CBHeader.cs" />
-    <Compile Include="common\protocol\chat-be\CBListRoomRequestBody.cs" />
-    <Compile Include="common\protocol\chat-be\CBListRoomResponseBody.cs" />
-    <Compile Include="common\protocol\client-chat\CCCreateRoomRequestBody.cs" />
-    <Compile Include="common\protocol\client-chat\CCCreateRoomResponseBody.cs" />
-    <Compile Include="common\protocol\client-chat\CCListRoomRequestBody.cs" />
-    <Compile Include="common\protocol\client-chat\CCListRoomResponseBody.cs" />
-    <Compile Include="common\protocol\client-login\CLDeleteRequestBody.cs" />
-    <Compile Include="common\protocol\client-login\CLDeleteResponseBody.cs" />
-    <Compile Include="common\protocol\client-login\CLModifyRequestBody.cs" />
-    <Compile Include="common\protocol\client-login\CLModifyResponseBody.cs" />
-    <Compile Include="common\protocol\client-login\CLSigninRequestBody.cs" />
-    <Compile Include="common\protocol\client-login\CLSigninResponseBody.cs" />
-    <Compile Include="common\protocol\client-login\CLSignupRequestBody.cs" />
-    <Compile Include="common\protocol\client-login\CLSignupResponseBody.cs" />
-    <Compile Include="common\protocol\CommonHeader.cs" />
-    <Compile Include="common\protocol\chat-be\CBCreateRoomRequestBody.cs" />
-    <Compile Include="common\protocol\chat-be\CBCreateRoomResponseBody.cs" />
-    <Compile Include="common\protocol\ChattingRoom.cs" />
-    <Compile Include="common\protocol\Cookie.cs" />
-    <Compile Include="common\protocol\frame\Body.cs" />
-    <Compile Include="common\protocol\frame\Header.cs" />
-    <Compile Include="common\protocol\login-be\LBDeleteRequestBody.cs" />
-    <Compile Include="common\protocol\login-be\LBDeleteResponseBody.cs" />
-    <Compile Include="common\protocol\login-be\LBModifyRequestBody.cs" />
-    <Compile Include="common\protocol\login-be\LBModifyResponseBody.cs" />
-    <Compile Include="common\protocol\login-be\LBSigninRequestBody.cs" />
-    <Compile Include="common\protocol\login-be\LBSigninResponseBody.cs" />
-    <Compile Include="common\protocol\login-chat\LCFENoticeRequestBody.cs" />
-    <Compile Include="common\protocol\login-chat\LCFENoticeResponseBody.cs" />
-    <Compile Include="common\protocol\login-chat\LCUserAuthRequestBody.cs" />
-    <Compile Include="common\protocol\login-chat\LCUserAuthResponseBody.cs" />
-    <Compile Include="common\protocol\MessageState.cs" />
-    <Compile Include="common\protocol\MessageType.cs" />
-    <Compile Include="common\protocol\Packet.cs" />
-    <Compile Include="common\protocol\ServerInfo.cs" />
-    <Compile Include="common\protocol\UserInfo.cs" />
     <Compile Include="common\utils\ConnectionManager.cs" />
-    <Compile Include="common\utils\Constants.cs" />
     <Compile Include="common\utils\Logger.cs" />
     <Compile Include="common\utils\NetworkManager.cs" />
     <Compile Include="common\utils\SocketConnectionPool.cs" />
@@ -102,6 +63,15 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LunkerProtocol\LunkerProtocol.csproj">
+      <Project>{2bc1f17f-4f41-4d18-b31e-61d1ebab65a9}</Project>
+      <Name>LunkerProtocol</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="common\protocol\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

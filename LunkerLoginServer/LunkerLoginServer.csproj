@@ -72,6 +72,10 @@
       <Project>{79ae82ed-b2aa-410b-8099-248b5493d276}</Project>
       <Name>LunkerLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LunkerProtocol\LunkerProtocol.csproj">
+      <Project>{2bc1f17f-4f41-4d18-b31e-61d1ebab65a9}</Project>
+      <Name>LunkerProtocol</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

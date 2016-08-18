@@ -30,7 +30,7 @@ namespace LunkerChatServer
         private static MainWorker mainWorker = null;
         private bool threadState = Constants.ThreadRun;
 
-        private Socket sockListener = null;
+        private Socket clientListener = null;
 
         private ConnectionManager connectionManager = null;
         private List<Socket> readSocketList = null;
@@ -128,13 +128,13 @@ namespace LunkerChatServer
                     // Add accepted connections
                     // getAcceptTask.Result;
                     // 다시 task run 
-                    getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
+                    getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
                 }
             }
             else
             {
                 logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                getAcceptTask = Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
+                getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
                 //getAcceptTask.Start();
             }
         }
@@ -147,7 +147,7 @@ namespace LunkerChatServer
             {
                 // 정상 연결상태 
                 // 일단 CCHeader로 전체 header 사용 
-                CommonHeader header = (CommonHeader) NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                CommonHeader header = (CommonHeader) await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
  
                 switch (header.Type)
                 {
@@ -239,9 +239,9 @@ namespace LunkerChatServer
             // initialiize client socket listener
             IPEndPoint ep = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().FrontPort);
 
-            sockListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            sockListener.Bind(ep);
-            sockListener.Listen(AppConfig.GetInstance().Backlog);
+            clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            clientListener.Bind(ep);
+            clientListener.Listen(AppConfig.GetInstance().Backlog);
 
         }// end method 
 
@@ -284,14 +284,14 @@ namespace LunkerChatServer
         public async Task<Socket> AcceptAsync()
         {
             //logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] start accept");
-            Socket handler = await Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
+            Socket handler = await Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
 
             logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] accept client request");
             return handler;
 
             /*
             Task delay = Task.Delay(TimeSpan.FromSeconds(5));
-            var result = await Task.WhenAny(delay, Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true)).ConfigureAwait(false);
+            var result = await Task.WhenAny(delay, Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true)).ConfigureAwait(false);
 
        
             if (result == delay)
@@ -305,7 +305,7 @@ namespace LunkerChatServer
             }
             */
             /*
-            Socket handler = await Task.Factory.FromAsync(sockListener.BeginAccept, sockListener.EndAccept, true);
+            Socket handler = await Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
 
             logger.Debug("[ChatServer][GetClientRequest()][AcceptAsync()] accept client request");
             return handler;
@@ -332,10 +332,10 @@ namespace LunkerChatServer
         /// </summary>
         /// <param name="peer"></param>
         /// <param name="header"></param>
-        public void HandleConnectionSetup(Socket peer, CommonHeader header)
+        public async void HandleConnectionSetup(Socket peer, CommonHeader header)
         {
             // 1)
-            LCNotifyUserRequestBody requestBody = (LCNotifyUserRequestBody) NetworkManager.ReadAsync(peer, header.BodyLength, typeof(LCNotifyUserRequestBody));
+            LCUserAuthRequestBody requestBody = (LCUserAuthRequestBody) await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(LCUserAuthRequestBody));
             
             // 2) 
             connectionManager.AddAuthInfo(new string(requestBody.UserInfo.Id), requestBody.Cookie);
@@ -354,10 +354,9 @@ namespace LunkerChatServer
         public async void HandleChattingRequest(Socket peer, CommonHeader header)
         {
             byte[] messageBuff = new byte[header.BodyLength];
-            
+            messageBuff = await NetworkManager.ReadAsync(peer, header.BodyLength);
             // read message
-            await NetworkManager.ReadAsyncTask(peer, header.BodyLength, ref messageBuff);
-                
+
             // Get User Entered Room 
             ChattingRoom enteredRoom = connectionManager.GetChattingRoomJoinInfo(new string(header.UserInfo.Id)); // room info ~ user id 
 
@@ -368,14 +367,15 @@ namespace LunkerChatServer
                 client = connectionManager.GetClientConnection(user);
 
                 // broadcast to each client
-                await NetworkManager.SendAsyncTask(client, messageBuff);
+                await NetworkManager.SendAsync(client, messageBuff);
             }
 
             // Send chatting to BE 
-            string sendingUser = new string(header.UserInfo.Id);
-
+            //string sendingUser = new string(header.UserInfo.Id);
+            CommonHeader responseHeader = new CommonHeader(MessageType.Chatting, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
+            await NetworkManager.SendAsync(beSocket, responseHeader);
             // worker에게 위임? 
-            beWorker.HandleChatting(header);
+            //beWorker.HandleChatting(header);
         }
 
         public Task HandleChattingRequestAsync(Socket peer, CommonHeader header)
@@ -395,15 +395,15 @@ namespace LunkerChatServer
         {
             // 1) send request to BE server
             //beWorker.HandleCreateRoomRequest(header);
-            await NetworkManager.SendAsyncTask(beSocket,header);
+            await NetworkManager.SendAsync(beSocket,header);
 
             // 2) read response(header, body) from BE
-            CommonHeader responseHeader = (CommonHeader) NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
-            CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody) NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
 
             // 3) send response(header, body) to client
-            await NetworkManager.SendAsyncTask(peer, responseHeader);
-            await NetworkManager.SendAsyncTask(peer, responseBody);
+            await NetworkManager.SendAsync(peer, responseHeader);
+            await NetworkManager.SendAsync(peer, responseBody);
         }
 
         public Task HandleCreateRoomAsync(Socket peer, CommonHeader header)
@@ -422,13 +422,13 @@ namespace LunkerChatServer
         public async void HandleListChattingRoom(Socket peer, CommonHeader header)
         {
             // 1) 
-            await NetworkManager.SendAsyncTask(beSocket, header);
+            await NetworkManager.SendAsync(beSocket, header);
 
             // 2) 
-            CommonHeader responseHeader = (CommonHeader) NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             //// 여기 에러 밭 ㅠㅠㅠㅠ 
-            CBListRoomResponseBody responseBody = (CBListRoomResponseBody) NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBListRoomResponseBody));
+            CBListRoomResponseBody responseBody = (CBListRoomResponseBody)await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBListRoomResponseBody));
 
 
         }

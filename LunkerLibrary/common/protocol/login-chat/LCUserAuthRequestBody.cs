@@ -1,7 +1,10 @@
 ﻿
 using LunkerLibrary.common.protocol;
 
-public struct LCNotifyUserRequestBody
+/// <summary>
+/// <para>User Login Auth Information</para>
+/// </summary>
+public struct LCUserAuthRequestBody
 {
     Cookie cookie;
     UserInfo userInfo; // use only id 
@@ -11,7 +14,7 @@ public struct LCNotifyUserRequestBody
     char[] id;
     */
 
-    public LCNotifyUserRequestBody(Cookie cookie, UserInfo userInfo)
+    public LCUserAuthRequestBody(Cookie cookie, UserInfo userInfo)
     {
         this.cookie = cookie;
         this.userInfo = userInfo;

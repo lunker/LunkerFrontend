@@ -77,8 +77,10 @@
     <Compile Include="common\protocol\login-be\LBModifyResponseBody.cs" />
     <Compile Include="common\protocol\login-be\LBSigninRequestBody.cs" />
     <Compile Include="common\protocol\login-be\LBSigninResponseBody.cs" />
-    <Compile Include="common\protocol\login-chat\LCNotifyUserRequestBody.cs" />
-    <Compile Include="common\protocol\login-chat\LCNotifyUserResponseBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCFENoticeRequestBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCFENoticeResponseBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCUserAuthRequestBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCUserAuthResponseBody.cs" />
     <Compile Include="common\protocol\MessageState.cs" />
     <Compile Include="common\protocol\MessageType.cs" />
     <Compile Include="common\protocol\Packet.cs" />

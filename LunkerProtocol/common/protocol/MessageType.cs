@@ -29,7 +29,7 @@ public class MessageType
 
 
 
-public enum MessageType
+public enum MessageType : short
 {
 
     // connection setup between client ~ chat server 
@@ -64,7 +64,7 @@ public enum MessageType
     Auth = 600,
     FENotice = 610,
     VerifyCookie = 620,
-
+    AgentInfo = 630,
 
     // Heartbeat 
     Heartbeat = 800

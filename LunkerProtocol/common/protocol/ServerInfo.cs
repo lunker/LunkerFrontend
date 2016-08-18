@@ -8,21 +8,31 @@ namespace LunkerLibrary.common.protocol
 {
     public struct ServerInfo
     {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22)]
-        char[] domain;//15
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 15)]
+        char[] ip;//15
         int port;
 
-        public ServerInfo(char[] domain, int port)
+        public ServerInfo(char[] ip, int port)
         {
-            this.domain = domain;
+            this.ip = ip;
             this.port = port;
         }
 
+        /*
         public char[] Domain
         {
             get { return this.domain; }
             set { domain = value; }
         }
+        */
+
+            public char[] Ip
+        {
+            get { return ip; }
+            set { ip = value; }
+        }
+
+        
 
         public int Port
         {

@@ -10,7 +10,7 @@ public class MessageState
 }
 */
 
-public enum MessageState
+public enum MessageState : short
 {
     Request = 100,
     Response = 200,

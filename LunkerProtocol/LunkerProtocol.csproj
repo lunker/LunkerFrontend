@@ -84,6 +84,7 @@
     <Compile Include="common\protocol\MessageType.cs" />
     <Compile Include="common\protocol\Packet.cs" />
     <Compile Include="common\protocol\ServerInfo.cs" />
+    <Compile Include="common\protocol\ServerState.cs" />
     <Compile Include="common\protocol\UserInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

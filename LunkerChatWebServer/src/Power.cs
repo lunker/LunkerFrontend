@@ -15,14 +15,14 @@ namespace LunkerChatWebServer.src
     {
         private static ILog logger = Logger.GetLoggerInstance();
         private static bool appState = Constants.AppRun;
-        private static ChatServer chatServer = null;
+        private static ChatWebServer chatServer = null;
 
         public static void On()
         {
             logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
 
 
-            chatServer = ChatServer.GetInstance();
+            chatServer = ChatWebServer.GetInstance();
             chatServer.Start();
 
             while (appState)
@@ -58,8 +58,8 @@ namespace LunkerChatWebServer.src
             chatServer.Stop();
             appState = Constants.AppStop;
             // 종료 알림.
-            MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success));
-            MessageBroker.GetInstance().Release();
+            //MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success));
+            //MessageBroker.GetInstance().Release();
 
             logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
             Environment.Exit(0);

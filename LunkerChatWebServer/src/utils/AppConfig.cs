@@ -7,7 +7,7 @@ using System.Xml;
 using log4net;
 using LunkerLibrary.common.Utils;
 
-namespace LunkerChatServer.src.utils
+namespace LunkerChatWebServer.src.utils
 {
     public class AppConfig
     {
@@ -30,7 +30,7 @@ namespace LunkerChatServer.src.utils
             // read config xml 
             //StringBuilder sb = new StringBuilder();
 
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatWebServer\\config\\AppConfig.xml");
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
@@ -126,7 +126,7 @@ namespace LunkerChatServer.src.utils
 
         public int Backport
         {
-            get { return this.backport; }
+            get { return this.Backport; }
         }
 
         public int FrontPort

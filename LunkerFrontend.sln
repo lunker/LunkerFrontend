@@ -11,11 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerLibrary", "LunkerLibr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerAgent", "LunkerAgent\LunkerAgent.csproj", "{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatServerTests", "LunkerChatServerTests\LunkerChatServerTests.csproj", "{726FEE42-58E1-4D91-9570-8B9C4C24E600}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerAgentTest", "LunkerAgentTest\LunkerAgentTest.csproj", "{BE3D8D25-B53F-4176-8F56-1EB6EA4A7D03}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerProtocol", "LunkerProtocol\LunkerProtocol.csproj", "{2BC1F17F-4F41-4D18-B31E-61D1EBAB65A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatWebServer", "LunkerChatWebServer\LunkerChatWebServer.csproj", "{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatAdminTool", "LunkerChatAdminTool\LunkerChatAdminTool.csproj", "{4ECA0BE7-2878-4EED-9A33-B892C8D96736}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,18 +39,18 @@ Global
 		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2E1F8CA-A5AC-4B33-AF5B-6410CCA9CFAA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{726FEE42-58E1-4D91-9570-8B9C4C24E600}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{726FEE42-58E1-4D91-9570-8B9C4C24E600}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{726FEE42-58E1-4D91-9570-8B9C4C24E600}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{726FEE42-58E1-4D91-9570-8B9C4C24E600}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BE3D8D25-B53F-4176-8F56-1EB6EA4A7D03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BE3D8D25-B53F-4176-8F56-1EB6EA4A7D03}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BE3D8D25-B53F-4176-8F56-1EB6EA4A7D03}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BE3D8D25-B53F-4176-8F56-1EB6EA4A7D03}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2BC1F17F-4F41-4D18-B31E-61D1EBAB65A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2BC1F17F-4F41-4D18-B31E-61D1EBAB65A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2BC1F17F-4F41-4D18-B31E-61D1EBAB65A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2BC1F17F-4F41-4D18-B31E-61D1EBAB65A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

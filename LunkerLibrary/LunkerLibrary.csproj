@@ -52,6 +52,7 @@
     <Compile Include="common\utils\Logger.cs" />
     <Compile Include="common\utils\NetworkManager.cs" />
     <Compile Include="common\utils\SocketConnectionPool.cs" />
+    <Compile Include="common\utils\WebNetworkManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -16,7 +16,6 @@ namespace LunkerLibrary.common.Utils
     /// </summary>
     public class ConnectionManager
     {
-
         private static ConnectionManager instance = null;
 
         private Dictionary<string, UserInfo> clientInfos = null;// ip:port - user Id 

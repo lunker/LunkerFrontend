@@ -18,13 +18,13 @@ namespace LunkerLibrary.common.Utils
         public static int None = 0;
 
         public static int NonExistedRoom { get; } = -1;
-        public static string SocketServer { get; } = "socketserver.433.co.kr";
+        public static string SocketServer { get; } = "socketserver.chat";
 
-        public static string WebServer { get; } = "webserver.433.co.kr";
+        public static string WebServer { get; } = "webserver.chat";
 
-        public static string LoginServer { get; } = "loginserver.433.co.kr";
+        public static string LoginServer { get; } = "loginserver.chat";
 
-        public static string BeServer { get; } = "beserver.433.co.kr";
+        public static string BeServer { get; } = "beserver.chat";
 
     }
 }

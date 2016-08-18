@@ -89,7 +89,7 @@ namespace LunkerLoginServer.src.workers
             return Task.Run(()=> 
             {
                 beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                IPEndPoint beEndPoint = new IPEndPoint(IPAddress.Parse("100.100.58.6"), 50010);
+                IPEndPoint beEndPoint = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], 50010);
                 beSocket.Connect(beEndPoint);
             });
         }// end method 
@@ -99,7 +99,7 @@ namespace LunkerLoginServer.src.workers
             return Task.Run(()=>
             {
                 feListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                IPEndPoint feEndPoint = new IPEndPoint(IPAddress.Parse(Constants.SocketServer), 43320);
+                IPEndPoint feEndPoint = new IPEndPoint(Dns.GetHostEntry(Constants.SocketServer).AddressList[0], 43320);
                 feListener.Connect(feEndPoint);
             });
         }

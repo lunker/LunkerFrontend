@@ -147,8 +147,6 @@ namespace LunkerChatServer
                     return clientListener.Accept();
                 });
             }
-
-
         }
 
         // 요청을 읽고, 작업을 처리하는 비동기 작업을 만들어야함!!!
@@ -259,7 +257,7 @@ namespace LunkerChatServer
             return Task.Run(()=> {
                 beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
+                IPEndPoint ep = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], AppConfig.GetInstance().BackendServerPort);
 
                 beSocket.Connect(ep);
             });
@@ -270,7 +268,7 @@ namespace LunkerChatServer
             return Task.Run(()=> {
                 loginSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+                IPEndPoint ep = new IPEndPoint(Dns.GetHostEntry(Constants.LoginServer).AddressList[0], AppConfig.GetInstance().LoginServerPort);
 
                 loginSocket.Connect(ep);
             });
@@ -314,7 +312,7 @@ namespace LunkerChatServer
 
             // broadcast
             Socket client = null;
-            foreach (string user in connectionManager.GetChattingRoomListInfo(enteredRoom))
+            foreach (string user in connectionManager.GetChattingRoomListInfoKey(enteredRoom))
             {
                 client = connectionManager.GetClientConnection(user);
 
@@ -387,7 +385,6 @@ namespace LunkerChatServer
         {
             return Task.Run(()=>HandleChattingRequest(peer, header));
         }
-
 
         /*
         public void HandleCreateRoomRequest(Socket peer, CommonHeader header)

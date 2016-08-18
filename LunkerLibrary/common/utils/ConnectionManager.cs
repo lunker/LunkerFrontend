@@ -252,12 +252,29 @@ namespace LunkerLibrary.common.Utils
                 return userInfo.Count;
         }
 
-        public void AddChattingRoomListInfo(ChattingRoom chatRoom, string id)
+        
+        /// <summary>
+        /// user Enter to chatting room
+        /// </summary>
+        /// <param name="chatRoom">chatting room </param>
+        /// <param name="id">entered user id</param>
+        public void AddChattingRoomListInfoValue(ChattingRoom chatRoom, string id)
         {
             HashSet<string> userInfo = null;
 
             chattingRoomListInfo.TryGetValue(chatRoom, out userInfo);
             userInfo.Add(id);
+        }
+
+        /// <summary>
+        /// create new chatting room
+        /// </summary>
+        /// <param name="chatRoom"></param>
+        public void AddChattingRoomListInfoKey(ChattingRoom chatRoom)
+        {
+            HashSet<string> userInfo = new HashSet<string>();
+
+            chattingRoomListInfo.Add(chatRoom, userInfo);// create new chatting room
         }
 
         /// <summary>

@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerProtocol", "LunkerPro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatWebServer", "LunkerChatWebServer\LunkerChatWebServer.csproj", "{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatAdminTool", "LunkerChatAdminTool\LunkerChatAdminTool.csproj", "{4ECA0BE7-2878-4EED-9A33-B892C8D96736}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunkerChatAdminTool", "LunkerChatAdminTool\LunkerChatAdminTool.csproj", "{1E6BDC73-78EF-43B4-AA00-A6DC03421D26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,10 +47,10 @@ Global
 		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDAD5B75-B973-4AA2-8C1E-646FBE22FE05}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4ECA0BE7-2878-4EED-9A33-B892C8D96736}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E6BDC73-78EF-43B4-AA00-A6DC03421D26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E6BDC73-78EF-43B4-AA00-A6DC03421D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E6BDC73-78EF-43B4-AA00-A6DC03421D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E6BDC73-78EF-43B4-AA00-A6DC03421D26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

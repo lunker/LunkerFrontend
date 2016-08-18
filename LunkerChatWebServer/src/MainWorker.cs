@@ -24,24 +24,21 @@ namespace LunkerChatWebServer.src
 
         private ConnectionManager connectionManager = null;
 
-
         private Dictionary<ServerInfo, Socket> feConnectionDic = null;
 
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
 
-        private Task<Socket> clientAcceptTask = null;
+        private Task<HttpListenerContext> clientAcceptTask = null;
         private Task<Socket> feAcceptTask = null;
 
-        private Socket clientListener = null;
         private Socket feListener = null;
 
         private Socket beSocket = null;
         private Socket loginSocket = null;
 
-        private TcpListener clientTCPListener = null;
-        private TcpListener server = null;
+        private HttpListener server = null;
 
         private MainWorker() { }
         public static MainWorker GetInstance()
@@ -60,27 +57,26 @@ namespace LunkerChatWebServer.src
             Initialize();
             try
             {
-                /*
-                await Task.WhenAll(BindClientSocketListenerAsync(), ConnectBESocketAsync(), ConnectLoginSocketAsync()).ContinueWith((parent) => {
-
-                    Console.WriteLine("complete"); });
-                    */
-
-                server = new TcpListener(IPAddress.Parse("127.0.0.1"), 9999);
-
+                server = new HttpListener();
+                server.Prefixes.Add("http://+:80/");
                 server.Start();
-                //server.AcceptSocketAsync();
-                //BindClientSocketListenerAsync().ContinueWith((parent)=> { MainProcess(); });
+
                 MainProcess();
                 Console.WriteLine("complete222");
             } 
+            catch(ArgumentException ae)
+            {
+                Console.WriteLine("ae error");
+            }
+            catch(HttpListenerException hle)
+            {
+                Console.WriteLine("hle error");
+            }
             catch (Exception e)
             {
                 // error
                 Console.WriteLine("error");
             }
-            // request initial FE Info
-           
 
             logger.Debug("[ChatServer][MainWorker][Start()] end");
             Console.ReadKey();
@@ -159,146 +155,90 @@ namespace LunkerChatWebServer.src
 
             while (threadState)
             {
-                // Accept Client Connection Request 
-                HandleClientAcceptAsync();
-
-                // 접속한 client가 있을 경우에만 수행.
-                if (0 != connectionManager.GetClientConnectionCount())
-                {
-                    // select client connection
-                    readSocketList = connectionManager.GetClientConnectionDic().Values.ToList();
-                    // select login connection
-                    readSocketList.Add(loginSocket);
-                    //writeSocketList = clientSocketDic.Values.ToList();
-                    //errorSocketList = clientSocketDic.Values.ToList();
-
-                    // Check Inputs 
-                    Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
-
-                    // Request가 들어왔을 경우 
-                    if (readSocketList.Count != 0)
-                    {
-                        foreach (Socket peer in readSocketList)
-                        {
-                            HandleRequest(peer);
-                        }
-                    }
-                }// end if
+               HandleAcceptClientRequest();
+               
             }// end loop 
         }// end method
 
-        public async void HandleClientAcceptAsync()
+        public void HandleAcceptClientRequest()
         {
-
-
             if (clientAcceptTask != null)
             {
-                if ( clientAcceptTask.IsCompleted)
+                if (clientAcceptTask.IsCompleted)
                 {
                     logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+                    
+                    HttpListenerRequest request = clientAcceptTask.Result.Request;
+                    HttpListenerResponse response = clientAcceptTask.Result.Response;
 
-                    // 나중에 auth 인증을 거친 후 해당 사용자의 connection을 저장시킨다.  
                     Console.WriteLine("whow~!~!~!~!~!~!~!~!");
-                    // 다시 task run 
-                    //Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-
-                    //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                    /*
-                    Socket tmp = await (clientAcceptTask = Task.Run(() =>
-                    {
-                        return clientListener.Accept();
-                    }));
-                    */
-
-                    clientAcceptTask = server.AcceptSocketAsync();
+                    HandleRequest(request, response);
+                    clientAcceptTask = server.GetContextAsync();
+                    
                 }
             }
             else
             {
                 logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                /*
-                Socket tmp = await (clientAcceptTask = Task.Run(() =>
-                {
-                    return clientListener.Accept();
-                }));
-                */
-                clientAcceptTask = server.AcceptSocketAsync();
+                
+                clientAcceptTask = server.GetContextAsync();
             }
-        }
+        }// end method 
 
-        public async void HandleRequest(Socket peer)
+
+        public async void HandleRequest(HttpListenerRequest request, HttpListenerResponse response)
         {
-            if (peer != null && peer.Connected)
+            
+            // 정상 연결상태 
+            // 일단 CCHeader로 전체 header 사용 
+            try
             {
-                // 정상 연결상태 
-                // 일단 CCHeader로 전체 header 사용 
-                try
+                CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                switch (header.Type)
                 {
-                    CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
-                    switch (header.Type)
-                    {
-                        // Login Server
-                        // request from login server
-                        // ok 
-                        case MessageType.ConnectionSetup:
-                            // 인증된 유저가 들어와야 
-                            // connectionDic에 저장된다. 
-                            //await HandleConnectionSetupAsync(peer, header);
-                            break;
+                    // Login Server
+                    // request from login server
+                    // ok 
+                    case MessageType.ConnectionSetup:
+                        // 인증된 유저가 들어와야 
+                        // connectionDic에 저장된다. 
+                        //await HandleConnectionSetupAsync(peer, header);
+                        break;
 
-                        // 200: chatting 
-                        // ok 
-                        case MessageType.Chatting:
-                            //await HandleChattingRequestAsync(peer, header);
-                            break;
+                    // 200: chatting 
+                    // ok 
+                    case MessageType.Chatting:
+                        //await HandleChattingRequestAsync(peer, header);
+                        break;
 
-                        // room : 400 
-                        // ok 
-                        case MessageType.CreateRoom:
-                            //await HandleCreateRoomAsync(peer, header);
-                            break;
+                    // room : 400 
+                    // ok 
+                    case MessageType.CreateRoom:
+                        //await HandleCreateRoomAsync(peer, header);
+                        break;
 
-                        case MessageType.JoinRoom:
-                            break;
+                    case MessageType.JoinRoom:
+                        break;
 
-                        case MessageType.LeaveRoom:
-                            break;
+                    case MessageType.LeaveRoom:
+                        break;
 
-                        // not yet 
-                        case MessageType.ListRoom:
-                            break;
+                    // not yet 
+                    case MessageType.ListRoom:
+                        break;
 
-                        // default
-                        default:
-                            break;
-                    }
+                    // default
+                    default:
+                        break;
                 }
-                catch (Exception e)
-                {
-                    // errorr
-                }
-
             }
-            else
+            catch (Exception e)
             {
-                // clear connection infos 
-                // delete socket in connection list 
-
-                IPEndPoint endPoint = (IPEndPoint)peer.RemoteEndPoint;
-                string ip = endPoint.Address.ToString();
-                int port = endPoint.Port;
-                string key = ip + ":" + port;
-
-                UserInfo userInfo = connectionManager.GetClientInfo(key);
-
-                if (!userInfo.Equals(default(UserInfo)))
-                {
-                    connectionManager.LogoutClient(key);
-
-                }
-
+                // errorr
             }
+
+         
+            
         }// end method
 
         public void HandleConnectionSetupAsync()

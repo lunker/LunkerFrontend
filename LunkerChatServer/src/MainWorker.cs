@@ -178,23 +178,32 @@ namespace LunkerChatServer
                             break;
 
                         // room : 400 
+                        // check cookie available
                         // ok 
+                        
                         case MessageType.CreateRoom:
                             await HandleCreateRoomAsync(peer, header);
                             break;
 
+                            // ok 
                         case MessageType.JoinRoom:
+                            await HandleJoinRoomAsync(peer, header);
                             break;
 
+                            // ok
                         case MessageType.LeaveRoom:
+                            await HandleLeaveRoomAsync(peer, header);
                             break;
 
+                            // ok
                         // not yet 
                         case MessageType.ListRoom:
+                            await HandleListChattingRoomAsync(peer, header);
                             break;
-
+                            // ok
                         // default
                         default:
+                            //await HandleErrorAsync();
                             break;
                     }
                 }
@@ -297,8 +306,8 @@ namespace LunkerChatServer
         }
 
         /// <summary>
-        /// handle chatting request from client 
-        /// be에 보내는 logic 추가해야함 
+        /// <para>handle chatting request from client </para>
+        /// <para>be에 보내는 logic 추가해야함 </para>
         /// </summary>
         /// <param name="peer"></param>
         public async void HandleChattingRequest(Socket peer, CommonHeader header)
@@ -333,12 +342,43 @@ namespace LunkerChatServer
             return Task.Run(()=> HandleChattingRequest(peer, header));
         }
 
+
+
+        public Task RequestCookieVerifyAsync()
+        {
+            return Task.Run(()=> {
+                CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
+                return NetworkManager.SendAsync(beSocket, requestHeader);
+            });
+        }
+
+
+        /// <summary>
+        /// <para></para>
+        /// <para>1) read response</para>
+        /// <para></para>
+        /// <para></para>
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="header"></param>
+        public async void HandleCookieVerify(Socket peer, CommonHeader header)
+        {
+            // 1) 
+            CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
+            await NetworkManager.SendAsync(beSocket, requestHeader);   
+        }
+
+        public Task HandleCookieVerifyAsync( CommonHeader header)
+        {
+            return Task.Run(()=> { HandleCookieVerify(header); });
+        }
+
         /// <summary>
         /// <para>handle create chatting room request</para>
         /// <para>1) send request to BE</para>
         /// <para>2) read respoonse(header, body) from BE</para>
         /// <para>3) send response(header, body) to client</para>
-        /// <para></para>
+        /// <para>4) save data </para>
         /// </summary>
         /// <param name="peer"></param>
         public async void HandleCreateRoom(Socket peer, CommonHeader header)
@@ -354,6 +394,9 @@ namespace LunkerChatServer
             // 3) send response(header, body) to client
             await NetworkManager.SendAsync(peer, responseHeader);
             await NetworkManager.SendAsync(peer, responseBody);
+
+            // 4) 
+            connectionManager.AddChattingRoomListInfoKey(responseBody.ChattingRoom);
         }
 
         public Task HandleCreateRoomAsync(Socket peer, CommonHeader header)
@@ -376,52 +419,120 @@ namespace LunkerChatServer
 
             // 2) 
             CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            byte[] responseBody = await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength);
 
-            //// 여기 에러 밭 ㅠㅠㅠㅠ 
-            CBListRoomResponseBody responseBody = (CBListRoomResponseBody)await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBListRoomResponseBody));
+            // 3) 
+
+            await NetworkManager.SendAsync(peer,responseHeader);
+            await NetworkManager.SendAsync(peer, responseBody);
         }
 
         public Task HandleListChattingRoomAsync(Socket peer, CommonHeader header)
         {
-            return Task.Run(()=>HandleChattingRequest(peer, header));
+            return Task.Run(()=> HandleListChattingRoom(peer, header));
         }
 
-        /*
-        public void HandleCreateRoomRequest(Socket peer, CommonHeader header)
+        /// <summary>
+        /// <para>handle join room request</para>
+        /// <para>1) read request body from client</para>
+        /// <para>2) send request to be</para>
+        /// <para>3) read reseponse from be</para>
+        /// <para>4) send response to client </para>
+        /// <para>5) save data </para>
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="header"></param>
+        public async void HandleJoinRoom(Socket peer, CommonHeader header)
         {
-            // send request to BE server
-            beWorker.HandleCreateRoomRequest(header);
-        }
+            ChattingRoom enteredRoom = default(ChattingRoom);
+            string userId = default(string);
 
-        public Task HandleCreateRoomRequestAsync(Socket peer, CommonHeader header)
-        {
-            return Task.Run(()=> HandleCreateRoomRequest(peer,header));
-        }
+            //  1) 
+            CCJoinRequestBody requestBody = (CCJoinRequestBody) await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(CCJoinRequestBody));
+            enteredRoom = requestBody.RoomInfo;
+            userId = new string(header.UserInfo.Id);
+            // 2) 
+            await NetworkManager.SendAsync(beSocket, header);
+            await NetworkManager.SendAsync(beSocket, requestBody);
 
-        // Message From BE Server
-        public async void HandleCreateRoomResponse(Socket peer, CommonHeader header)
-        {
-            // read from be socket
-            CBCreateRoomResponseBody body = (CBCreateRoomResponseBody) NetworkManager.ReadAsync(peer, header.BodyLength, typeof(CBCreateRoomResponseBody)); // Get ResponseBody
+            // 3) 
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
-            // get requested client socket 
-            Socket client = connectionManager.GetClientConnection(new string(header.UserInfo.Id));
-
-            // Send Response To Client 
-            // send header
-            Task sendHeaderTask = NetworkManager.SendAsyncTask(client, header);
-            // send body
-            await sendHeaderTask.ContinueWith((parent)=> 
+            
+            if (header.State == MessageState.Fail)
             {
-                 NetworkManager.SendAsyncTask(client, body);
+                // fail - room is on the other 
+                // read body
+                CBJoinRoomResponseBody responseBody = (CBJoinRoomResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBJoinRoomResponseBody));
+
+                await NetworkManager.SendAsync(peer, responseHeader);
+                await NetworkManager.SendAsync(peer, responseBody);
+            }
+            else if(header.State == MessageState.Success)
+            {
+                // success 
+                // send header to client
+                await NetworkManager.SendAsync(peer, responseHeader);
+                // add user info to data structure 
+                connectionManager.AddChattingRoomListInfoValue(enteredRoom, userId);
+            }
+            else
+            {
+                // error
+                await NetworkManager.SendAsync(peer, responseHeader);
+
+            }
+        }
+
+        public Task HandleJoinRoomAsync(Socket peer, CommonHeader header)
+        {
+            return Task.Run(() => {
+                HandleJoinRoom(peer, header);
             });
         }
-        public Task HandleCreateRoomResponseAsync(Socket peer, CommonHeader header)
-        {
-            return Task.Run( ()=> HandleCreateRoomResponse(peer, header) );
-        }
-        */
 
+        /// <summary>
+        /// <para>1) read body from client</para>
+        /// <para>2) send request to be</para>
+        /// <para>3) read body from be</para>
+        /// <para>4) send response to client </para>
+        /// <para>5) save data</para>
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="header"></param>
+        public async void HandleLeaveRoom(Socket peer, CommonHeader header)
+        {
+            ChattingRoom enteredRoom = default(ChattingRoom);
+            string userId = new string(header.UserInfo.Id);
+            // 1) 
+            CCLeaveRequestBody requestBody = (CCLeaveRequestBody) await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(CCLeaveRequestBody));
+            enteredRoom = requestBody.RoomInfo;
+
+            // 2) send
+            await NetworkManager.SendAsync(beSocket, header);
+            await NetworkManager.SendAsync(beSocket, requestBody);
+
+            // 3)
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+
+            // 4) 
+            await NetworkManager.SendAsync(peer, responseHeader);
+
+            // 5)
+            connectionManager.DeleteChattingRoomListInfoValue(enteredRoom, userId);
+        }
+
+        public Task HandleLeaveRoomAsync(Socket peer, CommonHeader header)
+        {
+            return Task.Run(() => {
+                HandleLeaveRoom(peer, header);
+            });
+        }
+      
+        public void HandleErrorAsync()
+        {
+
+        }
 
 
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -64,119 +65,57 @@ namespace LunkerLibrary.common.utils
 
             return data; // 배열을 리턴
         }
-
     
-        public static Object Read(Socket peer, int msgLength, Type type)
+        public static async Task<Object> ReadAsync(HttpListenerRequest request, int msgLength, Type type)
         {
-            Object obj = null;
-            int rc = 0;
-            byte[] buff = new byte[msgLength];
+            return Task.Run( async ()=> {
+                Object obj = null;
+                //int rc = 0;
+                byte[] buff = new byte[msgLength];
 
-            rc = peer.Receive(buff);
+                await request.InputStream.ReadAsync(buff, 0, msgLength);
 
-            if (rc == 0)
-            {
-                throw new SocketException();
-            }
-            else if (rc > 0)
-            {
-                ;
-            }
-            else
-            {
-                ;
-            }
-
-            obj = ByteToStructure(buff, type);
-
-            return obj;
+                // read success
+                obj = ByteToStructure(buff, type);
+                return obj;
+            });
         }
-
         /// <summary>
-        /// Type 형식의 Object를 반환 
+        /// ???? 맞는 구현임 이게?
         /// </summary>
-        /// <param name="peer"></param>
+        /// <param name="request"></param>
         /// <param name="msgLength"></param>
-        /// <param name="type"></param>
         /// <returns></returns>
-        public static Task<Object> ReadAsync(Socket peer, int msgLength, Type type)
+        public static async Task<byte[]> ReadAsync(HttpListenerRequest request, int msgLength)
         {
-            return Task.Run(() => Read(peer, msgLength, type));
-        }// end 
+            return await Task.Run(async () => {
+                int rc = 0;
+                byte[] buff = new byte[msgLength];
 
-        public static byte[] Read(Socket peer, int msgLength)
+                await request.InputStream.ReadAsync(buff, 0, msgLength);
+                return buff;
+            });
+        }
+    
+        public static void Send(HttpListenerResponse response, Object obj)
+        {
+
+        }
+
+        public static  Task SendAsync(HttpListenerResponse response, Object obj)
         {
             int rc = 0;
-            byte[] buff = new byte[msgLength];
-
-            rc = peer.Receive(buff);
-
-            if (rc == 0)
+            byte[] buff = null;
+            if (obj is byte[])
             {
-                throw new SocketException();
-            }
-            else if (rc > 0)
-            {
-                ;
+                buff = (byte[])obj;
             }
             else
             {
-                ;
+                buff = StructureToByte(obj);
             }
-
-            return buff;
-        }
-
-        public static Task<byte[]> ReadAsync(Socket peer, int msgLength)
-        {
-            return Task.Run(() => Read(peer, msgLength));
-        }
-
-        public static void Send(Socket peer, Object obj)
-        {
-            int rc = default(int);
-
-            try
-            {
-                if (obj is byte[])
-                {
-                    rc = peer.Send((byte[])obj);
-                }
-                else
-                {
-                    rc = peer.Send(StructureToByte(obj));
-                }
-
-                if (rc == 0)
-                {
-                    //Console.WriteLine("");
-                }
-                else if (rc > 0)
-                {
-
-                }
-                else
-                {
-
-                }
-            }
-            catch (SocketException se)
-            {
-                throw se;
-            }
+            return response.OutputStream.WriteAsync(buff, 0, buff.Length);
         }// end method
-
-        /// <summary>
-        /// send message
-        /// 
-        /// </summary>
-        /// <param name="peer"></param>
-        /// <param name="message">any object or byte[]</param>
-        /// <returns></returns>
-        public static Task SendAsync(Socket peer, Object message)
-        {
-            return Task.Run(() => Send(peer, message));
-
-        }// end method
+  
     }// end class
 }

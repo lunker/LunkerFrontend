@@ -150,6 +150,7 @@ namespace LunkerAgent.src
                         // read
                         try
                         {
+                            logger.Debug("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
                             Task.Run(() => HandleRequestAsync(adminSocket));
                         }
                         catch (SocketException se)

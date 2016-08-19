@@ -16,6 +16,7 @@ namespace LunkerChatAdminTool
         {
             logger.Debug("\n------------------------------------start -=---");
             Power.On();
+            //Console.ReadLine();
         }
     }
 }

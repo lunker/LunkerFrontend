@@ -15,7 +15,7 @@ namespace LunkerLoginServer.src.workers
     public class MainWorker
     {
         private static MainWorker instance = null;
-        private ILog logger = Logger.GetLoggerInstance();
+        private ILog logger = LoginLogger.GetLoggerInstance();
         private bool threadState = Constants.AppRun;
 
         private List<Socket> clientConnection = null;
@@ -47,7 +47,7 @@ namespace LunkerLoginServer.src.workers
             logger.Debug("[ChatServer][MainWorker][Start()] start");
 
             Initialize();
-            await ConnectBEAsync();
+            //await ConnectBEAsync();
             await ConnectFEAsync();
             // request initial FE Info
             MainProcess(); 
@@ -110,7 +110,7 @@ namespace LunkerLoginServer.src.workers
             while (threadState)
             {
                 // Accept Client Connection Request 
-                HandleClientAcceptAsync();
+                Task.Run(()=> HandleClientAcceptAsync()); 
                 HandleFEAcceptAsync();
 
                 // 접속한 client가 있을 경우에만 수행.
@@ -142,6 +142,11 @@ namespace LunkerLoginServer.src.workers
         
         public void HandleClientAcceptAsync()
         {
+            while (true)
+            {
+                clientListener.Accept();
+            }
+            /*
             if ( clientAcceptTask!= null)
             {
                 if (clientAcceptTask.IsCompleted)
@@ -166,6 +171,8 @@ namespace LunkerLoginServer.src.workers
                     return clientListener.Accept();
                 });
             }
+            */
+
         }
 
         public async void HandleFEAcceptAsync()

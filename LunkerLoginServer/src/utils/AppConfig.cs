@@ -32,7 +32,7 @@ namespace LunkerLoginServer.src.utils
             //StringBuilder sb = new StringBuilder();
             //chatServerInfo.Select();
 
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
             while (reader.Read())
             {
 

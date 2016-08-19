@@ -56,7 +56,7 @@ namespace LunkerChatAdminTool.src
         public void Start()
         {
             Initialize();
-            MainProcess();
+            Task.Run(()=>MainProcess());
         }
 
 
@@ -85,32 +85,15 @@ namespace LunkerChatAdminTool.src
         /// <summary>
         /// Accept Agent Connect request
         /// </summary>
-        public Task<Socket> AcceptAgentAsync()
+        public void AcceptAgentAsync()
         {
-            /*
-            //logger.Debug("[Admin][AcceptAgentAsync()] start");
-            if (acceptAgentTask != null)
+            while (true)
             {
-                if (acceptAgentTask.IsCompleted)
-                {
-                    logger.Debug("[Admin][AcceptAgentAsync()] complete");
-
-                    // socket을 저장해놓고, 나중에 serverinfo를 받아서 초기화 시킨다.
-                    agentSocketList.Add(acceptAgentTask.Result, default(AgentInfo));
-
-                    acceptAgentTask = Task.Run(() => {
-                        return agentListener.Accept();
-                    });
-                }
+                Socket tmp = agentListener.Accept();
+                agentSocketList.Add(tmp, default(AgentInfo));
             }
-            else
-            {
-                acceptAgentTask = Task.Run(() => {
-                    
-                });
-            }
-            */
-            return Task.Run(()=> {  return agentListener.Accept(); });
+
+            //return Task.Run(()=> {  return agentListener.Accept(); });
             
         }// end method
 
@@ -193,7 +176,6 @@ namespace LunkerChatAdminTool.src
                     return 0;
                 }
                 
-                
                 /*
                 string request = await ConsoleRequestSelectTask();
                 string agent = await ConsoleAgentSelectTask();
@@ -205,11 +187,8 @@ namespace LunkerChatAdminTool.src
                     SendAdminRequest(selectedRequest, agentSocketList.ElementAt(selectedAgent).Key);
                 }
                 */
-
             });
-            
-
-        }
+        }// end method
 
         /// <summary>
         /// <para>Send Admin request </para>
@@ -217,7 +196,7 @@ namespace LunkerChatAdminTool.src
         /// <returns></returns>
         public async void SendAdminRequest(int type, Socket agentSocket)
         {
-            Console.WriteLine( "asdfawsdfadsfdasfasdfdasfadsf");
+            Console.WriteLine("SendAdminRequest");
             logger.Debug("[Admin][SendAdminRequest()] start");
             //CommonHeader header = (CommonHeader) await NetworkManager.ReadAsync(agent, Constants.HeaderSize, typeof(CommonHeader));
             try
@@ -277,14 +256,25 @@ namespace LunkerChatAdminTool.src
             logger.Debug("[Admin][HandleAgentResponse()] end");
         }
 
+        /*
         public Task HandleStartAppRequestAsync(Socket agentSocket)
         {
+            
             return Task.Run(()=> {
 
                 AAHeader requestHeader = new AAHeader(MessageType.StartApp, MessageState.Request, Constants.None);
                 NetworkManager.Send(agentSocket, requestHeader);
             });
         }
+        */
+        public void HandleStartAppRequestAsync(Socket agentSocket)
+        {
+            Console.WriteLine("asfasddasf");
+            logger.Debug("[Admin][HandleStartAppRequestAsync()] start");
+            AAHeader requestHeader = new AAHeader(MessageType.StartApp, MessageState.Request, Constants.None);
+            NetworkManager.Send(agentSocket, requestHeader);
+        }
+
         public Task HandleShutdownAppRequestAsync(Socket agentSocket)
         {
             return Task.Run(() => { });
@@ -341,9 +331,16 @@ namespace LunkerChatAdminTool.src
 
         public async void MainProcess()
         {
+            AcceptAgentAsync(); // accept
             while (appState)
             {
 
+                SendAdminRequest();
+
+
+                //print UI
+
+                /*   
                 if (acceptAgentTask != null)
                 {
                     if (acceptAgentTask.IsCompleted)
@@ -360,9 +357,7 @@ namespace LunkerChatAdminTool.src
                 {
                     acceptAgentTask = AcceptAgentAsync();
                 }
-
-
-
+ 
                 //PrintMainUI();
                 if (printUITask != null)
                 {
@@ -377,8 +372,6 @@ namespace LunkerChatAdminTool.src
                 }
 
                 // accept agent connect request 
-                
-               
 
                 // Get User Input 
                 if (consoleInputTask != null)
@@ -389,7 +382,7 @@ namespace LunkerChatAdminTool.src
                         int result = consoleInputTask.Result;
 
                         Console.WriteLine("result :"+result);
-                        SendAdminRequest(selectedRequest, agentSocketList.ElementAt(selectedAgent).Key);
+                        SendAdminRequest(selectedRequest, agentSocketList.ElementAt(selectedAgent).Key); 
                         consoleInputTask = ConsoleInputTask();
                     }
                     else if (consoleInputTask.IsCanceled)
@@ -431,6 +424,7 @@ namespace LunkerChatAdminTool.src
                     }
                 }// end select read if 
               
+                */
             }// end loop 
         }// end method
     }

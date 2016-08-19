@@ -160,6 +160,7 @@ namespace LunkerChatServer
                 try
                 {
                     CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                    CommonHeader cookieVerifyHeader;
                     switch (header.Type)
                     {
                         // Login Server
@@ -180,24 +181,46 @@ namespace LunkerChatServer
                         // room : 400 
                         // check cookie available
                         // ok 
-                        
+
                         case MessageType.CreateRoom:
-                            await HandleCreateRoomAsync(peer, header);
+                            cookieVerifyHeader = (CommonHeader) await HandleCookieVerifyAsync(header);
+                            if(cookieVerifyHeader.State == MessageState.Success)
+                            {
+                                await HandleCreateRoomAsync(peer, header);
+                            }
+                            else
+                            {
+                                // error
+                                // not authenticated user
+                            }
+
                             break;
 
                             // ok 
                         case MessageType.JoinRoom:
+                            cookieVerifyHeader = (CommonHeader)await HandleCookieVerifyAsync(header);
+                            if (cookieVerifyHeader.State == MessageState.Success)
+                            {
+                                await HandleCreateRoomAsync(peer, header);
+                            }
+                            else
+                            {
+                                // error
+                                // not authenticated user
+                            }
                             await HandleJoinRoomAsync(peer, header);
                             break;
 
                             // ok
                         case MessageType.LeaveRoom:
+                            await HandleCookieVerifyAsync(header);
                             await HandleLeaveRoomAsync(peer, header);
                             break;
 
                             // ok
                         // not yet 
                         case MessageType.ListRoom:
+                            await HandleCookieVerifyAsync(header);
                             await HandleListChattingRoomAsync(peer, header);
                             break;
                             // ok
@@ -228,9 +251,7 @@ namespace LunkerChatServer
                 if (!userInfo.Equals(default(UserInfo)))
                 {
                     connectionManager.LogoutClient(key);
-
                 }
-
             }
         }// end method 
 
@@ -342,17 +363,6 @@ namespace LunkerChatServer
             return Task.Run(()=> HandleChattingRequest(peer, header));
         }
 
-
-
-        public Task RequestCookieVerifyAsync()
-        {
-            return Task.Run(()=> {
-                CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
-                return NetworkManager.SendAsync(beSocket, requestHeader);
-            });
-        }
-
-
         /// <summary>
         /// <para></para>
         /// <para>1) read response</para>
@@ -361,17 +371,30 @@ namespace LunkerChatServer
         /// </summary>
         /// <param name="peer"></param>
         /// <param name="header"></param>
-        public async void HandleCookieVerify(Socket peer, CommonHeader header)
-        {
-            // 1) 
-            CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
-            await NetworkManager.SendAsync(beSocket, requestHeader);   
+        public Task SendCookieVerify(CommonHeader header)
+        {  
+
+            return Task.Run(()=> {
+
+                CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
+                NetworkManager.SendAsync(beSocket, requestHeader);
+            });
         }
 
-        public Task HandleCookieVerifyAsync( CommonHeader header)
+        public Task<Object> ResponseCookieVerify()
         {
-            return Task.Run(()=> { HandleCookieVerify(header); });
+            return  NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
         }
+        public async Task<CommonHeader> HandleCookieVerifyAsync(CommonHeader header)
+        {
+            //Task sendTask = SendCookieVerify(header);
+            SendCookieVerify(header).ContinueWith((parent) =>
+            {
+               return NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            });
+
+            return default(CommonHeader);
+        }// end method 
 
         /// <summary>
         /// <para>handle create chatting room request</para>

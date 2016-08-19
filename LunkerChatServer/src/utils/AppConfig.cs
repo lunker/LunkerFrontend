@@ -28,9 +28,12 @@ namespace LunkerChatServer.src.utils
         private AppConfig()
         {
             // read config xml 
-            //StringBuilder sb = new StringBuilder();
-
+#if DEBUG
             XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
+#else
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
+#endif
+
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))

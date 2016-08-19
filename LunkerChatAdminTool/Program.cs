@@ -1,4 +1,6 @@
-﻿using LunkerChatAdminTool.src;
+﻿using log4net;
+using LunkerChatAdminTool.src;
+using LunkerChatAdminTool.src.utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +11,10 @@ namespace LunkerChatAdminTool
 {
     class Program
     {
+        private static ILog logger = AdminLogger.GetLoggerInstance();
         static void Main(string[] args)
         {
-
+            logger.Debug("\n------------------------------------start -=---");
             Power.On();
         }
     }

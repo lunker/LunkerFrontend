@@ -99,23 +99,33 @@ namespace LunkerLibrary.common.Utils
             Object obj = null;
             int rc = 0;
             byte[] buff = new byte[msgLength];
-
-            rc = peer.Receive(buff);
-
-            if (rc == 0)
+            try
             {
-                throw new SocketException();
-            }
-            else if (rc > 0)
-            {
-                ;
-            }
-            else
-            {
-                ;
-            }
+                rc = peer.Receive(buff);
 
-            obj = ByteToStructure(buff, type);
+                if (rc == 0)
+                {
+                    throw new SocketException();
+                }
+                else if (rc > 0)
+                {
+                    ;
+                }
+                else
+                {
+                    throw new SocketException();
+                }
+
+                obj = ByteToStructure(buff, type);
+            }
+            catch (ObjectDisposedException ode)
+            {
+                throw ode;
+            }
+            catch (SocketException se)
+            {
+                throw ;
+            }
 
             return obj;
         }
@@ -129,7 +139,16 @@ namespace LunkerLibrary.common.Utils
         /// <returns></returns>
         public static Task<Object> ReadAsync(Socket peer, int msgLength, Type type)
         {
-            return Task.Run(()=>Read(peer, msgLength, type));
+            Task<Object> tmp = null;
+            try
+            {
+                tmp  = Task.Run(() => Read(peer, msgLength, type));
+                return tmp;
+            }
+            catch (SocketException se)
+            {
+                return tmp;
+            }
         }// end 
 
         public static byte[] Read(Socket peer, int msgLength)
@@ -203,8 +222,14 @@ namespace LunkerLibrary.common.Utils
         /// <returns></returns>
         public static Task SendAsync(Socket peer, Object message)
         {
-            return Task.Run(()=> Send(peer, message));
-
+            try
+            {
+                return Task.Run(() => Send(peer, message));
+            }
+            catch (SocketException se)
+            {
+                throw se;
+            }
         }// end method
     }// end class
 }

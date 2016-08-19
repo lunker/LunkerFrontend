@@ -14,8 +14,18 @@ namespace LunkerLibrary.common.protocol
 
         public ServerInfo(char[] ip, int port)
         {
-            this.ip = ip;
+            this.ip = new char[15];
+            Array.Copy(ip, this.ip, ip.Length);
+
             this.port = port;
+        }
+
+        public ServerInfo(string ip)
+        {
+            this.ip = new char[15];
+
+            Array.Copy(ip.ToCharArray(), this.ip, ip.ToCharArray().Length);
+            this.port = 0;
         }
 
         /*

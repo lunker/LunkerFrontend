@@ -9,24 +9,17 @@ namespace LunkerAgent.src.utils
 {
     class AppConfig
     {
-        private int port = default(int);
-        private string ip = default(string);
-
+        private int port = default(int); // admin agent port
+        private string ip = default(string); // admin ip 
 
         private static AppConfig appConfig = null;
 
-
-
         private AppConfig()
         {
-            // read config xml 
-            //StringBuilder sb = new StringBuilder();
-            //chatServerInfo.Select();
-
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
+#if DEBUG
+             XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerAgent\\config\\AppConfig.xml");
             while (reader.Read())
             {
-
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("ip"))
                 {
                     reader.Read();
@@ -44,6 +37,27 @@ namespace LunkerAgent.src.utils
                 }
 
             }
+#else
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("ip"))
+                {
+                    reader.Read();
+                    ip = reader.Value;
+                    reader.Read(); // delete close element
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("port"))
+                {
+                    reader.Read();
+                    if (Int32.TryParse(reader.Value, out port))
+                    {
+                        // successs
+                    }
+                    reader.Read(); // delete close element
+                }
+            }
+#endif
         }// set configs 
 
         public static AppConfig GetInstance()

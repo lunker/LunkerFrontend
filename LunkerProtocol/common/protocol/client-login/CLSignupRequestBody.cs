@@ -2,5 +2,16 @@
 
 public struct CLSignupRequestBody : Body
 {
-    UserInfo user;
+    UserInfo userInfo;
+
+    public CLSignupRequestBody(UserInfo userInfo)
+    {
+        this.userInfo = userInfo;
+    }
+
+    public UserInfo UserInfo
+    {
+        get { return userInfo; }
+    }
+
 }

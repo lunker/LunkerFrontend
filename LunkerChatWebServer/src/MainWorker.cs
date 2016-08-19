@@ -1,6 +1,7 @@
 ﻿using log4net;
 using LunkerChatWebServer.src.utils;
 using LunkerLibrary.common.protocol;
+using LunkerLibrary.common.utils;
 using LunkerLibrary.common.Utils;
 using System;
 using System.Collections.Generic;
@@ -111,10 +112,11 @@ namespace LunkerChatWebServer.src
                 //IPEndPoint ep = new IPEndPoint(IPAddress.Parse("10.100.58.3"), 80);
                 IPEndPoint ep = new IPEndPoint(IPAddress.Any, 80);
 
-
+                /*
                 clientListener = new Socket(SocketType.Stream, ProtocolType.IP);
                 clientListener.Bind(ep);
                 clientListener.Listen(1000);
+                */
                 logger.Debug("[ChatServer][BindClientSocketListenerAsync()] end");
             });
         }
@@ -193,7 +195,10 @@ namespace LunkerChatWebServer.src
             // 일단 CCHeader로 전체 header 사용 
             try
             {
-                CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                //CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+
+                CommonHeader header = (CommonHeader) await WebNetworkManager.ReadAsync(request, Constants.HeaderSize, typeof(CommonHeader));
+
                 switch (header.Type)
                 {
                     // Login Server
@@ -236,8 +241,6 @@ namespace LunkerChatWebServer.src
             {
                 // errorr
             }
-
-         
             
         }// end method
 

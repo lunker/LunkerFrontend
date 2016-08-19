@@ -59,7 +59,7 @@ namespace LunkerChatServer.src
             chatServer.Stop();
             appState = Constants.AppStop;
             // 종료 알림.
-            MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success));
+            MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success,Constants.None));
             MessageBroker.GetInstance().Release();
 
             logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");

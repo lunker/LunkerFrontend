@@ -14,7 +14,7 @@ namespace LunkerAgent.src.utils
     class MessageBroker
     {
         private static MessageBroker instance = null;
-        private ILog logger = Logger.GetLoggerInstance();
+        private ILog logger = AgentLogger.GetLoggerInstance();
         public delegate void MessageConumer(Object model, BasicDeliverEventArgs events, Socket admin); // subscriber
 
         private string chatQueueName = "ChatQueue"; // to chatqueue.subscribe. request from agent

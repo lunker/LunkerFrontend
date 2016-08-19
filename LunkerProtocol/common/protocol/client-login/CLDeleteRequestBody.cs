@@ -2,5 +2,15 @@
 
 public struct CLDeleteRequestBody : Body
 {
-    UserInfo info;
+    UserInfo userInfo;
+
+    public CLDeleteRequestBody(UserInfo userInfo)
+    {
+        this.userInfo = userInfo;
+    }
+
+    public UserInfo UserInfo
+    {
+        get { return userInfo; }
+    }
 }

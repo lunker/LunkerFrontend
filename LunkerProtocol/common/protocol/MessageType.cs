@@ -31,7 +31,7 @@ public class MessageType
 
 public enum MessageType : short
 {
-
+    Basic = 0,
     // connection setup between client ~ chat server 
     ConnectionSetup = 100,
 

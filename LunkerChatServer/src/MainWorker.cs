@@ -66,11 +66,14 @@ namespace LunkerChatServer
             {
                 await Task.WhenAll(BindClientSocketListenerAsync(), ConnectBESocketAsync(), ConnectLoginSocketAsync());
 
+                // send Chatting Server Info to LoginServer
+                // messagetype.FENOtice
+                CommonHeader requestHeader = new CommonHeader(MessageType.FENotice, MessageState.Request, Constants.None, new Cookie(), new UserInfo());
+                await NetworkManager.SendAsync(beSocket, requestHeader);
             }
-            catch (Exception e)
+            catch (SocketException se)
             {
                 // error
-
             }
  
             MainProcess();
@@ -97,15 +100,15 @@ namespace LunkerChatServer
                 HandleClientAcceptAsync();
 
                 // 접속한 client가 있을 경우에만 수행.
+                // client의 요청 수행 
                 if (0 != connectionManager.GetClientConnectionCount())
                 {
                     // select client connection
                     readSocketList = connectionManager.GetClientConnectionDic().Values.ToList();
                     // select login connection
+                    // 사용자의 Auth정보를 받기 위함.
                     readSocketList.Add(loginSocket);
-                    //writeSocketList = clientSocketDic.Values.ToList();
-                    //errorSocketList = clientSocketDic.Values.ToList();
-
+                   
                     // Check Inputs 
                     Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
 
@@ -120,32 +123,41 @@ namespace LunkerChatServer
                 }// end if
             }// end loop 
         }
-
+        /// <summary>
+        /// <para>Handle Client Connect Request</para>
+        /// <para>나중에 auth 인증을 거친 후 해당 사용자의 connection을 저장시킨다.  </para>
+        /// </summary>
         public void HandleClientAcceptAsync()
         {
-
-            if (clientAcceptTask != null)
+            try
             {
-                if (clientAcceptTask.IsCompleted)
+                if (clientAcceptTask != null)
                 {
-                    logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
-                    
-                    // 나중에 auth 인증을 거친 후 해당 사용자의 connection을 저장시킨다.  
+                    if (clientAcceptTask.IsCompleted)
+                    {
+                        logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
 
-                    // 다시 task run 
-                    //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                        // 다시 task run 
+                        //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                        clientAcceptTask = Task.Run(() => {
+                            return clientListener.Accept();
+                        });
+                    }
+                }
+                else
+                {
+                    logger.Debug("[ChatServer][HandleRequest()] start accept task ");
+                    //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
                     clientAcceptTask = Task.Run(() => {
                         return clientListener.Accept();
                     });
                 }
             }
-            else
+            catch(SocketException se)
             {
-                logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                clientAcceptTask = Task.Run(() => {
-                    return clientListener.Accept();
-                });
+                // clientListener error 
+                // reconnect.
+                return;
             }
         }
 
@@ -166,6 +178,20 @@ namespace LunkerChatServer
                         // Login Server
                         // request from login server
                         // ok 
+                        case MessageType.FENotice:
+                            // login -> chat
+                            // 
+                            // just Get Response about FE Notice 
+                            break;
+                        
+                            // login -> chat
+                            // notice user Auth Info 
+                        case MessageType.NoticeUserAuth:
+                            await HandleNoticeUserAuthAsync(peer, header);
+                            break;
+                        
+                            // client -> chatting server. 
+                            // send user auth info
                         case MessageType.ConnectionSetup:
                             // 인증된 유저가 들어와야 
                             // connectionDic에 저장된다. 
@@ -181,7 +207,6 @@ namespace LunkerChatServer
                         // room : 400 
                         // check cookie available
                         // ok 
-
                         case MessageType.CreateRoom:
                             cookieVerifyHeader = (CommonHeader) await HandleCookieVerifyAsync(header);
                             if(cookieVerifyHeader.State == MessageState.Success)
@@ -193,7 +218,6 @@ namespace LunkerChatServer
                                 // error
                                 // not authenticated user
                             }
-
                             break;
 
                             // ok 
@@ -226,15 +250,17 @@ namespace LunkerChatServer
                             // ok
                         // default
                         default:
-                            //await HandleErrorAsync();
+                            await HandleErrorAsync(peer, header);
                             break;
                     }
                 }
-                catch (Exception e)
+                catch (SocketException se)
                 {
-                    // errorr
+                    // error
+                    // Get rid of client 
+
+                    return;
                 }
-                
             }
             else
             {
@@ -280,6 +306,7 @@ namespace LunkerChatServer
                 clientListener.Bind(ep);
                 clientListener.Listen(AppConfig.GetInstance().Backlog);
             });
+
         }
 
         public Task ConnectBESocketAsync()
@@ -304,7 +331,17 @@ namespace LunkerChatServer
             });
         }
 
+        public async void HandleNoticeUserAuth(Socket peer, CommonHeader header)
+        {
+            // 1)
+            LCUserAuthRequestBody requestBody = (LCUserAuthRequestBody)await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(LCUserAuthRequestBody));
+
+            // 2) 
+            connectionManager.AddAuthInfo(new string(requestBody.UserInfo.Id), requestBody.Cookie);
+        }
+
         /// <summary>
+        /// <para>접속할 유저의 정보를 받아온다.</para>
         /// <para>1) read body from login server</para>
         /// <para>2) save auth info in structure</para>
         /// <para></para>
@@ -312,18 +349,38 @@ namespace LunkerChatServer
         /// </summary>
         /// <param name="peer"></param>
         /// <param name="header"></param>
-        public async void HandleConnectionSetup(Socket peer, CommonHeader header)
+        public Task HandleNoticeUserAuthAsync(Socket peer, CommonHeader header)
         {
-            // 1)
-            LCUserAuthRequestBody requestBody = (LCUserAuthRequestBody) await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(LCUserAuthRequestBody));
-            
-            // 2) 
-            connectionManager.AddAuthInfo(new string(requestBody.UserInfo.Id), requestBody.Cookie);
+            return Task.Run(()=> HandleNoticeUserAuth(peer, header));
         }
 
+        /// <summary>
+        /// <oara>Authorize User Before Chatting</oara>
+        /// </summary>
+        /// <param name="peer"></param>
+        /// <param name="header"></param>
+        /// <returns></returns>
         public Task HandleConnectionSetupAsync(Socket peer, CommonHeader header)
         {
-            return Task.Run(()=>HandleConnectionSetup(peer, header));
+            return Task.Run(()=> {
+                Cookie sentCookie = header.Cookie;
+                UserInfo userInfo = header.UserInfo;
+
+                Cookie authorizedCookie = connectionManager.GetAuthInfo(new string(userInfo.Id).Split('\0')[0]);
+
+                // 인증실패
+                if(sentCookie.Value != authorizedCookie.Value)
+                {
+                    CommonHeader responseHeader = new CommonHeader(MessageType.ConnectionSetup, MessageState.Fail, Constants.None, new Cookie(), userInfo);
+                    NetworkManager.SendAsync(peer, responseHeader);
+                }
+                else
+                {
+                    // 인증성공
+                    CommonHeader responseHeader = new CommonHeader(MessageType.ConnectionSetup, MessageState.Success, Constants.None, new Cookie(), userInfo);
+                    NetworkManager.SendAsync(peer, responseHeader);
+                }
+            });
         }
 
         /// <summary>
@@ -373,7 +430,6 @@ namespace LunkerChatServer
         /// <param name="header"></param>
         public Task SendCookieVerify(CommonHeader header)
         {  
-
             return Task.Run(()=> {
 
                 CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
@@ -385,6 +441,7 @@ namespace LunkerChatServer
         {
             return  NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
         }
+
         public async Task<CommonHeader> HandleCookieVerifyAsync(CommonHeader header)
         {
             //Task sendTask = SendCookieVerify(header);
@@ -552,12 +609,12 @@ namespace LunkerChatServer
             });
         }
       
-        public void HandleErrorAsync()
+        public Task HandleErrorAsync(Socket peer, CommonHeader header)
         {
-
+            return Task.Run(()=> {
+                NetworkManager.SendAsync(peer, new CommonHeader(header.Type, MessageState.Error, Constants.None, new Cookie(), header.UserInfo));
+            });
         }
-
-
 
     }
 }

@@ -137,8 +137,6 @@ namespace LunkerChatAdminTool.src
                             SendAdminRequest(MessageType.RestartApp, agentSocketList.ElementAt(selectedAgent).Key);
                             break;
                     }
-
-                    
                 }
                 else
                 {

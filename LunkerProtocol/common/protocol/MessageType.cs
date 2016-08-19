@@ -1,37 +1,8 @@
-﻿/*
-public class MessageType
-{
-    public const short CHATTING = 200; // normal msg  
-
-    // Membership : 300번대 
-    public const short SIGNUP = 310; // signup req
-    public const short SIGNIN = 320; // login req
-    public const short MODIFY = 330; // modify 
-    public const short DELETE = 340;// delete 
-
-    // Chatting Room : 400번대
-    public const short LIST = 400; // room list req
-    public const short JOIN = 410; // join room req
-    public const short LEAVE = 420; // leave room req
-    public const short CREATE = 430; // create room req
-
-
-    // Admin tool : 500번대 
-    public const short START = 500;
-    public const short SHUTDOWN = 510;
-    public const short RESTART = 520;
-
-  
-
-    public const short HEARTBEAT = 800; // heartbeat
-}
-*/
-
-
-
+﻿
 public enum MessageType : short
 {
     Basic = 0,
+
     // connection setup between client ~ chat server 
     ConnectionSetup = 100,
 
@@ -56,16 +27,25 @@ public enum MessageType : short
     ShutdownApp = 510,
     RestartApp = 520,
 
+    Total_Room_Count = 530, // type for request total room number in application
+    FE_User_Status = 540, // type for request FE' user number
+    Chat_Ranking = 550, // type for request chatting ranking 
+
     /*
     Monitoring 
     */
-
-    // Login -> Chat 
-    Auth = 600,
+    // chat -> login 
     FENotice = 610,
+
+    // login -> chat 
+    NoticeUserAuth = 640,
+    // Chat -> BE
     VerifyCookie = 620,
+    
+    // send agent info to admin
     AgentInfo = 630,
 
+    
     // Heartbeat 
     Heartbeat = 800
 }

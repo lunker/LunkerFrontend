@@ -192,6 +192,13 @@ namespace LunkerLibrary.common.Utils
             authInfos.Remove(id);
         }
 
+        public Cookie GetAuthInfo(string id)
+        {
+            Cookie cookie = default(Cookie);
+
+            authInfos.TryGetValue(id, out cookie);
+            return cookie;
+        }
 
         //-------------------------------------------------------------------------------------//
         //chattingRoomJoinInfo

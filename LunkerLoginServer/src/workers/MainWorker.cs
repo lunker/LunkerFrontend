@@ -47,13 +47,17 @@ namespace LunkerLoginServer.src.workers
             logger.Debug("[ChatServer][MainWorker][Start()] start");
 
             Initialize();
-            await ConnectBEAsync();
-            await ConnectFEAsync();
+
+            // parallel
+            ConnectBEAsync();
+            AcceptFEConnectAsync();
+
+
             // request initial FE Info
             MainProcess(); 
 
             logger.Debug("[ChatServer][MainWorker][Start()] end");
-            Console.ReadKey();
+            
         }
 
         /// <summary>
@@ -71,16 +75,24 @@ namespace LunkerLoginServer.src.workers
         {
             clientConnection = new List<Socket>();
 
+            feConnectionDic = new Dictionary<ServerInfo, Socket>();
+
             readSocketList = new List<Socket>();
             writeSocketList = new List<Socket>();
             errorSocketList = new List<Socket>();
 
             // initialiize client socket listener
             IPEndPoint ep = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().FrontPort);
+            IPEndPoint feListenEndPoint = new IPEndPoint(IPAddress.Any, 43340);
+
 
             clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
             clientListener.Bind(ep);
             clientListener.Listen(AppConfig.GetInstance().Backlog);
+
+            feListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            feListener.Bind(feListenEndPoint);
+            feListener.Listen(AppConfig.GetInstance().Backlog);
         }
 
         /// <summary>
@@ -90,34 +102,87 @@ namespace LunkerLoginServer.src.workers
         {
             return Task.Run(()=> 
             {
-                beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                IPEndPoint beEndPoint = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], 50010);
-                beSocket.Connect(beEndPoint);
+                while (true)
+                {
+                    try
+                    {
+                        if (beSocket != null)
+                        {
+                            if (!beSocket.Connected)
+                            {
+                                beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                                IPEndPoint beEndPoint = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], 50010);
+                                beSocket.Connect(beEndPoint);
+                            }
+                        }
+                        else
+                        {
+                            beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                            IPEndPoint beEndPoint = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], 50010);
+                            beSocket.Connect(beEndPoint);
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        continue;
+                    }
+                }// end loop
+ 
             });
         }// end method 
         
-        public Task ConnectFEAsync()
+        public Task AcceptFEConnectAsync()
         {
-            return Task.Run(()=>
+            return Task.Run(  async ()=>
             {
+                /*
                 feListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 IPEndPoint feEndPoint = new IPEndPoint(Dns.GetHostEntry(Constants.SocketServer).AddressList[0], 43320);
                 feListener.Connect(feEndPoint);
+                */
+
+                while (true)
+                {
+                    Socket tmp = feListener.Accept();
+
+                    // Add accepted connections
+                    clientConnection.Add(tmp);
+
+                    // Request FE Server Info 
+                    // await 할 필요가 있나 ?
+                    await RequestFEInfoAsync(tmp);
+
+                    // add fe count
+                    LoadBalancer.AddFE();
+
+                    // FE Info Setup이 끝나면, 다음 accept 수행
+                    feAcceptTask = Task.Run(() => {
+                        return feListener.Accept();
+                    });
+
+
+                }
+               
             });
         }
 
         public void MainProcess()
         {
-            logger.Debug("[ChatServer][HandleRequest()] start");
+            logger.Debug("[ChatServer][MainProcess()] start");
+
+            HandleClientAcceptAsync();
+            HandleFEAcceptAsync();
+
             while (threadState)
             {
                 // Accept Client Connection Request 
-                HandleClientAcceptAsync();
-                //HandleFEAcceptAsync();
+                // Listen . . .
 
                 // 접속한 client가 있을 경우에만 수행.
                 if (0 != clientConnection.Count)
                 {
+                    //logger.Debug("[ChatServer][HandleRequest()] 0 != ");
+
                     readSocketList = clientConnection.ToList();
                     
                     // Check Inputs 
@@ -135,81 +200,61 @@ namespace LunkerLoginServer.src.workers
                     }
                 }// end if
                 
-                
+                // check fe socket connection for read
                 if(0 != feConnectionDic.Count)
                 {
                     readSocketList.Concat(feConnectionDic.Values.ToList()); // 
                 }
-                
 
                 readSocketList.Clear();
             }// end loop 
         }// end method
         
-        public void HandleClientAcceptAsync()
+        public Task HandleClientAcceptAsync()
         {
-            if ( clientAcceptTask!= null)
-            {
-                if (clientAcceptTask.IsCompleted)
+            return Task.Run(()=> {
+
+                while (true)
                 {
-                    logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+                    Socket client = clientListener.Accept();
+
+                    logger.Debug("[ChatServer][HandleClientAcceptAsync()] complete accept task. Restart");
 
                     // Add accepted connections
-                    clientConnection.Add(clientAcceptTask.Result);
-
-                    // 다시 task run 
-                    //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                    clientAcceptTask = Task.Run(()=> {
-                        return clientListener.Accept();
-                    });
+                    clientConnection.Add(client);
                 }
-            }
-            else
-            {
-                logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                clientAcceptTask = Task.Run(() => {
-                    return clientListener.Accept();
-                });
-            }
+            });
         }
 
-        public async void HandleFEAcceptAsync()
+        public Task HandleFEAcceptAsync()
         {
-            if (feAcceptTask != null)
-            {
-                if (feAcceptTask.IsCompleted)
+            return Task.Run(()=> {
+                //feListenr = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+                while (true)
                 {
-                    logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+
+                    Socket socket = feListener.Accept();
+                    logger.Debug("[ChatServer][HandleFEAcceptAsync()] complete accept task. Restart");
 
                     // Add accepted connections
-                    clientConnection.Add(feAcceptTask.Result);
+                    clientConnection.Add(socket);
 
                     // Request FE Server Info 
                     // await 할 필요가 있나 ?
-                    RequestFEInfoAsync(feAcceptTask.Result);
+                    RequestFEInfoAsync(socket);
 
                     // add fe count
                     LoadBalancer.AddFE();
-
-                    // FE Info Setup이 끝나면, 다음 accept 수행
-                    feAcceptTask = Task.Run(() => {
-                        return feListener.Accept();
-                    });
                 }
-            }
-            else
-            {
-                logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                feAcceptTask = Task.Run(() => {
-                    return feListener.Accept();
-                });
-            }
+
+            });
         }
 
         public Task RequestFEInfoAsync(Socket feSocket)
         {
             return Task.Run(() => {
+                logger.Debug("[LoginServer][RequestFEInfoAsync()] start");
                 CommonHeader requestHeader = new CommonHeader(MessageType.FENotice, MessageState.Request, Constants.None, new Cookie(), new UserInfo());
                 NetworkManager.SendAsync(feSocket, requestHeader);
             });
@@ -221,16 +266,15 @@ namespace LunkerLoginServer.src.workers
             // peer : client 
             if (peer != null && peer.Connected)
             {
-                
                 try
                 {
-                    logger.Debug("[ChatServer][HandleRequest()] start");
+                    logger.Debug("[ChatServer][HandleRequest()] handle client request start");
                     // 정상 연결상태 
                     //CommonHeader header = (CommonHeader)NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
                     CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
                     switch (header.Type)
                     {
-                        // login에서 request를 날린다.
+                        
                         case MessageType.FENotice:
                             await HandleFENoticeAsync(peer, header);
                             break;
@@ -336,7 +380,7 @@ namespace LunkerLoginServer.src.workers
             // !!!!!! loadbalancing 
             
             // send auth to Chat Server
-            CommonHeader feRequestHeader = new CommonHeader(MessageType.Auth, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
+            CommonHeader feRequestHeader = new CommonHeader(MessageType.SendAuthToChatServer, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
             LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
 
             // LoadBalancing

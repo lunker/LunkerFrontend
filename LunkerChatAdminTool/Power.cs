@@ -17,7 +17,8 @@ namespace LunkerChatAdminTool.src
         private static bool appState = Constants.AppRun;
         private static AdminTool adminTool = null;
 
-        public static void On()
+        private static Task startTask = null;
+        public static async void On()
         {
             logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
 
@@ -25,6 +26,14 @@ namespace LunkerChatAdminTool.src
             adminTool = AdminTool.GetInstance();
             adminTool.Start();
 
+            //startTask = Task.Run(()=> {
+            //    adminTool.Start();
+            //});
+
+
+            //startTask.Wait();
+            
+            /*
             while (appState)
             {
                 Console.Write("어플리케이션을 종료하시겠습니까? (y/n) : ");
@@ -45,6 +54,8 @@ namespace LunkerChatAdminTool.src
                     Console.WriteLine("다시 입력하십시오.");
                 }
             }
+            */
+
         }
 
         /// <summary>

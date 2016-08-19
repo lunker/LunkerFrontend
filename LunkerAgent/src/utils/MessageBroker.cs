@@ -23,7 +23,7 @@ namespace LunkerAgent.src.utils
         
         private IModel channel = null;
 
-        private MessageBroker() { }
+        private MessageBroker() { Setup(); }
 
         public static MessageBroker GetInstance()
         {

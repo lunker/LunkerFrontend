@@ -47,7 +47,7 @@ namespace LunkerLoginServer.src.workers
             logger.Debug("[ChatServer][MainWorker][Start()] start");
 
             Initialize();
-            //await ConnectBEAsync();
+            await ConnectBEAsync();
             await ConnectFEAsync();
             // request initial FE Info
             MainProcess(); 
@@ -69,6 +69,8 @@ namespace LunkerLoginServer.src.workers
         /// </summary>
         public void Initialize()
         {
+            clientConnection = new List<Socket>();
+
             readSocketList = new List<Socket>();
             writeSocketList = new List<Socket>();
             errorSocketList = new List<Socket>();
@@ -110,8 +112,8 @@ namespace LunkerLoginServer.src.workers
             while (threadState)
             {
                 // Accept Client Connection Request 
-                Task.Run(()=> HandleClientAcceptAsync()); 
-                HandleFEAcceptAsync();
+                HandleClientAcceptAsync();
+                //HandleFEAcceptAsync();
 
                 // 접속한 client가 있을 경우에만 수행.
                 if (0 != clientConnection.Count)
@@ -127,26 +129,25 @@ namespace LunkerLoginServer.src.workers
                     {
                         foreach (Socket peer in readSocketList)
                         {
+                            logger.Debug("[ChatServer][HandleRequest()] in socket.select");
                             HandleRequest(peer);
                         }
                     }
                 }// end if
                 
+                
                 if(0 != feConnectionDic.Count)
                 {
                     readSocketList.Concat(feConnectionDic.Values.ToList()); // 
                 }
+                
+
                 readSocketList.Clear();
             }// end loop 
         }// end method
         
         public void HandleClientAcceptAsync()
         {
-            while (true)
-            {
-                clientListener.Accept();
-            }
-            /*
             if ( clientAcceptTask!= null)
             {
                 if (clientAcceptTask.IsCompleted)
@@ -171,8 +172,6 @@ namespace LunkerLoginServer.src.workers
                     return clientListener.Accept();
                 });
             }
-            */
-
         }
 
         public async void HandleFEAcceptAsync()
@@ -222,8 +221,10 @@ namespace LunkerLoginServer.src.workers
             // peer : client 
             if (peer != null && peer.Connected)
             {
+                
                 try
                 {
+                    logger.Debug("[ChatServer][HandleRequest()] start");
                     // 정상 연결상태 
                     //CommonHeader header = (CommonHeader)NetworkManager.ReadAsync(peer, 8, typeof(CommonHeader));
                     CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));

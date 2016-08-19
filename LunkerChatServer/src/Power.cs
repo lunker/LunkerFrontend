@@ -17,6 +17,7 @@ namespace LunkerChatServer.src
         private static ILog logger = Logger.GetLoggerInstance();
         private static bool appState = Constants.AppRun;
         private static ChatServer chatServer = null;
+        private static MessageBroker mBroker = MessageBroker.GetInstance();
 
         public static void On()
         {

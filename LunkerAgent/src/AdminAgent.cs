@@ -110,48 +110,56 @@ namespace LunkerAgent.src
 
         public async void MainProcess()
         {
+            Task.Run(()=> {
+                while (true)
+                {
+                    try
+                    {
+                        if (adminSocket != null)
+                        {
+                            if (!adminSocket.Connected)
+                            {
+                                adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                                IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
+
+                                adminSocket.Connect(endPoint);
+                                SendServerInfo();
+                                logger.Debug("[AdminAgent][Initialize()] connect success");
+                            }
+                        }
+                        else
+                        {
+                            adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
+
+                            adminSocket.Connect(endPoint);
+                            SendServerInfo();
+                            logger.Debug("[AdminAgent][Initialize()] connect success");
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        continue;
+                    }
+                   
+                }
+                
+            });
             
             while (appState)
             {
-                // admin socket connection
-                try
-                {
-                    if (adminSocket != null)
-                    {
-                        if (!adminSocket.Connected)
-                        {
-                            if (socketConnectTask.IsCompleted)
-                            {
-                                socketConnectTask = ConnectTask();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (socketConnectTask==null)
-                        {
-                            socketConnectTask = ConnectTask();
-                        }
-                    }
-
-                }
-                catch (SocketException se)
-                {
-                    // admin과 연결이끊어짐. 계속해서 연결 시도...
-                    logger.Debug("[AdminAgent][Initialize()] connect fail . . .");
-                    continue;
-                }
-
+                //logger.Debug("[AdminAgent][SendServerInfo()] 1");
                 // read 
                 if (adminSocket!=null && adminSocket.Connected)
                 {
+                    
                     if (adminSocket.Poll(0, SelectMode.SelectRead))
                     {
                         // read
                         try
                         {
                             logger.Debug("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
-                            Task.Run(() => HandleRequestAsync(adminSocket));
+                            HandleRequestAsync(adminSocket);
                         }
                         catch (SocketException se)
                         {
@@ -183,8 +191,9 @@ namespace LunkerAgent.src
         /// handle admin request
         /// </summary>
         /// <param name="peer"></param>
-        public async void HandleRequestAsync(Socket peer)
+        public void HandleRequestAsync(Socket peer)
         {
+            logger.Debug("[AdminAgent][SendServerInfo()] end");
             //AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
             try
             {
@@ -200,7 +209,6 @@ namespace LunkerAgent.src
                     case MessageType.StartApp:
                         HandleStartApp();
                         break;
-
                     default:
                         break;
                 }
@@ -235,10 +243,10 @@ namespace LunkerAgent.src
         {
             if (chatProcess == null)
             {
+                Console.WriteLine("in null");
                 ProcessStartInfo info = new ProcessStartInfo();
                 info.CreateNoWindow = false;
-                info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
-
+                info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
                 chatProcess = Process.Start(info);
 
                 // send result
@@ -248,6 +256,7 @@ namespace LunkerAgent.src
             }
             else
             {
+                Console.WriteLine("not null");
                 if (!chatProcess.HasExited)
                 {
                     // already start
@@ -269,6 +278,7 @@ namespace LunkerAgent.src
                 // publish message
                 AAHeader requestHeader = new AAHeader(MessageType.ShutdownApp, MessageState.Request, Constants.None);
                 broker.Publish(requestHeader);
+                chatProcess.Kill();
             }
         }
 

@@ -24,7 +24,7 @@ namespace LunkerChatServer.src.agent
 
         private IModel channel = null;
 
-        private MessageBroker() { }
+        private MessageBroker() { Setup(); }
 
         public static MessageBroker GetInstance()
         {   
@@ -99,6 +99,7 @@ namespace LunkerChatServer.src.agent
 
         public void RegisterSubscribe()
         {
+            Console.WriteLine("RegisterSubscribe");
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
@@ -116,6 +117,7 @@ namespace LunkerChatServer.src.agent
 
         public void HandleRequest(MessageType type)
         {
+            Console.WriteLine("HandleRequest");
             switch (type)
             {
                 case MessageType.RestartApp:

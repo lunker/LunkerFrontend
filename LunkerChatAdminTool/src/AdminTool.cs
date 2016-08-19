@@ -23,7 +23,7 @@ namespace LunkerChatAdminTool.src
 
         private Task<string> consoleAgentSelectTask = null; // agent
         private Task<string> consoleRequestSelectTask = null; // request 
-        private Task<int> consoleInputTask = null; // agent + request
+        private Task consoleInputTask = null; // agent + request
 
         private Task printUITask = null;
         private CancellationTokenSource source = new CancellationTokenSource();
@@ -56,9 +56,96 @@ namespace LunkerChatAdminTool.src
         public void Start()
         {
             Initialize();
-            Task.Run(()=>MainProcess());
+            MainProcess();
         }
 
+        /// <summary>
+        /// 1) send admin request // UI 
+        /// 2) handle response  // select read 
+        /// 3) accept 
+        /// </summary>
+        public async void MainProcess()
+        {
+            Task.Run(()=> {
+                while (true)
+                {
+                    Socket tmp = agentListener.Accept();
+                    agentSocketList.Add(tmp, default(AgentInfo));
+                }
+            });
+
+            Task.Run(()=> {
+
+                while (true)
+                {
+                    if (0 != agentSocketList.Count)
+                    {
+                        readSocketList = agentSocketList.Keys.ToList();
+
+                        Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
+                        // data is ready
+                        if (0 != readSocketList.Count)
+                        {
+                            logger.Debug("[Admin][MainProcess()] socket.select success ");
+                            foreach (Socket agent in readSocketList)
+                            {
+                                try
+                                {
+                                    
+                                    HandleAgentResponse(agent);
+                                }
+                                catch (SocketException se)
+                                {
+                                    logger.Debug("[Admin][MainProcess()]HandleAgentResponse error");
+                                    agentSocketList.Remove(agent);
+                                }
+
+                            }
+                        }
+                    }// end select read if 
+                }
+            });
+
+            // print ui
+            PrintAgentInfo();
+            PrintRequest();
+            while (true)
+            {
+        
+
+                Console.Write("Enter Command : ");
+
+                string request = Console.ReadLine();
+
+                Console.Write("Agent를 선택하세요 : ");
+                string agent = Console.ReadLine();
+
+                logger.Debug("[Admin][ConsoleInputTask()] send request!");
+                Console.WriteLine();
+                if (int.TryParse(agent, out selectedAgent) && int.TryParse(request, out selectedRequest))
+                {
+                    
+                    switch (selectedRequest)
+                    {
+                        case 1:
+                            SendAdminRequest(MessageType.StartApp, agentSocketList.ElementAt(selectedAgent).Key);
+                            break;
+                        case 2:
+                            SendAdminRequest(MessageType.ShutdownApp, agentSocketList.ElementAt(selectedAgent).Key);
+                            break;
+                        case 3:
+                            SendAdminRequest(MessageType.RestartApp, agentSocketList.ElementAt(selectedAgent).Key);
+                            break;
+                    }
+
+                    
+                }
+                else
+                {
+
+                }
+            }
+        }// end method
 
         public void Stop()
         {
@@ -87,14 +174,33 @@ namespace LunkerChatAdminTool.src
         /// </summary>
         public void AcceptAgentAsync()
         {
-            while (true)
+            if (acceptAgentTask != null)
             {
-                Socket tmp = agentListener.Accept();
-                agentSocketList.Add(tmp, default(AgentInfo));
+                if (acceptAgentTask.IsCompleted)
+                {
+                    logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+
+                    // Add accepted connections
+                    agentSocketList.Add(acceptAgentTask.Result, default(AgentInfo));
+
+                    // 다시 task run 
+                    //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                    acceptAgentTask = Task.Run(() => {
+                        return agentListener.Accept();
+                    });
+                }
+            }
+            else
+            {
+                logger.Debug("[ChatServer][HandleRequest()] start accept task ");
+                //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
+                acceptAgentTask = Task.Run(() => {
+                    return agentListener.Accept();
+                });
             }
 
             //return Task.Run(()=> {  return agentListener.Accept(); });
-            
+
         }// end method
 
         public void PrintAgentInfo()
@@ -129,91 +235,29 @@ namespace LunkerChatAdminTool.src
                 Task.Delay(2000)
                 );
         }
-       
-        public void PrintErrorUI()
-        {
-            const string format = "{0,-32} : {1} ";
-            
-            Console.WriteLine(format, "Error", "다시 입력하세요.");
-        }
-
-        public Task<string> ConsoleAgentSelectTask()
-        {
-            return Task.Run(() => {
-                Console.Write("Agent를 선택하세요 : ");
-                return Console.ReadLine();
-            });
-        }
-        public Task<string> ConsoleRequestSelectTask()
-        {
-
-            return Task.Run(() => {
-                Console.Write("Enter Command : ");
-                
-                return Console.ReadLine();
-            });
-        }
-
-        public Task<int> ConsoleInputTask()
-        {
-            
-            return Task.Run( ()=> {
-
-                Console.Write("Enter Command : ");
-
-                string request = Console.ReadLine();
-
-                Console.Write("Agent를 선택하세요 : ");
-                string agent = Console.ReadLine();
-
-                logger.Debug("[Admin][ConsoleInputTask()] send request!");
-                if (int.TryParse(agent, out selectedAgent) && int.TryParse(request, out selectedRequest))
-                {
-                    return 1; 
-                }
-                else
-                {
-                    return 0;
-                }
-                
-                /*
-                string request = await ConsoleRequestSelectTask();
-                string agent = await ConsoleAgentSelectTask();
-                logger.Debug("[Admin][ConsoleInputTask()] send request!");
-
-                if (int.TryParse(agent, out selectedAgent))
-                {
-                    logger.Debug("[Admin][ConsoleInputTask()] send request!");
-                    SendAdminRequest(selectedRequest, agentSocketList.ElementAt(selectedAgent).Key);
-                }
-                */
-            });
-        }// end method
 
         /// <summary>
         /// <para>Send Admin request </para>
         /// </summary>
         /// <returns></returns>
-        public async void SendAdminRequest(int type, Socket agentSocket)
+        public void SendAdminRequest(MessageType type, Socket agentSocket)
         {
-            Console.WriteLine("SendAdminRequest");
             logger.Debug("[Admin][SendAdminRequest()] start");
             //CommonHeader header = (CommonHeader) await NetworkManager.ReadAsync(agent, Constants.HeaderSize, typeof(CommonHeader));
             try
             {
                 switch (type)
                 {
-                    case (short)MessageType.StartApp:
+                    case MessageType.StartApp:
                         HandleStartAppRequestAsync(agentSocket);
                         break;
-                    case (short)MessageType.ShutdownApp:
+                    case MessageType.ShutdownApp:
                         HandleShutdownAppRequestAsync(agentSocket);
                         break;
 
-                    case (short)MessageType.RestartApp:
+                    case MessageType.RestartApp:
                         HandleReStartAppRequestAsync(agentSocket);
                         break;
-
                     default:
                         break;
                 }// end switch
@@ -225,6 +269,10 @@ namespace LunkerChatAdminTool.src
             logger.Debug("[Admin][SendAdminRequest()] start");
         }// end method 
 
+        /// <summary>
+        /// start, shutdown, restart의 resonse = header만 존재 
+        /// </summary>
+        /// <param name="agentSocket"></param>
         public async void HandleAgentResponse(Socket agentSocket)
         {
             logger.Debug("[Admin][HandleAgentResponse()] start");
@@ -233,22 +281,29 @@ namespace LunkerChatAdminTool.src
 
             switch (responseHeader.Type)
             {
-                case MessageType.Basic:
-                    // 공통작업
-                    // UI Refresh
+                /*
                 case MessageType.AgentInfo:
                     await HandleAgentInfoResponseAsync(agentSocket, responseHeader);
                     break;
                 case MessageType.StartApp:
+                    await HandleStartAppResponseAsync(agentSocket, responseHeader);
                     break;
                 case MessageType.ShutdownApp:
-                    
+                    await HandleShutdownAppResponseAsync(agentSocket, responseHeader);
                     break;
 
                 case MessageType.RestartApp:
-                    
+                    await HandleReStartAppResponseAsync(agentSocket, responseHeader);
                     break;
-
+                */
+                case MessageType.AgentInfo:
+                    break;
+                case MessageType.StartApp:
+                    break;
+                case MessageType.ShutdownApp:
+                    break;
+                case MessageType.RestartApp:
+                    break;
                 default:
                     break;
             }// end switch
@@ -256,47 +311,47 @@ namespace LunkerChatAdminTool.src
             logger.Debug("[Admin][HandleAgentResponse()] end");
         }
 
-        /*
-        public Task HandleStartAppRequestAsync(Socket agentSocket)
-        {
-            
-            return Task.Run(()=> {
-
-                AAHeader requestHeader = new AAHeader(MessageType.StartApp, MessageState.Request, Constants.None);
-                NetworkManager.Send(agentSocket, requestHeader);
-            });
-        }
-        */
         public void HandleStartAppRequestAsync(Socket agentSocket)
         {
-            Console.WriteLine("asfasddasf");
-            logger.Debug("[Admin][HandleStartAppRequestAsync()] start");
+            Console.WriteLine("start");
+            //logger.Debug("[Admin][HandleStartAppRequestAsync()] start");
             AAHeader requestHeader = new AAHeader(MessageType.StartApp, MessageState.Request, Constants.None);
             NetworkManager.Send(agentSocket, requestHeader);
         }
 
-        public Task HandleShutdownAppRequestAsync(Socket agentSocket)
+        public void HandleShutdownAppRequestAsync(Socket agentSocket)
         {
-            return Task.Run(() => { });
+            Console.WriteLine("shutdown");
+            //logger.Debug("[Admin][HandleStartAppRequestAsync()] start");
+            AAHeader requestHeader = new AAHeader(MessageType.ShutdownApp, MessageState.Request, Constants.None);
+            NetworkManager.Send(agentSocket, requestHeader);
         }
-        public Task HandleReStartAppRequestAsync(Socket agentSocket)
+        public void HandleReStartAppRequestAsync(Socket agentSocket)
         {
-            return Task.Run(() => { });
+            Console.WriteLine("restart");
+            //logger.Debug("[Admin][HandleStartAppRequestAsync()] start");
+            AAHeader requestHeader = new AAHeader(MessageType.RestartApp, MessageState.Request, Constants.None);
+            NetworkManager.Send(agentSocket, requestHeader);
         }
         ////---------------------------------------------Response---------------------------------------------/////
         
         public Task HandleStartAppResponseAsync(Socket agentSocket)
         {
             return Task.Run(() => {
+                
             });
         }
         public Task HandleShutdownAppResponseAsync(Socket agentSocket)
         {
-            return Task.Run(() => { });
+            return Task.Run(() => {
+
+            });
         }
         public Task HandleReStartAppResponseAsync(Socket agentSocket)
         {
-            return Task.Run(() => { });
+            return Task.Run(() => {
+
+            });
         }
 
         /// <summary>
@@ -312,6 +367,7 @@ namespace LunkerChatAdminTool.src
                 AAAgentInfoRequestBody requestBody = (AAAgentInfoRequestBody)NetworkManager.Read(agentSocket, header.BodyLength, typeof(AAAgentInfoRequestBody));
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] ip : " + new string(requestBody.AgentInfo.ServerInfo.Ip).Split('\0')[0]);
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] port :" + requestBody.AgentInfo.ServerInfo.Port);
+
                 if (agentSocketList.ContainsKey(agentSocket))
                 {
                     agentSocketList.Remove(agentSocket);
@@ -329,103 +385,6 @@ namespace LunkerChatAdminTool.src
             
         }
 
-        public async void MainProcess()
-        {
-            AcceptAgentAsync(); // accept
-            while (appState)
-            {
-
-                SendAdminRequest();
-
-
-                //print UI
-
-                /*   
-                if (acceptAgentTask != null)
-                {
-                    if (acceptAgentTask.IsCompleted)
-                    {
-                        logger.Debug("[Admin][AcceptAgentAsync()] complete");
-
-                        // socket을 저장해놓고, 나중에 serverinfo를 받아서 초기화 시킨다.
-                        agentSocketList.Add(acceptAgentTask.Result, default(AgentInfo));
-
-                        acceptAgentTask = AcceptAgentAsync();
-                    }
-                }
-                else
-                {
-                    acceptAgentTask = AcceptAgentAsync();
-                }
- 
-                //PrintMainUI();
-                if (printUITask != null)
-                {
-                    if (printUITask.IsCompleted)
-                    {
-                        printUITask = PrintMainUIAsync();
-                    }
-                }
-                else
-                {
-                    printUITask = PrintMainUIAsync();
-                }
-
-                // accept agent connect request 
-
-                // Get User Input 
-                if (consoleInputTask != null)
-                {
-                    if (consoleInputTask.IsCompleted )
-                    {
-                        logger.Debug("[Admin][AcceptAgentAsync()] consoleInputTask complete??");
-                        int result = consoleInputTask.Result;
-
-                        Console.WriteLine("result :"+result);
-                        SendAdminRequest(selectedRequest, agentSocketList.ElementAt(selectedAgent).Key); 
-                        consoleInputTask = ConsoleInputTask();
-                    }
-                    else if (consoleInputTask.IsCanceled)
-                    {
-                        // printError 
-                        PrintErrorUI();
-                        consoleInputTask = ConsoleInputTask();
-                    }
-                }
-                else
-                {
-                    consoleInputTask = ConsoleInputTask();
-                }
-
-                // select read ㅠㅠㅠㅠ 
-
-                if(0 != agentSocketList.Count)
-                {
-                    readSocketList = agentSocketList.Keys.ToList();
-                   
-                    Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
-                    // data is ready
-                    if (0 != readSocketList.Count)
-                    {
-                        logger.Debug("[Admin][MainProcess()] socket.select success ");
-                        foreach (Socket agent in readSocketList)
-                        {
-                            try
-                            {
-                                HandleAgentResponse(agent);
-                            }
-                            catch (SocketException se)
-                            {
-                                logger.Debug("[Admin][MainProcess()]HandleAgentResponse error");
-                                agentSocketList.Remove(agent);
-                            }
-                            
-                        }
-                    }
-                }// end select read if 
-              
-                */
-            }// end loop 
-        }// end method
+      
     }
 }

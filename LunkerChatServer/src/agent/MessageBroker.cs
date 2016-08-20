@@ -100,7 +100,7 @@ namespace LunkerChatServer.src.agent
                 case MessageType.RestartApp:
                 case MessageType.ShutdownApp:
 
-                    Power.Off();
+                    Power.Off(type);
                     break;
             }
         }// end method

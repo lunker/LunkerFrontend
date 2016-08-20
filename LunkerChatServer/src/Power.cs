@@ -55,13 +55,23 @@ namespace LunkerChatServer.src
         /// <para></para>
         /// <para></para>
         /// </summary>
-        public static void Off()
+        public static void Off(MessageType type)
         {
             chatServer.Stop();
             appState = Constants.AppStop;
-            // 종료 알림.
-            MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success,Constants.None));
-            MessageBroker.GetInstance().Release();
+
+            if (type == MessageType.ShutdownApp) {
+                // 종료 알림.
+                MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success, Constants.None));
+                
+            }
+            else
+            {
+                MessageBroker.GetInstance().Release();
+            }
+
+
+           
 
             logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
             Environment.Exit(0);

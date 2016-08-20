@@ -20,7 +20,8 @@ namespace LunkerLoginServer.src.workers
 
         private List<Socket> clientConnection = null;
 
-        private Dictionary<ServerInfo, Socket> feConnectionDic = null;
+        //private Dictionary<ServerInfo, Socket> feConnectionDic = null;
+        private Dictionary<Socket, ServerInfo> feConnectionDic = null;
 
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;
@@ -74,7 +75,7 @@ namespace LunkerLoginServer.src.workers
         {
             clientConnection = new List<Socket>();
 
-            feConnectionDic = new Dictionary<ServerInfo, Socket>();
+            feConnectionDic = new Dictionary<Socket, ServerInfo>();
 
             readSocketList = new List<Socket>();
             writeSocketList = new List<Socket>();
@@ -174,7 +175,7 @@ namespace LunkerLoginServer.src.workers
                 // check fe socket connection for read
                 if (0 != feConnectionDic.Count)
                 {
-                    readSocketList.Concat(feConnectionDic.Values.ToList()); // 
+                    readSocketList.Concat(feConnectionDic.Keys.ToList()); // 
                 }
 
                 // 접속한 client가 있을 경우에만 수행.
@@ -266,7 +267,6 @@ namespace LunkerLoginServer.src.workers
                     CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
                     switch (header.Type)
                     {
-                        
                         case MessageType.FENotice:
                             await HandleFENoticeAsync(peer, header);
                             break;
@@ -308,11 +308,12 @@ namespace LunkerLoginServer.src.workers
                         return;
                     }
 
-                    if (feConnectionDic.Values.ToList().Contains(peer))
+                    if (feConnectionDic.Keys.ToList().Contains(peer))
                     {
-                        feConnectionDic.Get
+                        feConnectionDic.Remove(peer);
+                        peer.Dispose();
                     }
-                }
+                }// end try-catch
             }
             else
             {
@@ -336,7 +337,7 @@ namespace LunkerLoginServer.src.workers
 
             // 2) 
             // 
-            feConnectionDic.Add(responseBody.ServerInfo, feSocket);
+            feConnectionDic.Add(feSocket, responseBody.ServerInfo);
 
             // 3) 
             CommonHeader responseHeader = new CommonHeader(MessageType.FENotice, MessageState.Response, Constants.None, new Cookie(), new UserInfo());
@@ -404,8 +405,8 @@ namespace LunkerLoginServer.src.workers
             CommonHeader clientResponseHeader = new CommonHeader(MessageType.Signin, MessageState.Response, bodyArr.Length, new Cookie(), new UserInfo());
 
             // select FE Server to connect with client
-            await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Value, clientResponseHeader);
-            await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Value, bodyArr);
+            await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, clientResponseHeader);
+            await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, bodyArr);
         }
         
         public Task HandleSigninAsync(Socket client, CommonHeader header)

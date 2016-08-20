@@ -306,8 +306,17 @@ namespace LunkerAgent.src
         /// <para></para>
         /// </summary>
         /// <param name="peer"></param>
-        public void HandleRestartApp()
+        public async void HandleRestartApp()
         {
+            
+            // 1) shutdown
+            if (chatProcess != null && !chatProcess.HasExited)
+            {
+                // publish message
+                AAHeader requestHeader = new AAHeader(MessageType.RestartApp, MessageState.Request, Constants.None);
+                broker.Publish(requestHeader);
+                chatProcess.Kill();
+            }
             if (chatProcess == null)
             {
                 ProcessStartInfo info = new ProcessStartInfo();
@@ -315,8 +324,23 @@ namespace LunkerAgent.src
                 info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
 
                 chatProcess = Process.Start(info);
-
             }
+            else
+            {
+                if (chatProcess.HasExited || chatProcess.Responding)
+                {
+                    ProcessStartInfo info = new ProcessStartInfo();
+                    info.CreateNoWindow = true;
+                    info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
+
+                    chatProcess = Process.Start(info);
+                }
+            }
+
+            AAHeader responseHeader = new AAHeader(MessageType.RestartApp, MessageState.Success, Constants.None);
+            //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+            await NetworkManager.SendAsync(adminSocket, responseHeader);
+
         }// end 
     }
 }

@@ -310,7 +310,7 @@ namespace LunkerChatServer
                     // error
                     // Get rid of client 
 
-                    connectionManager
+                    connectionManager.
 
 
                     return;
@@ -502,7 +502,6 @@ namespace LunkerChatServer
         public async void HandleCreateRoom(Socket peer, CommonHeader header)
         {
             // 1) send request to BE server
-            //beWorker.HandleCreateRoomRequest(header);
             await NetworkManager.SendAsync(beServerSocket,header);
 
             // 2) read response(header, body) from BE
@@ -598,7 +597,6 @@ namespace LunkerChatServer
             {
                 // error
                 await NetworkManager.SendAsync(peer, responseHeader);
-
             }
         }
 

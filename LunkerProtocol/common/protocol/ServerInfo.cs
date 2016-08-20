@@ -28,6 +28,13 @@ namespace LunkerLibrary.common.protocol
             this.port = 0;
         }
 
+        public string GetPureIp()
+        {
+            if (this.ip != null)
+                return new string(ip).Split('\0')[0];
+            else
+                return null;
+        }
         /*
         public char[] Domain
         {

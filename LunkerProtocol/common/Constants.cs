@@ -29,5 +29,18 @@ namespace LunkerLibrary.common.Utils
 
         public static string BeServer { get; } = "beserver.chat";
 
+        public static bool ConsoleBlock { get; } = true;
+
+        public static bool ConsoleNonBlock { get; } = false;
+
+        public static int InitialState { get; } = (int) UIState.GetUserCommandInfo;
+
+        public static int Lobby { get; } = 3;
+
+        public static int Admin { get; } = 1;
+        public static int Monitoring { get; } = 2;
+
+        
+
     }
 }

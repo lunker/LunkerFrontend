@@ -141,7 +141,6 @@ namespace LunkerAgent.src
                     {
                         continue;
                     }
-                   
                 }
                 
             });
@@ -257,13 +256,32 @@ namespace LunkerAgent.src
             else
             {
                 Console.WriteLine("not null");
-                if (!chatProcess.HasExited)
+                if ( chatProcess.HasExited || !chatProcess.Responding)
                 {
-                    // already start
-                    AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Fail, Constants.None);
-                    //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
-                    await NetworkManager.SendAsync(adminSocket, responseHeader);
+                    try
+                    {
+                        Console.WriteLine("in null");
+                        ProcessStartInfo info = new ProcessStartInfo();
+                        info.CreateNoWindow = false;
+                        info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
+                        chatProcess = Process.Start(info);
+
+                        Console.WriteLine("not null start!!!");
+
+                        // already start
+                        AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Success, Constants.None);
+                        //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+                        await NetworkManager.SendAsync(adminSocket, responseHeader);
+                    }
+                    catch (Exception e)
+                    {
+                        AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Fail, Constants.None);
+                        //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
+                        await NetworkManager.SendAsync(adminSocket, responseHeader);
+                    }
+                  
                 }
+                
             }
         }
 

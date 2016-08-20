@@ -38,8 +38,8 @@ namespace LunkerChatServer
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
 
-        private Socket beSocket = null;
-        private Socket loginSocket = null;
+        private Socket beServerSocket = null;
+        private Socket loginServerSocket = null;
 
         private Task<Socket> clientAcceptTask = null;
 
@@ -64,18 +64,16 @@ namespace LunkerChatServer
             Initialize();
             try
             {
-                await Task.WhenAll(BindClientSocketListenerAsync(), ConnectBESocketAsync(), ConnectLoginSocketAsync());
+                await Task.WhenAll(BindClientSocketListenerAsync());
 
-                // send Chatting Server Info to LoginServer
-                // messagetype.FENOtice
-                CommonHeader requestHeader = new CommonHeader(MessageType.FENotice, MessageState.Request, Constants.None, new Cookie(), new UserInfo());
-                await NetworkManager.SendAsync(beSocket, requestHeader);
+                
+
             }
             catch (SocketException se)
             {
                 // error
             }
- 
+            
             MainProcess();
 
             logger.Debug("[ChatServer][MainWorker][Start()] end");
@@ -92,22 +90,78 @@ namespace LunkerChatServer
 
         public void MainProcess()
         {
-            logger.Debug("[ChatServer][HandleRequest()] start");
+            logger.Debug("[ChatServer][MainProcess()] start");
 
             while (threadState)
             {
                 // Accept Client Connection Request 
                 HandleClientAcceptAsync();
 
+                //ConnectLoginServerAsync()
+                Task.Run( async ()=> {
+                    while (true)
+                    {
+                        Task.Delay(500);
+                        try
+                        {
+                            if (loginServerSocket != null)
+                            {
+                                if (!loginServerSocket.Connected)
+                                {
+                                    IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+                                    loginServerSocket.Connect(ep);
+
+                                    // send Chatting Server Info to LoginServer
+                                    // messagetype.FENOtice
+                                    CommonHeader requestHeader = new CommonHeader(MessageType.FENotice, MessageState.Request, Constants.None, new Cookie(), new UserInfo());
+                                    await NetworkManager.SendAsync(beServerSocket, requestHeader);
+
+                                    logger.Debug("[ChatServer][MainProcess()] Connect Login Server");
+                                }
+                            }
+                        }
+                        catch (SocketException se)
+                        {
+                            continue;
+                        }
+                    }
+                });
+
+                // Connect BEServer 
+                Task.Run( ()=> {
+                    while (true)
+                    {
+                        Task.Delay(500);
+                        try
+                        {
+                            if (beServerSocket != null)
+                            {
+                                if (!beServerSocket.Connected)
+                                {
+                                    IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
+                                    beServerSocket.Connect(ep);
+                                    logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
+                                }
+                            }
+                        }
+                        catch (SocketException se)
+                        {
+                            continue;
+                        }
+                        
+                    }
+                });                
+
                 // 접속한 client가 있을 경우에만 수행.
                 // client의 요청 수행 
                 if (0 != connectionManager.GetClientConnectionCount())
                 {
-                    // select client connection
+                    // select CLIENT 
                     readSocketList = connectionManager.GetClientConnectionDic().Values.ToList();
-                    // select login connection
+
+                    // select LOGIN
                     // 사용자의 Auth정보를 받기 위함.
-                    readSocketList.Add(loginSocket);
+                    readSocketList.Add(loginServerSocket);
                    
                     // Check Inputs 
                     Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
@@ -175,11 +229,8 @@ namespace LunkerChatServer
                     CommonHeader cookieVerifyHeader;
                     switch (header.Type)
                     {
-                        // Login Server
-                        // request from login server
-                        // ok 
                         case MessageType.FENotice:
-                            // login -> chat
+                            // chat->login에게 fe의 정보를 보내준것에 대한 response
                             // 
                             // just Get Response about FE Notice 
                             break;
@@ -259,6 +310,9 @@ namespace LunkerChatServer
                     // error
                     // Get rid of client 
 
+                    connectionManager
+
+
                     return;
                 }
             }
@@ -294,42 +348,26 @@ namespace LunkerChatServer
             writeSocketList = new List<Socket>();
             errorSocketList = new List<Socket>();
 
+            loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            beServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+            IPEndPoint ep = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().ClientListenPort);
+
+            clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            clientListener.Bind(ep);
+            clientListener.Listen(AppConfig.GetInstance().Backlog);
+
         }// end method 
 
         public Task BindClientSocketListenerAsync()
         {
             return Task.Run(()=> {
                 // initialiize client socket listener
-                IPEndPoint ep = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().FrontPort);
-
-                clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                clientListener.Bind(ep);
-                clientListener.Listen(AppConfig.GetInstance().Backlog);
-            });
-
-        }
-
-        public Task ConnectBESocketAsync()
-        {
-            return Task.Run(()=> {
-                beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-
-                IPEndPoint ep = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], AppConfig.GetInstance().BackendServerPort);
-
-                beSocket.Connect(ep);
+                
             });
         }
 
-        public Task ConnectLoginSocketAsync()
-        {
-            return Task.Run(()=> {
-                loginSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
-                IPEndPoint ep = new IPEndPoint(Dns.GetHostEntry(Constants.LoginServer).AddressList[0], AppConfig.GetInstance().LoginServerPort);
-
-                loginSocket.Connect(ep);
-            });
-        }
 
         public async void HandleNoticeUserAuth(Socket peer, CommonHeader header)
         {
@@ -410,7 +448,7 @@ namespace LunkerChatServer
             // Send chatting to BE 
             //string sendingUser = new string(header.UserInfo.Id);
             CommonHeader responseHeader = new CommonHeader(MessageType.Chatting, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
-            await NetworkManager.SendAsync(beSocket, responseHeader);
+            await NetworkManager.SendAsync(beServerSocket, responseHeader);
             // worker에게 위임? 
             //beWorker.HandleChatting(header);
         }
@@ -433,13 +471,13 @@ namespace LunkerChatServer
             return Task.Run(()=> {
 
                 CommonHeader requestHeader = new CommonHeader(MessageType.VerifyCookie, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
-                NetworkManager.SendAsync(beSocket, requestHeader);
+                NetworkManager.SendAsync(beServerSocket, requestHeader);
             });
         }
 
         public Task<Object> ResponseCookieVerify()
         {
-            return  NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            return  NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
         }
 
         public async Task<CommonHeader> HandleCookieVerifyAsync(CommonHeader header)
@@ -447,7 +485,7 @@ namespace LunkerChatServer
             //Task sendTask = SendCookieVerify(header);
             SendCookieVerify(header).ContinueWith((parent) =>
             {
-               return NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+               return NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
             });
 
             return default(CommonHeader);
@@ -465,11 +503,11 @@ namespace LunkerChatServer
         {
             // 1) send request to BE server
             //beWorker.HandleCreateRoomRequest(header);
-            await NetworkManager.SendAsync(beSocket,header);
+            await NetworkManager.SendAsync(beServerSocket,header);
 
             // 2) read response(header, body) from BE
-            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
-            CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody) await NetworkManager.ReadAsync(beServerSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
 
             // 3) send response(header, body) to client
             await NetworkManager.SendAsync(peer, responseHeader);
@@ -495,11 +533,11 @@ namespace LunkerChatServer
         public async void HandleListChattingRoom(Socket peer, CommonHeader header)
         {
             // 1) 
-            await NetworkManager.SendAsync(beSocket, header);
+            await NetworkManager.SendAsync(beServerSocket, header);
 
             // 2) 
-            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
-            byte[] responseBody = await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength);
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
+            byte[] responseBody = await NetworkManager.ReadAsync(beServerSocket, responseHeader.BodyLength);
 
             // 3) 
 
@@ -532,18 +570,18 @@ namespace LunkerChatServer
             enteredRoom = requestBody.RoomInfo;
             userId = new string(header.UserInfo.Id);
             // 2) 
-            await NetworkManager.SendAsync(beSocket, header);
-            await NetworkManager.SendAsync(beSocket, requestBody);
+            await NetworkManager.SendAsync(beServerSocket, header);
+            await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3) 
-            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             
             if (header.State == MessageState.Fail)
             {
                 // fail - room is on the other 
                 // read body
-                CBJoinRoomResponseBody responseBody = (CBJoinRoomResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(CBJoinRoomResponseBody));
+                CBJoinRoomResponseBody responseBody = (CBJoinRoomResponseBody) await NetworkManager.ReadAsync(beServerSocket, responseHeader.BodyLength, typeof(CBJoinRoomResponseBody));
 
                 await NetworkManager.SendAsync(peer, responseHeader);
                 await NetworkManager.SendAsync(peer, responseBody);
@@ -589,11 +627,11 @@ namespace LunkerChatServer
             enteredRoom = requestBody.RoomInfo;
 
             // 2) send
-            await NetworkManager.SendAsync(beSocket, header);
-            await NetworkManager.SendAsync(beSocket, requestBody);
+            await NetworkManager.SendAsync(beServerSocket, header);
+            await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3)
-            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // 4) 
             await NetworkManager.SendAsync(peer, responseHeader);

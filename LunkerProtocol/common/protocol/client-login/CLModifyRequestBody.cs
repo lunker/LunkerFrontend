@@ -23,4 +23,13 @@ public struct CLModifyRequestBody : Body
         Array.Copy(npwd.ToCharArray(), this.npwd, npwd.ToCharArray().Length);
     }
 
+
+    public string GetPureNPwd()
+    {
+        if (this.npwd != null)
+            return new string(npwd).Split('\0')[0];
+        else
+            return null;
+    }
+    
 }

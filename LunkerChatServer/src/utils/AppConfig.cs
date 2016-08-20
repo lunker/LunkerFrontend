@@ -12,9 +12,8 @@ namespace LunkerChatServer.src.utils
     public class AppConfig
     {
         //private int port = 0;
-        private int frontport = 0;
-        private int backport = 0;
         private int backlog = 0;
+        private int clientListenPort = 0;
 
         private string backendServerIp = "";
         private int backendServerPort = 0;
@@ -29,30 +28,17 @@ namespace LunkerChatServer.src.utils
         {
             // read config xml 
 #if DEBUG
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
 #else
             XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
 #endif
 
             while (reader.Read())
             {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
+                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("clientListenPort"))
                 {
                     reader.Read();
-                    if(Int32.TryParse( reader.Value, out frontport))
-                    {
-                        logger.Debug("");
-                    }
-                    else
-                    {
-                        logger.Debug("");
-                    }
-                    reader.Read(); // delete close element
-                }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backport"))
-                {
-                    reader.Read();
-                    if (Int32.TryParse(reader.Value, out backport))
+                    if(Int32.TryParse( reader.Value, out clientListenPort))
                     {
                         logger.Debug("");
                     }
@@ -127,14 +113,10 @@ namespace LunkerChatServer.src.utils
             return appConfig;
         }
 
-        public int Backport
-        {
-            get { return this.backport; }
-        }
 
-        public int FrontPort
+        public int ClientListenPort
         {
-            get { return this.frontport; }
+            get { return this.clientListenPort; }
         }
         
         public int Backlog

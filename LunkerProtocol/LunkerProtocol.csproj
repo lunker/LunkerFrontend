@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="common\Constants.cs" />
+    <Compile Include="common\KeyType.cs" />
     <Compile Include="common\protocol\admin-agent\AAAgentInfoRequestBody.cs" />
     <Compile Include="common\protocol\admin-agent\AAAgentInfoResponseBody.cs" />
     <Compile Include="common\protocol\admin-agent\AAHeader.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="common\protocol\client-chat\CCLeaveResponseBody.cs" />
     <Compile Include="common\protocol\client-chat\CCListRoomRequestBody.cs" />
     <Compile Include="common\protocol\client-chat\CCListRoomResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCUserAuthRequestBody.cs" />
     <Compile Include="common\protocol\client-login\CLDeleteRequestBody.cs" />
     <Compile Include="common\protocol\client-login\CLDeleteResponseBody.cs" />
     <Compile Include="common\protocol\client-login\CLModifyRequestBody.cs" />
@@ -88,6 +90,7 @@
     <Compile Include="common\protocol\Packet.cs" />
     <Compile Include="common\protocol\ServerInfo.cs" />
     <Compile Include="common\protocol\ServerState.cs" />
+    <Compile Include="common\protocol\UIState.cs" />
     <Compile Include="common\protocol\UserInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

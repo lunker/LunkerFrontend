@@ -16,6 +16,7 @@ namespace LunkerLibrary.common.protocol
 
         bool isDummy;
 
+        
         public UserInfo(char[] id, char[] pwd, bool isDummy)
         {
             this.id = new char[Constants.IdLength];
@@ -35,11 +36,27 @@ namespace LunkerLibrary.common.protocol
             this.isDummy = isDummy;
         }
 
+        
         public UserInfo(string id)
         {
             this.id = id.ToCharArray();
             this.pwd = new char[18];
             this.isDummy = false;
+        }
+        public string GetPureId()
+        {
+            if (this.id != null)
+                return new string(id).Split('\0')[0];
+            else
+                return null;
+        }
+
+        public string GetPurePwd()
+        {
+            if (this.id != null)
+                return new string(pwd).Split('\0')[0];
+            else
+                return null;
         }
 
         public char[] Id

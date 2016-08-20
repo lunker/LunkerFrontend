@@ -29,4 +29,14 @@ public struct LBModifyRequestBody
         get { return npwd; }
         set { this.npwd = value; }
     }
+
+    public string GetPureNPwd()
+    {
+        if (this.npwd != null)
+            return new string(npwd).Split('\0')[0];
+        else
+            return null;
+    }
+
+
 }

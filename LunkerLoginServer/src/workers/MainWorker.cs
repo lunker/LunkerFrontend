@@ -52,7 +52,6 @@ namespace LunkerLoginServer.src.workers
             ConnectBEAsync();
             AcceptFEConnectAsync();
 
-
             // request initial FE Info
             MainProcess(); 
 
@@ -159,10 +158,7 @@ namespace LunkerLoginServer.src.workers
                     feAcceptTask = Task.Run(() => {
                         return feListener.Accept();
                     });
-
-
                 }
-               
             });
         }
 
@@ -175,14 +171,15 @@ namespace LunkerLoginServer.src.workers
 
             while (threadState)
             {
-                // Accept Client Connection Request 
-                // Listen . . .
+                // check fe socket connection for read
+                if (0 != feConnectionDic.Count)
+                {
+                    readSocketList.Concat(feConnectionDic.Values.ToList()); // 
+                }
 
                 // 접속한 client가 있을 경우에만 수행.
                 if (0 != clientConnection.Count)
                 {
-                    //logger.Debug("[ChatServer][HandleRequest()] 0 != ");
-
                     readSocketList = clientConnection.ToList();
                     
                     // Check Inputs 
@@ -199,14 +196,9 @@ namespace LunkerLoginServer.src.workers
                         }
                     }
                 }// end if
-                
-                // check fe socket connection for read
-                if(0 != feConnectionDic.Count)
-                {
-                    readSocketList.Concat(feConnectionDic.Values.ToList()); // 
-                }
-
                 readSocketList.Clear();
+
+
             }// end loop 
         }// end method
         
@@ -282,6 +274,10 @@ namespace LunkerLoginServer.src.workers
                         case MessageType.Signin:
                             await HandleSigninAsync(peer, header);
                             break;
+
+                        case MessageType.Logout:
+                            await HandleLogoutAsnyc(peer, header);
+                            break;
                         case MessageType.Signup:
                             await HandleSignupAsync(peer, header);
                             break;
@@ -300,8 +296,23 @@ namespace LunkerLoginServer.src.workers
                 catch (Exception e)
                 {
                     // handling .
+                    // get rid of socket connection in list 
+
+                    // 1) client connection 이거나 
+                    // 2) fe connection 이거나 
+
+                    if (clientConnection.Contains(peer))
+                    {
+                        clientConnection.Remove(peer);
+                        peer.Dispose();
+                        return;
+                    }
+
+                    if (feConnectionDic.Values.ToList().Contains(peer))
+                    {
+                        feConnectionDic.Get
+                    }
                 }
-               
             }
             else
             {
@@ -324,6 +335,7 @@ namespace LunkerLoginServer.src.workers
             LCFENoticeResponseBody responseBody =  (LCFENoticeResponseBody)await NetworkManager.ReadAsync(feSocket, header.BodyLength, typeof(LCFENoticeResponseBody));
 
             // 2) 
+            // 
             feConnectionDic.Add(responseBody.ServerInfo, feSocket);
 
             // 3) 
@@ -380,7 +392,7 @@ namespace LunkerLoginServer.src.workers
             // !!!!!! loadbalancing 
             
             // send auth to Chat Server
-            CommonHeader feRequestHeader = new CommonHeader(MessageType.SendAuthToChatServer, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
+            CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Constants.HeaderSize, new Cookie(), new UserInfo());
             LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
 
             // LoadBalancing
@@ -399,6 +411,24 @@ namespace LunkerLoginServer.src.workers
         public Task HandleSigninAsync(Socket client, CommonHeader header)
         {
             return Task.Run(()=> HandleSignin(client, header));
+        }
+
+        /// <summary>
+        /// Client의 Logout처리.
+        /// <para>Connection은 그대로 두고, 그냥 BE와 정보만 주고 받는다.</para>
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="header"></param>
+        /// <returns></returns>
+        public Task HandleLogoutAsnyc(Socket client, CommonHeader header)
+        {
+            return Task.Run(()=> {
+                NetworkManager.Send(beSocket, header);
+
+                CommonHeader resonseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+
+                NetworkManager.Send(client, resonseHeader);
+            });
         }
 
         public async void HandleSignup(Socket client, CommonHeader header)

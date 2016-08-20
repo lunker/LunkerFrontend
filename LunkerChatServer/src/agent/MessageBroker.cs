@@ -17,11 +17,7 @@ namespace LunkerChatServer.src.agent
         private static MessageBroker instance = null;
         private string chatQueueName = "ChatQueue"; // to chatqueue.subscribe. request from agent
         private string agentQueueName = "AgentQueue"; // to agent queue. publish. response to agent.
-
         
-        //private IModel chatQueue = null;
-        //private IModel agentQueue = null;
-
         private IModel channel = null;
 
         private MessageBroker() { Setup(); }
@@ -34,7 +30,6 @@ namespace LunkerChatServer.src.agent
             }
             return instance;
         }
-
 
         /// <summary>
         /// Setup Queue
@@ -60,23 +55,6 @@ namespace LunkerChatServer.src.agent
 
             RegisterSubscribe();
 
-            /*
-            chatQueue = factory.CreateConnection().CreateModel();
-            agentQueue = factory.CreateConnection().CreateModel();
-
-            
-            chatQueue.QueueDeclare(queue: chatQueueName,
-                                     durable: false,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
-
-            agentQueue.QueueDeclare(queue: agentQueueName,
-                         durable: false,
-                         exclusive: false,
-                         autoDelete: false,
-                         arguments: null);
-            */
         }// end method
 
         public void Release()
@@ -93,7 +71,6 @@ namespace LunkerChatServer.src.agent
                         routingKey: agentQueueName,
                         basicProperties: null,
                         body: NetworkManager.StructureToByte(message));
-
             }
         }// end method
 
@@ -126,7 +103,6 @@ namespace LunkerChatServer.src.agent
                     Power.Off();
                     break;
             }
-        }
-
+        }// end method
     }
 }

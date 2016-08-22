@@ -3,4 +3,4 @@
 ## Dependency
 .NET Framework 4.5 
 
-Based on https://github.com/433-Summer-Internship/taehoon-dongkyoo-halim/tree/master/protocol
+Common Module For Networking Communication using async socket 

@@ -2,7 +2,7 @@
 4:33 Intern Chatting Project #2 : Frontend (Chatting Server, Login Server, Agent), Admin Tool, Test Backend
 
 ## Protocol
-Library(dll) : https://github.com/lunker/LunkerFrontend/tree/release/LunkerLibrary
+Library(dll) : https://github.com/lunker/LunkerFrontend/tree/release/LunkerLibrary  
 Protocol (dll): https://github.com/lunker/LunkerFrontend/tree/release/LunkerProtocol
 
 ## Architecture

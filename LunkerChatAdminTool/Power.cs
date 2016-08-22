@@ -22,40 +22,8 @@ namespace LunkerChatAdminTool.src
         {
             logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
 
-
             adminTool = AdminTool.GetInstance();
             adminTool.Start();
-
-            //startTask = Task.Run(()=> {
-            //    adminTool.Start();
-            //});
-
-
-            //startTask.Wait();
-            
-            /*
-            while (appState)
-            {
-                Console.Write("어플리케이션을 종료하시겠습니까? (y/n) : ");
-                string close = Console.ReadLine();
-                if (close.Equals("y") || close.Equals("Y"))
-                {
-                    Console.Clear();
-                    Console.Write("어플리케이션을 종료중입니다 . . .");
-                    adminTool.Stop();
-                    appState = Constants.AppStop;
-
-                    logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
-                    Environment.Exit(0);
-                }
-                else
-                {
-                    Console.Clear();
-                    Console.WriteLine("다시 입력하십시오.");
-                }
-            }
-            */
-
         }
 
         /// <summary>

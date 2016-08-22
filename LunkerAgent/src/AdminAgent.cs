@@ -85,51 +85,10 @@ namespace LunkerAgent.src
             info.CreateNoWindow = false;
             info.FileName = "C:\\chatserver(socket)\\LunkerChatServer.exe";
 
-
         }
-
-        public async void MainProcess()
+        public Task HandleAdminConnectAsync()
         {
-            /*
-            Task.Run(()=> {
-                while (true)
-                {
-                    try
-                    {
-                        if (adminSocket != null)
-                        {
-                            if (!adminSocket.Connected)
-                            {
-                                adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                                IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
-
-                                adminSocket.Connect(endPoint);
-                                SendServerInfo();
-                                logger.Debug("[AdminAgent][Initialize()] connect success");
-                            }
-                        }
-                        else
-                        {
-                            adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
-
-                            adminSocket.Connect(endPoint);
-                            SendServerInfo();
-                            logger.Debug("[AdminAgent][Initialize()] connect success");
-                        }
-                    }
-                    catch (SocketException se)
-                    {
-                        continue;
-                    }
-                }
-            });
-            */
-
-
-
-            //===============================================
-            Task.Run(() => {
+            return Task.Run(() => {
 
                 IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
 
@@ -166,7 +125,10 @@ namespace LunkerAgent.src
                     }
                 }
             });
-            
+        }
+
+        public async void MainProcess()
+        {
             while (appState)
             {
                 //logger.Debug("[AdminAgent][SendServerInfo()] 1");

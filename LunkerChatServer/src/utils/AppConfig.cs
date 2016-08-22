@@ -30,7 +30,7 @@ namespace LunkerChatServer.src.utils
 #if DEBUG
             XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
 #else
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
 #endif
 
             while (reader.Read())

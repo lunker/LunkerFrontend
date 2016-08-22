@@ -34,6 +34,12 @@ namespace LunkerLoginServer.src.workers
         private Socket clientListener = null;
         private Socket feListener = null;
         private Socket beSocket = null;
+
+
+        private Dictionary<Socket, Task> socketTaskPair = null;
+
+
+
         private MainWorker() { }
         public static MainWorker GetInstance()
         {
@@ -79,6 +85,8 @@ namespace LunkerLoginServer.src.workers
             clientConnection = new List<Socket>();
 
             feConnectionDic = new Dictionary<Socket, ServerInfo>();
+
+            socketTaskPair = new Dictionary<Socket, Task>();
 
             readSocketList = new List<Socket>();
             writeSocketList = new List<Socket>();
@@ -156,6 +164,47 @@ namespace LunkerLoginServer.src.workers
             {
                 try
                 {
+                    if (socketTaskPair.Count != 0)
+                    {
+                        foreach (Socket peer in socketTaskPair.Keys.ToList())
+                        {
+                            readSocketList.Add(peer);
+                        }
+
+                        Task tmp = null;
+                        foreach (Socket peer in readSocketList)
+                        {
+                            try
+                            {
+
+                                tmp = (Task)socketTaskPair[peer];
+
+                                if (tmp != null)
+                                {
+                                    if (tmp.IsCompleted)
+                                    {
+                                        //Console.WriteLine("오ㅓㅏㄴ료ㅕ?");
+                                        tmp = Task.Run(() => HandleRequest(peer));
+                                        socketTaskPair[peer] = tmp;
+                                    }
+                                }
+                                else
+                                {
+                                    tmp = Task.Run(() => HandleRequest(peer));
+                                    socketTaskPair[peer] = tmp;
+                                }
+
+                            }
+                            catch (KeyNotFoundException knf)
+                            {
+                                continue;
+                            }
+                        }
+                    }// end if
+                    readSocketList.Clear();
+
+                    /*
+
                     // check fe socket connection for read
                     if (0 != feConnectionDic.Count)
                     {
@@ -188,18 +237,16 @@ namespace LunkerLoginServer.src.workers
                         
                         foreach (Socket peer in readSocketList)
                         {
-                            //logger.Debug("[LoginServer][HandleRequest()] in socket.select");
-                            //HandleRequest(peer);
-                            
                             if (peer.Blocking)
                             {
                                 peer.Blocking = false;
                                 Task.Run(()=> { HandleRequest(peer); }); 
                             }
-
                         }
                     }
                     readSocketList.Clear();
+                    */
+
                 }
                 catch (SocketException se)
                 {
@@ -227,6 +274,7 @@ namespace LunkerLoginServer.src.workers
 
                                 // Add accepted connections
                                 clientConnection.Add(client);
+                                socketTaskPair.Add(client, Task.Run(()=> { }));
                             }
                         }
                     }
@@ -256,7 +304,7 @@ namespace LunkerLoginServer.src.workers
                             // Add accepted connections
                             //clientConnection.Add(socket);
                             feConnectionDic.Add(socket, default(ServerInfo));
-
+                            socketTaskPair.Add(socket, Task.Run(() => { }));
                             // Request FE Server Info 
                             // await 할 필요가 있나 ?
                             RequestFEInfoAsync(socket);
@@ -337,6 +385,7 @@ namespace LunkerLoginServer.src.workers
                             await HandleDeleteAsync(peer, header);
                             break;
                         case MessageType.Modify:
+                            Console.WriteLine("[LoginServer][HandleRequest()] Modify.");
                             await HandleModifyAsync(peer, header);
                             break;
                         // default
@@ -358,6 +407,8 @@ namespace LunkerLoginServer.src.workers
                     // 2) fe connection 이거나 
                     logger.Debug("[LoginServer][HandleRequest()] socket exception . . .");
 
+                    socketTaskPair.Remove(peer);
+                                        
                     if (clientConnection.Contains(peer))
                     {
                         clientConnection.Remove(peer);
@@ -572,18 +623,17 @@ namespace LunkerLoginServer.src.workers
         /// <param name="header"></param>
         public async void HandleDelete(Socket client, CommonHeader header)
         {
-            // 1) 
-            CLDeleteRequestBody clRequestBody = (CLDeleteRequestBody) await NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLDeleteRequestBody));
+            Console.WriteLine("[LoginServer][HandleDelete()] delete start");
 
             // 2)
             await NetworkManager.SendAsync(beSocket, header );
-            await NetworkManager.SendAsync(beSocket, clRequestBody);
-
+            
             // 3)
             CommonHeader responseHeader =(CommonHeader)await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // 4) 
             await NetworkManager.SendAsync(client, responseHeader);
+            Console.WriteLine("[LoginServer][HandleDelete()] delete end");
         }
 
         public Task HandleDeleteAsync(Socket client, CommonHeader header)
@@ -602,20 +652,22 @@ namespace LunkerLoginServer.src.workers
         /// <param name="header"></param>
         public async void HandleModify(Socket client, CommonHeader header)
         {
+            Console.WriteLine("[LoginServer][HandleModify()] modify start");
             logger.Debug("[LoginServer][HandleModify()] modify start");
             // 1) 
-            CLModifyRequestBody clRequestBody = (CLModifyRequestBody) await NetworkManager.ReadAsync(client, header.BodyLength, typeof(CLModifyRequestBody));
+            CLModifyRequestBody clRequestBody = (CLModifyRequestBody)  NetworkManager.Read(client, header.BodyLength, typeof(CLModifyRequestBody));
 
             // 2)
-            await NetworkManager.SendAsync(beSocket, header);
-            await NetworkManager.SendAsync(beSocket, clRequestBody);
+             NetworkManager.Send(beSocket, header);
+             NetworkManager.Send(beSocket, clRequestBody);
 
             // 3)
-            CommonHeader responseHeader = (CommonHeader)await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // 4) 
             await NetworkManager.SendAsync(client, responseHeader);
             logger.Debug("[LoginServer][HandleModify()] modify end");
+            Console.WriteLine("[LoginServer][HandleModify()] modify end");
         }
         
         public Task HandleModifyAsync(Socket client, CommonHeader header)

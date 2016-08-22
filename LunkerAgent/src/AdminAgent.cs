@@ -31,6 +31,9 @@ namespace LunkerAgent.src
         private CancellationTokenSource source = new CancellationTokenSource();
          
         private MessageBroker broker = MessageBroker.GetInstance();
+
+        private ProcessStartInfo info = new ProcessStartInfo();
+        
         private AdminAgent() { }
 
         public static AdminAgent GetInstance()
@@ -78,38 +81,16 @@ namespace LunkerAgent.src
 
             readSocket = new List<Socket>();
             //broker.RegisterSubscribe();
-        }
 
-        public Task ConnectTask()
-        {
-            return Task.WhenAll(Task.Run(() => {
-                try
-                {
-                    if(adminSocket!=null && adminSocket.Connected)
-                    {
+            info.CreateNoWindow = false;
+            info.FileName = "C:\\chatserver(socket)\\LunkerChatServer.exe";
 
-                    }
-                    else
-                    {
-                        adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
 
-                        adminSocket.Connect(endPoint);
-                        SendServerInfo();
-                        logger.Debug("[AdminAgent][Initialize()] connect success");
-
-                    }
-                }
-                catch (SocketException se)
-                {
-                    source.Cancel();
-                }
-            }),
-            Task.Delay(2000));
         }
 
         public async void MainProcess()
         {
+            /*
             Task.Run(()=> {
                 while (true)
                 {
@@ -142,20 +123,46 @@ namespace LunkerAgent.src
                         continue;
                     }
                 }
-                
             });
+            */
 
-            Task.Run(()=> {
+
+
+            //===============================================
+            Task.Run(() => {
+
+                IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Ip), AppConfig.GetInstance().Port);
+
                 while (true)
                 {
-                    if (chatProcess != null)
+                    try
                     {
-                        // 죽었을 경우 . . . 
-                        if (chatProcess.HasExited)
+                        if (adminSocket != null)
                         {
-
+                            if (!adminSocket.Connected)
+                            {
+                                adminSocket.Connect(endPoint);
+                                SendServerInfo();
+                                Console.WriteLine("[AdminAgent][Initialize()] connect success");
+                                logger.Debug("[AdminAgent][Initialize()] connect success");
+                            }
                         }
-
+                        else
+                        {
+                            adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        }
+                    }
+                    catch (InvalidOperationException ioe)
+                    {
+                        adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . admin tool  . . . retry");
+                        continue;
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . admin tool . . . retry");
+                        //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        continue;
                     }
                 }
             });
@@ -166,12 +173,13 @@ namespace LunkerAgent.src
                 // read 
                 if (adminSocket!=null && adminSocket.Connected)
                 {
-                    if (adminSocket.Poll(0, SelectMode.SelectRead))
+                    if (adminSocket.Poll(300, SelectMode.SelectRead))
                     {
                         // read
                         try
                         {
-                            logger.Debug("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
+                            Console.WriteLine("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
+                            //logger.Debug("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
                             HandleRequestAsync(adminSocket);
                         }
                         catch (SocketException se)
@@ -181,7 +189,6 @@ namespace LunkerAgent.src
                     }
                 }
                 // poll admin request
-                
             }// end loop 
         }// end method
 
@@ -189,7 +196,7 @@ namespace LunkerAgent.src
         {
             logger.Debug("[AdminAgent][SendServerInfo()] start");
             logger.Debug("[AdminAgent][SendServerInfo()]" + hostIP);
-            ServerInfo serverInfo = new ServerInfo(hostIP,0);
+            ServerInfo serverInfo = new ServerInfo(hostIP,43320);
             AgentInfo agentInfo = new AgentInfo(serverInfo, new ServerState());
 
             AAAgentInfoRequestBody requestBody = new AAAgentInfoRequestBody(agentInfo);
@@ -262,9 +269,8 @@ namespace LunkerAgent.src
             if (chatProcess == null)
             {
                 Console.WriteLine("in null");
-                ProcessStartInfo info = new ProcessStartInfo();
-                info.CreateNoWindow = false;
-                info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
+               
+                //info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
                 chatProcess = Process.Start(info);
 
                 // send result
@@ -280,9 +286,9 @@ namespace LunkerAgent.src
                     try
                     {
                         Console.WriteLine("in null");
-                        ProcessStartInfo info = new ProcessStartInfo();
-                        info.CreateNoWindow = false;
-                        info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
+                        //ProcessStartInfo info = new ProcessStartInfo();
+                        //info.CreateNoWindow = false;
+                        //info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
                         chatProcess = Process.Start(info);
 
                         Console.WriteLine("not null start!!!");
@@ -339,9 +345,9 @@ namespace LunkerAgent.src
             }
             if (chatProcess == null)
             {
-                ProcessStartInfo info = new ProcessStartInfo();
-                info.CreateNoWindow = true;
-                info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
+                //ProcessStartInfo info = new ProcessStartInfo();
+                //info.CreateNoWindow = true;
+                //info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
 
                 chatProcess = Process.Start(info);
             }
@@ -349,9 +355,9 @@ namespace LunkerAgent.src
             {
                 if (chatProcess.HasExited || chatProcess.Responding)
                 {
-                    ProcessStartInfo info = new ProcessStartInfo();
-                    info.CreateNoWindow = true;
-                    info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
+                    //ProcessStartInfo info = new ProcessStartInfo();
+                    //info.CreateNoWindow = true;
+                    //info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
 
                     chatProcess = Process.Start(info);
                 }

@@ -459,7 +459,7 @@ namespace LunkerChatAdminTool.src
                     default:
                         break;
                 }// end switch
-
+                PrintAdminModeUI();
                 logger.Debug("[Admin][HandleAgentResponse()] end");
             }
             catch (SocketException se)

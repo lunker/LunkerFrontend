@@ -1,4 +1,5 @@
-﻿using LunkerLibrary.common.Utils;
+﻿using log4net;
+using LunkerLibrary.common.Utils;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -6,14 +7,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LunkerChatServer.src.utils;
 
 namespace LunkerChatServer.src.agent
 {
     /// <summary>
     /// Publish & Subscribe Message between agent & chat server
     /// </summary>
-    class MessageBroker
+    public class MessageBroker
     {
+        private ILog logger = ChatLogger.GetLoggerInstance();
         private static MessageBroker instance = null;
         private string chatQueueName = "ChatQueue"; // to chatqueue.subscribe. request from agent
         private string agentQueueName = "AgentQueue"; // to agent queue. publish. response to agent.
@@ -38,20 +41,21 @@ namespace LunkerChatServer.src.agent
         {
             ConnectionFactory factory = new ConnectionFactory() { HostName = "localhost" };
             channel = factory.CreateConnection().CreateModel();
-
+            
+            /*
             channel.QueueDeclare(queue: agentQueueName,
                durable: false,
                exclusive: false,
                autoDelete: false,
                arguments: null);
-
+               */
             channel.QueueDeclare(queue: chatQueueName,
                 durable: false,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
             
-            factory = null;
+            //factory = null;
 
             RegisterSubscribe();
 
@@ -65,18 +69,18 @@ namespace LunkerChatServer.src.agent
 
         public void Publish(Object message)
         {
-            if(message is string)
-            {
-                channel.BasicPublish(exchange: "",
-                        routingKey: agentQueueName,
-                        basicProperties: null,
-                        body: NetworkManager.StructureToByte(message));
-            }
+            logger.Debug("[ChatServer][Publish()] Publish Messgae!");
+            channel.BasicPublish(exchange: "",
+                    routingKey: agentQueueName,
+                    basicProperties: null,
+                    body: NetworkManager.StructureToByte(message));
+           
         }// end method
 
         public void RegisterSubscribe()
         {
-            Console.WriteLine("RegisterSubscribe");
+            logger.Debug("[ChatServer][RegisterSubscribe()] Register Subscriber");
+
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
@@ -94,6 +98,7 @@ namespace LunkerChatServer.src.agent
 
         public void HandleRequest(MessageType type)
         {
+            logger.Debug("[ChatServer][HandleRequest()] Register Subscriber");
             Console.WriteLine("HandleRequest");
             switch (type)
             {

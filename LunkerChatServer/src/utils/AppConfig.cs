@@ -28,7 +28,7 @@ namespace LunkerChatServer.src.utils
         {
             // read config xml 
 #if DEBUG
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
 #else
             XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerLoginServer\\config\\AppConfig.xml");
 #endif

@@ -37,7 +37,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>C:\loginserver\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -93,7 +93,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="config\AppConfig.xml" />
-    <Content Include="config\DebugLogconfig.xml" />
+    <Content Include="config\DebugLogconfig.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="config\ChatServerConfig.xml" />
     <Content Include="config\ReleaseLogconfig.xml" />
   </ItemGroup>

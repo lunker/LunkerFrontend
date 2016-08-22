@@ -28,7 +28,6 @@ namespace LunkerChatAdminTool.src
 
         private Task printUITask = null;
         private CancellationTokenSource source = new CancellationTokenSource();
-        
 
         private Dictionary<Socket, AgentInfo> agentSocketList = null;
 
@@ -43,10 +42,13 @@ namespace LunkerChatAdminTool.src
 
         private int currentLine = 0;
         private int maxLine = 30;
+
         private int uiState = Constants.InitialState; // 초기 state
         private bool isBlocked = Constants.ConsoleNonBlock;
 
         private int AdminMode = Constants.Admin;
+
+        private Task adminModeTask = null;
 
         private AdminTool() { }
         public static AdminTool GetInstance()
@@ -66,6 +68,19 @@ namespace LunkerChatAdminTool.src
         public void Stop()
         {
             appState = Constants.AppStop;
+        }
+
+        public Task AdminModeTask()
+        {
+            /*
+            return Task.Delay(2000).ContinueWith((parent) => {
+                PrintAdminModeUI();
+            });
+            */
+            return Task.WhenAll(
+                Task.Delay(2000),
+                Task.Run(()=> PrintAdminModeUI())
+                );
         }
 
         /// <summary>
@@ -115,114 +130,24 @@ namespace LunkerChatAdminTool.src
             // Print UI
             while (true)
             {
+                // print admin mode UI 
                 // mode for admin
                 if (AdminMode == Constants.Admin)
                 {
-                    for (int moveState = 1; moveState <= uiState; moveState = moveState << 1)
+                    /*
+                    if (adminModeTask != null)
                     {
-                        switch (moveState)
+                        if (adminModeTask.IsCompleted)
                         {
-                            // 1이면, 1을 출력해야한다! 
-                            case (int)UIState.PrintAgentInfo:
-                                PrintAgentInfo();
-                                break;
-                            case (int)UIState.PrintCommandInfo:
-                                PrintRequest();
-                                break;
-                            case (int)UIState.PrintSelectCommandInfo:
-                                Console.Write("command : ");
-                                if (moveState != uiState && selectedRequest != -1)
-                                {
-                                    Console.Write(selectedRequest);
-                                }
-                                break;
-                            case (int)UIState.GetUserCommandInfo:
-                                if (moveState == uiState && !isBlocked)
-                                {
-                                    
-                                    string request = "";
-                                    isBlocked = Constants.ConsoleBlock;
-                                    if (TryReadLine(out request) == KeyType.Exit)
-                                    {
-                                        AdminMode = Constants.Lobby;
-                                        isBlocked = Constants.ConsoleNonBlock;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        if (int.TryParse(request, out selectedRequest) && selectedRequest < 3)
-                                        {
-                                            // Success
-                                            // Move to Next State
-                                            isBlocked = Constants.ConsoleNonBlock;
-                                            uiState = uiState << 2;
-                                        }
-                                        else
-                                        {
-                                            // retry
-                                            ResetVariable();
-                                            isBlocked = Constants.ConsoleNonBlock;
-                                           
-                                        }
-                                    }
-                                }
-                                break;
-                            case (int)UIState.PrintSelectAgentInfo:
-                                Console.Write("agent : ");
-                                if (moveState != uiState && selectedAgent != -1)
-                                {
-                                    Console.Write(selectedAgent);
-                                }
-                                break;
-                            case (int)UIState.GetUserAgnetInfo:
-                                if (moveState == uiState && !isBlocked)
-                                {
-                                    string agent = "";
-                                    isBlocked = Constants.ConsoleBlock;
-
-                                    if (TryReadLine(out agent) == KeyType.Exit)
-                                    {
-                                        AdminMode = Constants.Lobby;
-                                        isBlocked = Constants.ConsoleNonBlock;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        // get right input from user
-                                        if (int.TryParse(agent, out selectedAgent) && selectedAgent < agentSocketList.Count)
-                                        {
-                                            isBlocked = Constants.ConsoleNonBlock;
-                                            uiState = Constants.InitialState;
-                                            Console.WriteLine(selectedRequest + ":" + selectedAgent); // 0 : -1 ? 
-
-                                            switch (selectedRequest)
-                                            {
-                                                case 1:
-                                                    SendAdminRequest(MessageType.StartApp, agentSocketList.ElementAt(selectedAgent).Key);
-                                                    break;
-                                                case 2:
-                                                    SendAdminRequest(MessageType.ShutdownApp, agentSocketList.ElementAt(selectedAgent).Key);
-                                                    break;
-                                                case 3:
-                                                    SendAdminRequest(MessageType.RestartApp, agentSocketList.ElementAt(selectedAgent).Key);
-                                                    break;
-                                            }
-                                            ResetVariable();
-                                        }
-                                        else
-                                        {
-                                            ResetVariable();
-
-                                            // get input retry
-                                            isBlocked = Constants.ConsoleNonBlock;
-                                        }
-                                        
-                                    }
-                                }
-                                // end break;
-                                break;
+                            adminModeTask = AdminModeTask();
                         }
-                    }// end loop
+                    }
+                    else
+                    {
+                        adminModeTask = AdminModeTask();
+                    }
+                    */
+                    PrintAdminModeUI();
                 }
                 // mode for monitoring 
                 else if(AdminMode == Constants.Monitoring)
@@ -239,12 +164,10 @@ namespace LunkerChatAdminTool.src
                     {
                         AdminMode = int.Parse(menu);
                     }
+                    Console.Clear();
                 }
             }// end while
-
-            
         }// end method
-
         
         /// 예외처리해야함
         /// </summary>
@@ -284,6 +207,129 @@ namespace LunkerChatAdminTool.src
             Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("[1] : Start Application [2] : Shutdown Application [3] : Restart Application");
+        }
+
+        public void PrintAdminModeUI()
+        {
+            for (int moveState = 1; moveState <= uiState; moveState = moveState << 1)
+            {
+                switch (moveState)
+                {
+                    // 1이면, 1을 출력해야한다! 
+                    case (int)UIState.PrintAgentInfo:
+                        PrintAgentInfo();
+                        break;
+                    case (int)UIState.PrintCommandInfo:
+                        PrintRequest();
+                        break;
+                    case (int)UIState.PrintSelectCommandInfo:
+                        Console.Write("command : ");
+                        if (moveState != uiState && selectedRequest != -1)
+                        {
+                            Console.Write(selectedRequest);
+                        }
+                        break;
+                    case (int)UIState.GetUserCommandInfo:
+                        if (moveState == uiState && !isBlocked)
+                        {
+
+                            string request = "";
+                            isBlocked = Constants.ConsoleBlock;
+                            // Exit
+                            // GOTO Lobby
+                            if (TryReadLine(out request) == KeyType.Exit)
+                            {
+                                Console.Clear();
+                                AdminMode = Constants.Lobby;
+                                isBlocked = Constants.ConsoleNonBlock;
+                                break;
+                            }
+                            else
+                            {
+                                if (int.TryParse(request, out selectedRequest) && selectedRequest <= 3)
+                                {
+                                    // Success
+                                    // Move to Next State
+                                    isBlocked = Constants.ConsoleNonBlock;
+                                    uiState = uiState << 2;
+                                }
+                                else
+                                {
+                                    // retry
+                                    ResetVariable();
+                                    isBlocked = Constants.ConsoleNonBlock;
+                                }
+                            }
+                        }// end if
+                        break;
+                    case (int)UIState.PrintSelectAgentInfo:
+                        Console.Write("agent : ");
+                        if (moveState != uiState && selectedAgent != -1)
+                        {
+                            Console.Write(selectedAgent);
+                        }
+                        break;
+                    case (int)UIState.GetUserAgnetInfo:
+                        if (moveState == uiState && !isBlocked)
+                        {
+                            string agent = "";
+                            isBlocked = Constants.ConsoleBlock;
+
+                            // Exit
+                            // GOTO Lobby
+                            if (TryReadLine(out agent) == KeyType.Exit)
+                            {
+                                Console.Clear();
+                                AdminMode = Constants.Lobby;
+                                isBlocked = Constants.ConsoleNonBlock;
+                                break;
+                            }
+                            else
+                            {
+                                // get right input from user
+                                if (int.TryParse(agent, out selectedAgent) && selectedAgent < agentSocketList.Count)
+                                {
+                                    isBlocked = Constants.ConsoleNonBlock;
+                                    uiState = Constants.InitialState;
+                                    Console.WriteLine(selectedRequest + ":" + selectedAgent); // 0 : -1 ? 
+
+                                    switch (selectedRequest)
+                                    {
+                                        case 1:
+                                            SendAdminRequest(MessageType.StartApp, agentSocketList.ElementAt(selectedAgent).Key);
+                                            break;
+                                        case 2:
+                                            SendAdminRequest(MessageType.ShutdownApp, agentSocketList.ElementAt(selectedAgent).Key);
+                                            break;
+                                        case 3:
+                                            SendAdminRequest(MessageType.RestartApp, agentSocketList.ElementAt(selectedAgent).Key);
+                                            break;
+                                    }
+                                    ResetVariable();
+                                }
+                                else
+                                {
+                                    ResetVariable();
+
+                                    // get input retry
+                                    isBlocked = Constants.ConsoleNonBlock;
+                                }
+                            }
+                        }
+                        // end break;
+                        break;
+                }// end switch
+            }// end loop
+        }
+
+        public void PrintLobbyUI()
+        {
+
+        }
+
+        public void PrintMonitoringUI()
+        {
+
         }
 
         public Task<string> ConsoleInputTask()
@@ -341,7 +387,6 @@ namespace LunkerChatAdminTool.src
         public void SendAdminRequest(MessageType type, Socket agentSocket)
         {
             logger.Debug("[Admin][SendAdminRequest()] start");
-            //CommonHeader header = (CommonHeader) await NetworkManager.ReadAsync(agent, Constants.HeaderSize, typeof(CommonHeader));
             try
             {
                 switch (type)
@@ -363,8 +408,10 @@ namespace LunkerChatAdminTool.src
             catch (SocketException se)
             {
                 // disconnect handlign
+                agentSocketList.Remove(agentSocket);
+                logger.Debug("[Admin][SendAdminRequest()] agent disconnected");
             }
-            logger.Debug("[Admin][SendAdminRequest()] start");
+            logger.Debug("[Admin][SendAdminRequest()] end");
         }// end method 
 
         /// <summary>
@@ -384,16 +431,20 @@ namespace LunkerChatAdminTool.src
                     // agent
                     case MessageType.AgentInfo:
                         await HandleAgentInfoResponseAsync(agentSocket, responseHeader);
+                        //PrintAdminModeUI();
                         break;
                     case MessageType.StartApp:
                         await HandleStartAppResponseAsync(agentSocket, responseHeader);
+                        //PrintAdminModeUI();
                         break;
                     case MessageType.ShutdownApp:
                         await HandleShutdownAppResponseAsync(agentSocket, responseHeader);
+                        //PrintAdminModeUI();
                         break;
 
                     case MessageType.RestartApp:
                         await HandleReStartAppResponseAsync(agentSocket, responseHeader);
+                        //PrintAdminModeUI();
                         break;
 
                     // monitoring
@@ -475,6 +526,9 @@ namespace LunkerChatAdminTool.src
         public Task HandleShutdownAppResponseAsync(Socket agentSocket, AAHeader header)
         {
             return Task.Run(() => {
+                logger.Debug("[Admin][HandleShutdownAppResponseAsync()] start");
+                logger.Debug("[Admin][HandleShutdownAppResponseAsync()] state : " + header.State);
+
                 AgentInfo resultAgentInfo = default(AgentInfo);
 
                 if (agentSocketList.TryGetValue(agentSocket, out resultAgentInfo))
@@ -482,6 +536,36 @@ namespace LunkerChatAdminTool.src
                     if (header.State == MessageState.Success)
                     {
                         resultAgentInfo.ServerState = ServerState.Stopped;
+                    }
+                    else
+                    {
+
+                    }
+                }
+                else
+                {
+                    // error . . .
+                }
+                agentSocketList.Remove(agentSocket);
+                agentSocketList.Add(agentSocket, resultAgentInfo);
+                logger.Debug("[Admin][HandleShutdownAppResponseAsync()] end");
+            });
+        }
+        public Task HandleReStartAppResponseAsync(Socket agentSocket, AAHeader header)
+        {
+            return Task.Run(() => {
+
+                AgentInfo resultAgentInfo = default(AgentInfo);
+
+                if (agentSocketList.TryGetValue(agentSocket, out resultAgentInfo))
+                {
+                    if (header.State == MessageState.Success)
+                    {
+                        resultAgentInfo.ServerState = ServerState.Running;
+                    }
+                    else
+                    {
+
                     }
                 }
                 else
@@ -492,20 +576,10 @@ namespace LunkerChatAdminTool.src
                 agentSocketList.Add(agentSocket, resultAgentInfo);
             });
         }
-        public Task HandleReStartAppResponseAsync(Socket agentSocket, AAHeader header)
-        {
-            return Task.Run(() => {
 
-            });
-        }
-
-        public void RefreshUI()
-        {
-
-        }
 
         /// <summary>
-        /// ok
+        /// Agent가 접속후, 자신의 정보를 보내서 초기화시킨다.
         /// </summary>
         /// <param name="agentSocket"></param>
         /// <param name="header"></param>
@@ -515,7 +589,7 @@ namespace LunkerChatAdminTool.src
             return Task.Run(()=> {
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] start");
                 AAAgentInfoRequestBody requestBody = (AAAgentInfoRequestBody)NetworkManager.Read(agentSocket, header.BodyLength, typeof(AAAgentInfoRequestBody));
-                logger.Debug("[Admin][HandleAgentInfoResponseAsync()] ip : " + new string(requestBody.AgentInfo.ServerInfo.Ip).Split('\0')[0]);
+                logger.Debug("[Admin][HandleAgentInfoResponseAsync()] ip : " + requestBody.AgentInfo.ServerInfo.GetPureIp());
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] port :" + requestBody.AgentInfo.ServerInfo.Port);
 
                 if (agentSocketList.ContainsKey(agentSocket))
@@ -534,7 +608,6 @@ namespace LunkerChatAdminTool.src
             
             
         }
-
       
     }
 }

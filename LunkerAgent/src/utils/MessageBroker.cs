@@ -23,6 +23,10 @@ namespace LunkerAgent.src.utils
         
         private IModel channel = null;
 
+        private IModel chatQueueChannel = null;
+        private IModel agentQueueChannel = null;
+       
+
         private MessageBroker() { Setup(); }
 
         public static MessageBroker GetInstance()
@@ -43,11 +47,16 @@ namespace LunkerAgent.src.utils
             ConnectionFactory factory = new ConnectionFactory() { HostName = "localhost" };
             channel = factory.CreateConnection().CreateModel();
 
+            /*
             channel.QueueDeclare(queue: agentQueueName,
                durable: false,
                exclusive: false,
                autoDelete: false,
                arguments: null);
+
+    */
+
+   
 
             channel.QueueDeclare(queue: chatQueueName,
                 durable: false,
@@ -58,23 +67,7 @@ namespace LunkerAgent.src.utils
             
             RegisterSubscribe();
             factory = null;
-            /*
-            chatQueue = factory.CreateConnection().CreateModel();
-            agentQueue = factory.CreateConnection().CreateModel();
-
             
-            chatQueue.QueueDeclare(queue: chatQueueName,
-                                     durable: false,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
-
-            agentQueue.QueueDeclare(queue: agentQueueName,
-                         durable: false,
-                         exclusive: false,
-                         autoDelete: false,
-                         arguments: null);
-            */
         }// end method
 
         public void Release()
@@ -104,11 +97,22 @@ namespace LunkerAgent.src.utils
             consumer.Received += (model, ea) =>
             {
                 var body = ea.Body;
+
                 AAHeader responseHeader = (AAHeader) NetworkManager.ByteToStructure(body, typeof(AAHeader));
 
-                // send result to admin tool 
-                // call send method
-                AdminAgent.GetInstance().HandleResponse(responseHeader);
+                logger.Debug($"[MessageBroker][Publish()] Subscribe message~! type : " + nameof(responseHeader.Type));
+                logger.Debug($"[MessageBroker][Publish()] Subscribe message~! state : " + nameof(responseHeader.State));
+
+                if (responseHeader.Type == MessageType.RestartApp)
+                {
+                    ;
+                }
+                else
+                {
+                    // send result to admin tool 
+                    // call send method
+                    AdminAgent.GetInstance().HandleResponse(responseHeader);
+                }
             };
             
             channel.BasicConsume(queue: agentQueueName,

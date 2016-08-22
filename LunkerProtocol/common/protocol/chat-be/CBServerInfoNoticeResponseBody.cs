@@ -1,18 +1,18 @@
 ﻿using LunkerLibrary.common.protocol;
 
-public struct CBJoinRoomResponseBody
+public struct CBServerInfoNoticeResponseBody
 {
     ServerInfo serverInfo;
 
-    public CBJoinRoomResponseBody(ServerInfo serverInfo)
+    public CBServerInfoNoticeResponseBody(ServerInfo serverInfo)
     {
         this.serverInfo = serverInfo;
     }
 
+
     public ServerInfo ServerInfo
     {
         get { return serverInfo; }
-        set { serverInfo = value; }
     }
 
 }

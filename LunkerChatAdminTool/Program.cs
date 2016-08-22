@@ -11,10 +11,11 @@ namespace LunkerChatAdminTool
 {
     class Program
     {
-        private static ILog logger = AdminLogger.GetLoggerInstance();
+        //private static ILog logger = AdminLogger.GetLoggerInstance();
+
         static void Main(string[] args)
         {
-            logger.Debug("\n------------------------------------start -=---");
+            
             Power.On();
             //Console.ReadLine();
         }

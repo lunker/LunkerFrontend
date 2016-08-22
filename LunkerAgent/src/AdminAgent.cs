@@ -144,6 +144,21 @@ namespace LunkerAgent.src
                 }
                 
             });
+
+            Task.Run(()=> {
+                while (true)
+                {
+                    if (chatProcess != null)
+                    {
+                        // 죽었을 경우 . . . 
+                        if (chatProcess.HasExited)
+                        {
+
+                        }
+
+                    }
+                }
+            });
             
             while (appState)
             {
@@ -151,7 +166,6 @@ namespace LunkerAgent.src
                 // read 
                 if (adminSocket!=null && adminSocket.Connected)
                 {
-                    
                     if (adminSocket.Poll(0, SelectMode.SelectRead))
                     {
                         // read
@@ -174,15 +188,16 @@ namespace LunkerAgent.src
         public async void SendServerInfo()
         {
             logger.Debug("[AdminAgent][SendServerInfo()] start");
-            ServerInfo serverInfo = new ServerInfo(hostIP);
+            logger.Debug("[AdminAgent][SendServerInfo()]" + hostIP);
+            ServerInfo serverInfo = new ServerInfo(hostIP,0);
             AgentInfo agentInfo = new AgentInfo(serverInfo, new ServerState());
 
             AAAgentInfoRequestBody requestBody = new AAAgentInfoRequestBody(agentInfo);
             byte[] bodyArr = NetworkManager.StructureToByte(requestBody); 
             AAHeader requestHeader = new AAHeader(MessageType.AgentInfo, MessageState.Request, bodyArr.Length);
-
-            await NetworkManager.SendAsync(adminSocket, requestHeader);
-            await NetworkManager.SendAsync(adminSocket, bodyArr);
+            logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
+            NetworkManager.Send(adminSocket, requestHeader);
+             NetworkManager.Send(adminSocket, bodyArr);
             logger.Debug("[AdminAgent][SendServerInfo()] end");
         }
 
@@ -225,6 +240,10 @@ namespace LunkerAgent.src
             }
         }// end method 
 
+        /// <summary>
+        /// Send ResponseHeader to Admin Tool 
+        /// </summary>
+        /// <param name="responseHeader"></param>
         public async void HandleResponse(AAHeader responseHeader)
         {
             //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
@@ -296,7 +315,7 @@ namespace LunkerAgent.src
                 // publish message
                 AAHeader requestHeader = new AAHeader(MessageType.ShutdownApp, MessageState.Request, Constants.None);
                 broker.Publish(requestHeader);
-                chatProcess.Kill();
+                //chatProcess.Kill();
             }
         }
 
@@ -308,7 +327,8 @@ namespace LunkerAgent.src
         /// <param name="peer"></param>
         public async void HandleRestartApp()
         {
-            
+            logger.Debug("[AdminAgent][HandleRestartApp()] start");
+
             // 1) shutdown
             if (chatProcess != null && !chatProcess.HasExited)
             {

@@ -27,6 +27,8 @@ namespace LunkerChatServer
 
         private ILog logger = Logger.GetLoggerInstance();
 
+        private string hostIP = "";
+        
         private static MainWorker mainWorker = null;
         private bool threadState = Constants.ThreadRun;
 
@@ -42,6 +44,9 @@ namespace LunkerChatServer
         private Socket loginServerSocket = null;
 
         private Task<Socket> clientAcceptTask = null;
+
+        private Task loginSocketConnectTask = null;
+        private Task beSocketConnectTask = null;
 
         //private ChatWorker chatWorker;
         private BEWorker beWorker = BEWorker.GetInstance();
@@ -60,22 +65,13 @@ namespace LunkerChatServer
         // chat server main thread
         public async void Start()
         {
+            Console.WriteLine("[ChatServer][MainWorker][Start()] start");
             logger.Debug("[ChatServer][MainWorker][Start()] start");
             Initialize();
-            try
-            {
-                await Task.WhenAll(BindClientSocketListenerAsync());
-
-                
-
-            }
-            catch (SocketException se)
-            {
-                // error
-            }
             
             MainProcess();
 
+            Console.WriteLine("[ChatServer][MainWorker][Start()] end");
             logger.Debug("[ChatServer][MainWorker][Start()] end");
             Console.ReadKey();
         }
@@ -88,95 +84,193 @@ namespace LunkerChatServer
             threadState = Constants.ThreadStop;
         }
 
+        public Task HandleLoginServerConnectAsync()
+        {
+
+            return Task.Run(()=> {
+
+                while (true)
+                {
+                    try
+                    {
+                        if (loginServerSocket != null)
+                        {
+                            if (!loginServerSocket.Connected)
+                            {
+                                loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+                                loginServerSocket.Connect(ep);
+                                Console.WriteLine("[ChatServer][MainProcess()] Connect login Server");
+                                logger.Debug("[ChatServer][MainProcess()] Connect login Server");
+                            }
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . .");
+
+                        continue;
+                    }
+                }
+            });
+        }
+
+        public void HandleBeServerConnectAsync()
+        {
+            
+            if (beSocketConnectTask != null)
+            {
+                if (beSocketConnectTask.IsCompleted)
+                {
+                    beSocketConnectTask = Task.Run(() => {
+                        try
+                        {
+                            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+                            beServerSocket.Connect(ep);
+                            Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
+                        }
+                        catch (SocketException se)
+                        {
+                            throw;
+                        }
+                    });
+                }
+
+            }
+            else
+            {
+                try
+                {
+                    beSocketConnectTask = Task.Run(() => {
+                        try
+                        {
+                            IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+                            beServerSocket.Connect(ep);
+                            Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
+                        }
+                        catch (SocketException se)
+                        {
+                            throw se;
+                        }
+                    });
+                }
+                catch (SocketException se)
+                {
+                    Console.WriteLine("[ChatServer][MainProcess()] errorr");
+
+                }
+            }
+
+        }
+
         public void MainProcess()
         {
             logger.Debug("[ChatServer][MainProcess()] start");
+            Console.WriteLine("[ChatServer][MainProcess()] start");
 
-            while (threadState)
+            Task.Run(() => {
+
+                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
+
+                while (true)
+                {
+                    try
+                    {
+                        if (loginServerSocket != null)
+                        {
+                            if (!loginServerSocket.Connected)
+                            {
+                                loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+                                loginServerSocket.Connect(ep);
+                                Console.WriteLine("[ChatServer][MainProcess()] Connect login Server");
+                                logger.Debug("[ChatServer][MainProcess()] Connect login Server");
+                            }
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
+                        continue;
+                    }
+                }
+            });
+
+            // Connect BEServer 
+            Task.Run( ()=> {
+                while (true)
+                {
+                    //Task.Delay(500);
+                    try
+                    {
+                        if (beServerSocket != null)
+                        {
+                            if (!beServerSocket.Connected)
+                            {
+                                beServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
+                                beServerSocket.Connect(ep);
+                                Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
+                                logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
+                            }
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("[ChatServer][MainProcess()] Reconnect . . . Backend Server . . .");
+                        
+                        continue;
+                    }
+                }
+            });
+
+            //HandleLoginServerConnectAsync();
+
+            while (true)
             {
+
                 // Accept Client Connection Request 
                 HandleClientAcceptAsync();
+                
+                if (loginServerSocket != null && loginServerSocket.Connected)
+                {
+                    readSocketList.Add(loginServerSocket);
+                }
 
-                //ConnectLoginServerAsync()
-                Task.Run( async ()=> {
-                    while (true)
-                    {
-                        Task.Delay(500);
-                        try
-                        {
-                            if (loginServerSocket != null)
-                            {
-                                if (!loginServerSocket.Connected)
-                                {
-                                    IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
-                                    loginServerSocket.Connect(ep);
-
-                                    // send Chatting Server Info to LoginServer
-                                    // messagetype.FENOtice
-                                    CommonHeader requestHeader = new CommonHeader(MessageType.FENotice, MessageState.Request, Constants.None, new Cookie(), new UserInfo());
-                                    await NetworkManager.SendAsync(beServerSocket, requestHeader);
-
-                                    logger.Debug("[ChatServer][MainProcess()] Connect Login Server");
-                                }
-                            }
-                        }
-                        catch (SocketException se)
-                        {
-                            continue;
-                        }
-                    }
-                });
-
-                // Connect BEServer 
-                Task.Run( ()=> {
-                    while (true)
-                    {
-                        Task.Delay(500);
-                        try
-                        {
-                            if (beServerSocket != null)
-                            {
-                                if (!beServerSocket.Connected)
-                                {
-                                    IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
-                                    beServerSocket.Connect(ep);
-                                    logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
-                                }
-                            }
-                        }
-                        catch (SocketException se)
-                        {
-                            continue;
-                        }
-                        
-                    }
-                });                
+                if(beServerSocket != null && beServerSocket.Connected)
+                {
+                    readSocketList.Add(beServerSocket);
+                }
 
                 // 접속한 client가 있을 경우에만 수행.
                 // client의 요청 수행 
                 if (0 != connectionManager.GetClientConnectionCount())
                 {
                     // select CLIENT 
-                    readSocketList = connectionManager.GetClientConnectionDic().Values.ToList();
+                    foreach (Socket tmp in connectionManager.GetClientConnectionDic().Values.ToList())
+                    {
+                        readSocketList.Add(tmp);
+                    }
+                    //readSocketList = connectionManager.GetClientConnectionDic().Values.ToList();
+                }// end if
 
-                    // select LOGIN
-                    // 사용자의 Auth정보를 받기 위함.
-                    readSocketList.Add(loginServerSocket);
-                   
+                if (0 != readSocketList.Count)
+                {
+                    //Console.WriteLine("socket select!!!!! ");
                     // Check Inputs 
                     Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
 
                     // Request가 들어왔을 경우 
-                    if (readSocketList.Count != 0)
+                    foreach (Socket peer in readSocketList)
                     {
-                        foreach (Socket peer in readSocketList)
-                        {
-                            HandleRequest(peer);
-                        }
+                        HandleRequest(peer);
                     }
-                }// end if
-            }// end loop 
+                }
+                readSocketList.Clear();
+
+            }
         }
+
         /// <summary>
         /// <para>Handle Client Connect Request</para>
         /// <para>나중에 auth 인증을 거친 후 해당 사용자의 connection을 저장시킨다.  </para>
@@ -189,6 +283,7 @@ namespace LunkerChatServer
                 {
                     if (clientAcceptTask.IsCompleted)
                     {
+                        Console.WriteLine("[ChatServer][HandleRequest()] client 접속!");
                         logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
 
                         // 다시 task run 
@@ -200,6 +295,7 @@ namespace LunkerChatServer
                 }
                 else
                 {
+                    Console.WriteLine("[ChatServer][HandleRequest()] start accept task ");
                     logger.Debug("[ChatServer][HandleRequest()] start accept task ");
                     //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
                     clientAcceptTask = Task.Run(() => {
@@ -225,14 +321,19 @@ namespace LunkerChatServer
                 // 일단 CCHeader로 전체 header 사용 
                 try
                 {
-                    CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
+                    //Console.WriteLine("chatserver: handlerequest");
+                    CommonHeader header = (CommonHeader) NetworkManager.Read(peer, Constants.HeaderSize, typeof(CommonHeader));
                     CommonHeader cookieVerifyHeader;
                     switch (header.Type)
                     {
+                        // login이 chat에 요청을 보낸다.
+                        // 그거에 대한 응답을 보내준다.
+                        // chat server의 정보를 담아서 보내준다!!
                         case MessageType.FENotice:
                             // chat->login에게 fe의 정보를 보내준것에 대한 response
                             // 
                             // just Get Response about FE Notice 
+                            await HandleFEInfoRequeset(peer, header);
                             break;
                         
                             // login -> chat
@@ -309,10 +410,8 @@ namespace LunkerChatServer
                 {
                     // error
                     // Get rid of client 
-
-                    connectionManager.
-
-
+                    Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
+                    peer.Close();
                     return;
                 }
             }
@@ -357,16 +456,37 @@ namespace LunkerChatServer
             clientListener.Bind(ep);
             clientListener.Listen(AppConfig.GetInstance().Backlog);
 
+            // set host id
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    if (ip.ToString().Split('.')[0].Equals("10"))
+                    {
+                        hostIP = ip.ToString();
+                        logger.Debug("[chatserver][Initialize()] host ip : " + hostIP);
+                    }
+                }
+            }
         }// end method 
 
-        public Task BindClientSocketListenerAsync()
+        /// <summary>
+        /// Send FE Info BE
+        /// </summary>
+        public Task HandleFEInfoRequeset(Socket peer,CommonHeader header)
         {
             return Task.Run(()=> {
-                // initialiize client socket listener
-                
+                Console.WriteLine("[chatserver][HandleFEInfoRequeset()] handle");
+                CBServerInfoNoticeResponseBody responseBody = new CBServerInfoNoticeResponseBody(new ServerInfo(hostIP, AppConfig.GetInstance().ClientListenPort));
+
+                CommonHeader responseHeader = new CommonHeader(MessageType.FENotice, MessageState.Response, Marshal.SizeOf(responseBody), new Cookie(), new UserInfo());
+
+                NetworkManager.Send(peer, responseHeader);
+                NetworkManager.Send(peer, responseBody);
+
             });
         }
-
 
 
         public async void HandleNoticeUserAuth(Socket peer, CommonHeader header)
@@ -401,6 +521,7 @@ namespace LunkerChatServer
         public Task HandleConnectionSetupAsync(Socket peer, CommonHeader header)
         {
             return Task.Run(()=> {
+                Console.WriteLine("[chatserver][HandleConnectionSetupAsync()] start");
                 Cookie sentCookie = header.Cookie;
                 UserInfo userInfo = header.UserInfo;
 
@@ -417,7 +538,10 @@ namespace LunkerChatServer
                     // 인증성공
                     CommonHeader responseHeader = new CommonHeader(MessageType.ConnectionSetup, MessageState.Success, Constants.None, new Cookie(), userInfo);
                     NetworkManager.SendAsync(peer, responseHeader);
+
+                    connectionManager.AddClientConnection(header.UserInfo.GetPureId(), peer);
                 }
+                Console.WriteLine("[chatserver][HandleConnectionSetupAsync()] end");
             });
         }
 

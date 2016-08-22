@@ -53,6 +53,8 @@
     <Compile Include="common\protocol\chat-be\CBLeaveResponseBody.cs" />
     <Compile Include="common\protocol\chat-be\CBListRoomRequestBody.cs" />
     <Compile Include="common\protocol\chat-be\CBListRoomResponseBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBServerInfoNoticeRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBServerInfoNoticeResponseBody.cs" />
     <Compile Include="common\protocol\ChattingRoom.cs" />
     <Compile Include="common\protocol\client-chat\CCCreateRoomRequestBody.cs" />
     <Compile Include="common\protocol\client-chat\CCCreateRoomResponseBody.cs" />

@@ -20,6 +20,15 @@ namespace LunkerLibrary.common.protocol
             this.port = port;
         }
 
+        public ServerInfo(string ip, int port)
+        {
+            this.ip = new char[15];
+            Array.Copy(ip.ToCharArray(), this.ip, ip.ToCharArray().Length);
+
+            this.port = port;
+
+        }
+
         public ServerInfo(string ip)
         {
             this.ip = new char[15];

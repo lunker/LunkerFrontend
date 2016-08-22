@@ -19,7 +19,6 @@ namespace LunkerLibrary.common.Utils
 
             foreach (Object status in list)
             {
-
                 int datasize = Marshal.SizeOf(status);//((PACKET_DATA)obj).TotalBytes; // 구조체에 할당된 메모리의 크기를 구한다.
                 IntPtr buff = Marshal.AllocHGlobal(datasize); // 비관리 메모리 영역에 구조체 크기만큼의 메모리를 할당한다.
                 Marshal.StructureToPtr(status, buff, false); // 할당된 구조체 객체의 주소를 구한다.
@@ -126,7 +125,6 @@ namespace LunkerLibrary.common.Utils
             {
                 throw ;
             }
-
             return obj;
         }
 

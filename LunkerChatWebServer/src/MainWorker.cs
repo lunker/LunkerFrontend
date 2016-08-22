@@ -190,7 +190,8 @@ namespace LunkerChatWebServer.src
 
         public async void HandleRequest(HttpListenerRequest request, HttpListenerResponse response)
         {
-            
+            //logger.Debug("[ChatServer][HandleRequest()] start accept task ");
+            Console.WriteLine("[ChatServer][HandleRequest()] start");
             // 정상 연결상태 
             // 일단 CCHeader로 전체 header 사용 
             try

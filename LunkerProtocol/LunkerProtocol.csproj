@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{2BC1F17F-4F41-4D18-B31E-61D1EBAB65A9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LunkerProtocol</RootNamespace>
+    <AssemblyName>LunkerProtocol</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="common\Constants.cs" />
+    <Compile Include="common\KeyType.cs" />
+    <Compile Include="common\protocol\admin-agent\AAAgentInfoRequestBody.cs" />
+    <Compile Include="common\protocol\admin-agent\AAAgentInfoResponseBody.cs" />
+    <Compile Include="common\protocol\admin-agent\AAHeader.cs" />
+    <Compile Include="common\protocol\AgentInfo.cs" />
+    <Compile Include="common\protocol\CBHeader.cs" />
+    <Compile Include="common\protocol\chat-be\CBCreateRoomRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBCreateRoomResponseBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBJoinRoomRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBJoinRoomResponseBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBLeaveRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBLeaveResponseBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBListRoomRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBListRoomResponseBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBServerInfoNoticeRequestBody.cs" />
+    <Compile Include="common\protocol\chat-be\CBServerInfoNoticeResponseBody.cs" />
+    <Compile Include="common\protocol\ChattingRoom.cs" />
+    <Compile Include="common\protocol\client-chat\CCCreateRoomRequestBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCCreateRoomResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCJoinRequestBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCJoinResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCLeaveRequestBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCLeaveResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCListRoomRequestBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCListRoomResponseBody.cs" />
+    <Compile Include="common\protocol\client-chat\CCUserAuthRequestBody.cs" />
+    <Compile Include="common\protocol\client-login\CLDeleteRequestBody.cs" />
+    <Compile Include="common\protocol\client-login\CLDeleteResponseBody.cs" />
+    <Compile Include="common\protocol\client-login\CLModifyRequestBody.cs" />
+    <Compile Include="common\protocol\client-login\CLModifyResponseBody.cs" />
+    <Compile Include="common\protocol\client-login\CLSigninRequestBody.cs" />
+    <Compile Include="common\protocol\client-login\CLSigninResponseBody.cs" />
+    <Compile Include="common\protocol\client-login\CLSignupRequestBody.cs" />
+    <Compile Include="common\protocol\client-login\CLSignupResponseBody.cs" />
+    <Compile Include="common\protocol\CommonHeader.cs" />
+    <Compile Include="common\protocol\Cookie.cs" />
+    <Compile Include="common\protocol\frame\Body.cs" />
+    <Compile Include="common\protocol\frame\Header.cs" />
+    <Compile Include="common\protocol\login-be\LBDeleteRequestBody.cs" />
+    <Compile Include="common\protocol\login-be\LBDeleteResponseBody.cs" />
+    <Compile Include="common\protocol\login-be\LBModifyRequestBody.cs" />
+    <Compile Include="common\protocol\login-be\LBModifyResponseBody.cs" />
+    <Compile Include="common\protocol\login-be\LBSigninRequestBody.cs" />
+    <Compile Include="common\protocol\login-be\LBSigninResponseBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCFENoticeRequestBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCFENoticeResponseBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCUserAuthRequestBody.cs" />
+    <Compile Include="common\protocol\login-chat\LCUserAuthResponseBody.cs" />
+    <Compile Include="common\protocol\MessageState.cs" />
+    <Compile Include="common\protocol\MessageType.cs" />
+    <Compile Include="common\protocol\Packet.cs" />
+    <Compile Include="common\protocol\ServerInfo.cs" />
+    <Compile Include="common\protocol\ServerState.cs" />
+    <Compile Include="common\protocol\UIState.cs" />
+    <Compile Include="common\protocol\UserInfo.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -13,7 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>true</IsWebBootstrapper>
-    <PublishUrl>ftp://10.10.0.157/</PublishUrl>
+    <PublishUrl>ftp://10.10.0.154/</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
     <UpdateEnabled>true</UpdateEnabled>
@@ -23,10 +23,10 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <InstallUrl>http://localhost/LunkerChatServer/</InstallUrl>
+    <InstallUrl>http://localhost/</InstallUrl>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>1</ApplicationRevision>
+    <ApplicationRevision>7</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -37,7 +37,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>C:\chatserver%28socket%29\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -52,7 +52,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>E2B84B36228092BE1C178C726A348DE3A01F54F7</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>0F381945B14AD17241304965BD761F44A151AC94</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>LunkerChatServer_TemporaryKey.pfx</ManifestKeyFile>
@@ -62,6 +62,12 @@
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>LunkerChatServer_TemporaryKey.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="log4net">
@@ -82,6 +88,7 @@
   <ItemGroup>
     <Compile Include="src\agent\MessageBroker.cs" />
     <Compile Include="src\Power.cs" />
+    <Compile Include="src\utils\ChatLogger.cs" />
     <Compile Include="src\utils\AppConfig.cs" />
     <Compile Include="src\ChatServer.cs" />
     <Compile Include="src\MainWorker.cs" />
@@ -116,6 +123,10 @@
     <ProjectReference Include="..\LunkerLibrary\LunkerLibrary.csproj">
       <Project>{79ae82ed-b2aa-410b-8099-248b5493d276}</Project>
       <Name>LunkerLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LunkerProtocol\LunkerProtocol.csproj">
+      <Project>{2bc1f17f-4f41-4d18-b31e-61d1ebab65a9}</Project>
+      <Name>LunkerProtocol</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

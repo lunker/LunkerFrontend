@@ -3,6 +3,8 @@ using LunkerLibrary.common.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +16,7 @@ namespace LunkerLoginServer
 
         static void Main(string[] args)
         {
+            
             logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
             bool appState = Constants.AppRun;
 
@@ -41,6 +44,16 @@ namespace LunkerLoginServer
                     Console.WriteLine("다시 입력하십시오.");
                 }
             }
+            
+
+            /*
+            Socket tmp = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            tmp.Bind(new IPEndPoint(IPAddress.Any,43320));
+            tmp.Listen(100);
+            tmp.Accept();
+            Console.WriteLine("asfaddaf");
+
+            */
 
         }// end method
     }

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<AppConfig>
+  <frontport>43320</frontport>
+  <backport>43330</backport>
+  
+  <backlog>10</backlog>
+  
+  <backendserverip>10.100.100.100</backendserverip>
+  <backendserverport>10000</backendserverport>
+  
+</AppConfig>

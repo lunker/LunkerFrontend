@@ -16,7 +16,7 @@ namespace LunkerLibrary.common.Utils
         {
             if (logger == null)
             {
-                log4net.Config.XmlConfigurator.Configure(new System.IO.FileInfo("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\DebugLogconfig.xml"));
+                log4net.Config.XmlConfigurator.Configure(new System.IO.FileInfo("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatWebServer\\config\\DebugLogconfig.xml"));
                 logger = LogManager.GetLogger("Logger");
             }
                 

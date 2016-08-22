@@ -24,7 +24,9 @@ namespace LunkerLoginServer.src.utils
         private static AppConfig appConfig = null;
 
         private Dictionary<string, ServerInfo> chatServerInfo = null;
-       
+        private int clientListenEndPoint = 0;
+        private int frontendListenEndPoint = 0;
+
 
         private AppConfig()
         {
@@ -32,37 +34,10 @@ namespace LunkerLoginServer.src.utils
             //StringBuilder sb = new StringBuilder();
             //chatServerInfo.Select();
 
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\LunkerFrontend\\LunkerChatServer\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
             while (reader.Read())
             {
-
-                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontport"))
-                {
-                    reader.Read();
-                    if (Int32.TryParse(reader.Value, out frontport))
-                    {
-                        logger.Debug("");
-                    }
-                    else
-                    {
-                        logger.Debug("");
-                    }
-                    reader.Read(); // delete close element
-                }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backport"))
-                {
-                    reader.Read();
-                    if (Int32.TryParse(reader.Value, out backport))
-                    {
-                        logger.Debug("");
-                    }
-                    else
-                    {
-                        logger.Debug("");
-                    }
-                    reader.Read(); // delete close element
-                }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backlog"))
+                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backlog"))
                 {
                     reader.Read();
                     if (Int32.TryParse(reader.Value, out backlog))
@@ -95,8 +70,38 @@ namespace LunkerLoginServer.src.utils
                     }
                     reader.Read(); // delete close element
                 }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("clientListenEndPoint"))
+                {
+                    reader.Read();
+                    if (Int32.TryParse(reader.Value, out clientListenEndPoint))
+                    {
+                        logger.Debug("");
+                    }
+                    else
+                    {
+                        logger.Debug("");
+                    }
+                    
+                    reader.Read(); // delete close element
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("frontendListenEndPoint"))
+                {
+                    reader.Read();
+                    if (Int32.TryParse(reader.Value, out frontendListenEndPoint))
+                    {
+                        logger.Debug("");
+                    }
+                    else
+                    {
+                        logger.Debug("");
+                    }
+                    
+                    reader.Read(); // delete close element
+                }
 
-            }
+
+
+            }//end loop
         }// set configs 
 
         public static AppConfig GetInstance()
@@ -131,6 +136,16 @@ namespace LunkerLoginServer.src.utils
         public int Backendserverport
         {
             get { return backendserverport; }
+        }
+
+        public int ClientListenEndPoint
+        {
+            get { return clientListenEndPoint; }
+        }
+
+        public int FrontListenEndPoint
+        {
+            get { return frontendListenEndPoint; }
         }
     }
 }

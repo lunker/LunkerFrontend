@@ -1,0 +1,20 @@
+﻿/*
+public class MessageState
+{
+
+    public const short REQUEST = 100;
+
+    public const short SUCCESS = 300;
+    public const short FAIL = 400;
+
+}
+*/
+
+public enum MessageState : short
+{
+    Request = 100,
+    Response = 200,
+    Success = 300,
+    Fail = 400,
+    Error = 500
+}

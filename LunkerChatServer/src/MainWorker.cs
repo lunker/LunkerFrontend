@@ -40,6 +40,9 @@ namespace LunkerChatServer
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
 
+
+        private List<Socket> tmpClientSocket = null;
+
         private Socket beServerSocket = null;
         private Socket loginServerSocket = null;
 
@@ -163,6 +166,70 @@ namespace LunkerChatServer
 
         }
 
+        /*
+        public Task HandleClientAcceptAsync()
+        {
+            return Task.Run(() => {
+
+                while (true)
+                {
+                    try
+                    {
+                        if (clientListener != null)
+                        {
+                            if (clientListener.IsBound)
+                            {
+                                Socket client = clientListener.Accept();
+                                Console.WriteLine("loginserver : client connected!!");
+                                logger.Debug("[ChatServer][HandleClientAcceptAsync()] Accept Client Connect");
+
+                                // Add accepted connections
+                                clientConnection.Add(client);
+                            }
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("loginserver : client listener disconnected!!");
+                        continue;
+                    }
+                }
+            });
+        }
+        */
+
+
+
+        public Task HandleClientAcceptAsync()
+        {
+            return Task.Run(() => {
+
+                while (true)
+                {
+                    try
+                    {
+                        if (clientListener != null)
+                        {
+                            if (clientListener.IsBound)
+                            {
+                                Socket client = clientListener.Accept();
+                                Console.WriteLine("loginserver : client connected!!");
+                                logger.Debug("[ChatServer][HandleClientAcceptAsync()] Accept Client Connect");
+
+                                // Add accepted connections
+                                //clientConnection.Add(client);
+                                tmpClientSocket.Add(client);
+                            }
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("loginserver : client listener disconnected!!");
+                        continue;
+                    }
+                }
+            });
+        }
         public void MainProcess()
         {
             logger.Debug("[ChatServer][MainProcess()] start");
@@ -180,7 +247,8 @@ namespace LunkerChatServer
                         {
                             if (!loginServerSocket.Connected)
                             {
-                                loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                                Console.WriteLine("[ChatServer][MainProcess()] 설마....");
+                                
 
                                 loginServerSocket.Connect(ep);
                                 Console.WriteLine("[ChatServer][MainProcess()] Connect login Server");
@@ -188,9 +256,16 @@ namespace LunkerChatServer
                             }
                         }
                     }
+                    catch(InvalidOperationException ioe)
+                    {
+                        loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
+                        continue;
+                    }
                     catch (SocketException se)
                     {
                         Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
+                        loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                         continue;
                     }
                 }
@@ -198,6 +273,9 @@ namespace LunkerChatServer
 
             // Connect BEServer 
             Task.Run( ()=> {
+
+                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
+
                 while (true)
                 {
                     //Task.Delay(500);
@@ -207,8 +285,8 @@ namespace LunkerChatServer
                         {
                             if (!beServerSocket.Connected)
                             {
-                                beServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
+                                
+                                
                                 beServerSocket.Connect(ep);
                                 Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
                                 logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
@@ -218,28 +296,36 @@ namespace LunkerChatServer
                     catch (SocketException se)
                     {
                         Console.WriteLine("[ChatServer][MainProcess()] Reconnect . . . Backend Server . . .");
-                        
+                        beServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
                         continue;
                     }
                 }
             });
 
-            //HandleLoginServerConnectAsync();
+            HandleClientAcceptAsync();
 
             while (true)
             {
-
-                // Accept Client Connection Request 
-                HandleClientAcceptAsync();
                 
                 if (loginServerSocket != null && loginServerSocket.Connected)
                 {
                     readSocketList.Add(loginServerSocket);
                 }
 
+                /*
                 if(beServerSocket != null && beServerSocket.Connected)
                 {
                     readSocketList.Add(beServerSocket);
+                }
+                */
+
+
+                if (tmpClientSocket.Count!=0)
+                {
+                    foreach (Socket tmpClient in tmpClientSocket.ToList())
+                    {
+                        readSocketList.Add(tmpClient);
+                    }
                 }
 
                 // 접속한 client가 있을 경우에만 수행.
@@ -256,58 +342,30 @@ namespace LunkerChatServer
 
                 if (0 != readSocketList.Count)
                 {
-                    //Console.WriteLine("socket select!!!!! ");
-                    // Check Inputs 
-                    Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
-
-                    // Request가 들어왔을 경우 
-                    foreach (Socket peer in readSocketList)
+                    try
                     {
-                        HandleRequest(peer);
+                        Socket.Select(readSocketList, writeSocketList, errorSocketList, 300);
+
+                        // Request가 들어왔을 경우 
+                        foreach (Socket peer in readSocketList)
+                        {
+                            if (peer.Blocking)
+                            {
+                                peer.Blocking = false;
+                                Task.Run(() => { HandleRequest(peer); });
+                            }
+                        }
                     }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("[chatserver][mainprocess()] : " + se.SocketErrorCode);
+                        Console.WriteLine("[chatserver][mainprocess()] : " + se.StackTrace);
+                        continue;
+                    }
+                    // Check Inputs 
                 }
                 readSocketList.Clear();
 
-            }
-        }
-
-        /// <summary>
-        /// <para>Handle Client Connect Request</para>
-        /// <para>나중에 auth 인증을 거친 후 해당 사용자의 connection을 저장시킨다.  </para>
-        /// </summary>
-        public void HandleClientAcceptAsync()
-        {
-            try
-            {
-                if (clientAcceptTask != null)
-                {
-                    if (clientAcceptTask.IsCompleted)
-                    {
-                        Console.WriteLine("[ChatServer][HandleRequest()] client 접속!");
-                        logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
-
-                        // 다시 task run 
-                        //getAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                        clientAcceptTask = Task.Run(() => {
-                            return clientListener.Accept();
-                        });
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("[ChatServer][HandleRequest()] start accept task ");
-                    logger.Debug("[ChatServer][HandleRequest()] start accept task ");
-                    //clientAcceptTask = Task.Factory.FromAsync(clientListener.BeginAccept, clientListener.EndAccept, true);
-                    clientAcceptTask = Task.Run(() => {
-                        return clientListener.Accept();
-                    });
-                }
-            }
-            catch(SocketException se)
-            {
-                // clientListener error 
-                // reconnect.
-                return;
             }
         }
 
@@ -323,6 +381,12 @@ namespace LunkerChatServer
                 {
                     //Console.WriteLine("chatserver: handlerequest");
                     CommonHeader header = (CommonHeader) NetworkManager.Read(peer, Constants.HeaderSize, typeof(CommonHeader));
+                    Console.WriteLine($"[chat] type : {header.Type}");
+                    Console.WriteLine($"[chat] state : {header.State}");
+                    Console.WriteLine($"[chat] remote IP: { ((IPEndPoint)peer.RemoteEndPoint).Address.ToString()}");
+                    Console.WriteLine($"[chat] remote port: { ((IPEndPoint)peer.RemoteEndPoint).Port}");
+                    Console.WriteLine($"[chat] local port: { ((IPEndPoint)peer.LocalEndPoint).Address.ToString()}");
+
                     CommonHeader cookieVerifyHeader;
                     switch (header.Type)
                     {
@@ -360,6 +424,7 @@ namespace LunkerChatServer
                         // check cookie available
                         // ok 
                         case MessageType.CreateRoom:
+                            /*
                             cookieVerifyHeader = (CommonHeader) await HandleCookieVerifyAsync(header);
                             if(cookieVerifyHeader.State == MessageState.Success)
                             {
@@ -370,20 +435,25 @@ namespace LunkerChatServer
                                 // error
                                 // not authenticated user
                             }
+                            */
+                            await HandleCreateRoomAsync(peer, header);
                             break;
 
                             // ok 
                         case MessageType.JoinRoom:
+                            /*
                             cookieVerifyHeader = (CommonHeader)await HandleCookieVerifyAsync(header);
                             if (cookieVerifyHeader.State == MessageState.Success)
                             {
-                                await HandleCreateRoomAsync(peer, header);
+                                await HandleJoinRoomAsync(peer, header);
                             }
                             else
                             {
                                 // error
                                 // not authenticated user
                             }
+                            
+                            */
                             await HandleJoinRoomAsync(peer, header);
                             break;
 
@@ -396,7 +466,7 @@ namespace LunkerChatServer
                             // ok
                         // not yet 
                         case MessageType.ListRoom:
-                            await HandleCookieVerifyAsync(header);
+                            //await HandleCookieVerifyAsync(header);
                             await HandleListChattingRoomAsync(peer, header);
                             break;
                             // ok
@@ -404,14 +474,27 @@ namespace LunkerChatServer
                         default:
                             await HandleErrorAsync(peer, header);
                             break;
-                    }
+                    }// end switch
+                    peer.Blocking = true;
                 }
                 catch (SocketException se)
                 {
+                    peer.Blocking = true;
                     // error
                     // Get rid of client 
-                    Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
-                    peer.Close();
+                    Console.WriteLine(se.StackTrace);
+                    Console.WriteLine(se.SocketErrorCode);
+                    if(se.SocketErrorCode == SocketError.WouldBlock)
+                    {
+                        Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
+                        
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
+                        peer.Close();
+                    }
                     return;
                 }
             }
@@ -446,6 +529,8 @@ namespace LunkerChatServer
             readSocketList = new List<Socket>();
             writeSocketList = new List<Socket>();
             errorSocketList = new List<Socket>();
+
+            tmpClientSocket = new List<Socket>();
 
             loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             beServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
@@ -491,11 +576,14 @@ namespace LunkerChatServer
 
         public async void HandleNoticeUserAuth(Socket peer, CommonHeader header)
         {
+            Console.WriteLine("[chatserver][HandleNoticeUserAuth()] start");
             // 1)
             LCUserAuthRequestBody requestBody = (LCUserAuthRequestBody)await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(LCUserAuthRequestBody));
-
+            Console.WriteLine($"[chatserver][HandleNoticeUserAuth()] cookie : ");
+            Console.WriteLine($"[chatserver][HandleNoticeUserAuth()] userinfo id: " + requestBody.UserInfo.GetPureId());
             // 2) 
             connectionManager.AddAuthInfo(new string(requestBody.UserInfo.Id), requestBody.Cookie);
+            Console.WriteLine("[chatserver][HandleNoticeUserAuth()] end");
         }
 
         /// <summary>
@@ -540,6 +628,7 @@ namespace LunkerChatServer
                     NetworkManager.SendAsync(peer, responseHeader);
 
                     connectionManager.AddClientConnection(header.UserInfo.GetPureId(), peer);
+                    tmpClientSocket.Remove(peer);
                 }
                 Console.WriteLine("[chatserver][HandleConnectionSetupAsync()] end");
             });
@@ -552,6 +641,7 @@ namespace LunkerChatServer
         /// <param name="peer"></param>
         public async void HandleChattingRequest(Socket peer, CommonHeader header)
         {
+            Console.WriteLine("[chatserver][HandleChattingRequest()] start");
             byte[] messageBuff = new byte[header.BodyLength];
             messageBuff = await NetworkManager.ReadAsync(peer, header.BodyLength);
             // read message
@@ -561,11 +651,15 @@ namespace LunkerChatServer
 
             // broadcast
             Socket client = null;
+
+            header.State = MessageState.Success;
+
             foreach (string user in connectionManager.GetChattingRoomListInfoKey(enteredRoom))
             {
                 client = connectionManager.GetClientConnection(user);
 
                 // broadcast to each client
+                await NetworkManager.SendAsync(client,header);
                 await NetworkManager.SendAsync(client, messageBuff);
             }
 
@@ -575,6 +669,7 @@ namespace LunkerChatServer
             await NetworkManager.SendAsync(beServerSocket, responseHeader);
             // worker에게 위임? 
             //beWorker.HandleChatting(header);
+            Console.WriteLine("[chatserver][HandleChattingRequest()] end");
         }
 
         public Task HandleChattingRequestAsync(Socket peer, CommonHeader header)
@@ -625,19 +720,23 @@ namespace LunkerChatServer
         /// <param name="peer"></param>
         public async void HandleCreateRoom(Socket peer, CommonHeader header)
         {
+            Console.WriteLine("[ChatServer][HandleCreateRoom()] start");
             // 1) send request to BE server
-            await NetworkManager.SendAsync(beServerSocket,header);
+            NetworkManager.Send(beServerSocket,header);
 
             // 2) read response(header, body) from BE
-            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
-            CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody) await NetworkManager.ReadAsync(beServerSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
+            CommonHeader responseHeader = (CommonHeader)  NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody)  NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
 
+            Console.WriteLine("[ChatServer][HandleCreateRoom()] end");
+            
             // 3) send response(header, body) to client
             await NetworkManager.SendAsync(peer, responseHeader);
             await NetworkManager.SendAsync(peer, responseBody);
 
             // 4) 
             connectionManager.AddChattingRoomListInfoKey(responseBody.ChattingRoom);
+            Console.WriteLine("[ChatServer][HandleCreateRoom()] end");
         }
 
         public Task HandleCreateRoomAsync(Socket peer, CommonHeader header)
@@ -655,6 +754,7 @@ namespace LunkerChatServer
         /// <param name="header"></param>
         public async void HandleListChattingRoom(Socket peer, CommonHeader header)
         {
+            Console.WriteLine("[ChatServer][HandleListChattingRoom()] start");
             // 1) 
             await NetworkManager.SendAsync(beServerSocket, header);
 
@@ -666,6 +766,7 @@ namespace LunkerChatServer
 
             await NetworkManager.SendAsync(peer,responseHeader);
             await NetworkManager.SendAsync(peer, responseBody);
+            Console.WriteLine("[ChatServer][HandleListChattingRoom()] end");
         }
 
         public Task HandleListChattingRoomAsync(Socket peer, CommonHeader header)
@@ -685,6 +786,7 @@ namespace LunkerChatServer
         /// <param name="header"></param>
         public async void HandleJoinRoom(Socket peer, CommonHeader header)
         {
+            Console.WriteLine("[ChatServer][HandleJoinRoom()] start");
             ChattingRoom enteredRoom = default(ChattingRoom);
             string userId = default(string);
 
@@ -698,7 +800,6 @@ namespace LunkerChatServer
 
             // 3) 
             CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
-
             
             if (header.State == MessageState.Fail)
             {
@@ -713,6 +814,7 @@ namespace LunkerChatServer
             {
                 // success 
                 // send header to client
+                responseHeader.BodyLength = 0;
                 await NetworkManager.SendAsync(peer, responseHeader);
                 // add user info to data structure 
                 connectionManager.AddChattingRoomListInfoValue(enteredRoom, userId);
@@ -720,8 +822,10 @@ namespace LunkerChatServer
             else
             {
                 // error
+                responseHeader.BodyLength = 0;
                 await NetworkManager.SendAsync(peer, responseHeader);
             }
+            Console.WriteLine("[ChatServer][HandleJoinRoom()] end");
         }
 
         public Task HandleJoinRoomAsync(Socket peer, CommonHeader header)

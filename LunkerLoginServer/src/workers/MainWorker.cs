@@ -182,14 +182,21 @@ namespace LunkerLoginServer.src.workers
 
                     if(0 != readSocketList.Count)
                     {
-                        Socket.Select(readSocketList, writeSocketList, errorSocketList, 20);
+                        Socket.Select(readSocketList, writeSocketList, errorSocketList, 300);
 
                         // Request가 들어왔을 경우 
                         
                         foreach (Socket peer in readSocketList)
                         {
                             //logger.Debug("[LoginServer][HandleRequest()] in socket.select");
-                            HandleRequest(peer);
+                            //HandleRequest(peer);
+                            
+                            if (peer.Blocking)
+                            {
+                                peer.Blocking = false;
+                                Task.Run(()=> { HandleRequest(peer); }); 
+                            }
+
                         }
                     }
                     readSocketList.Clear();
@@ -288,6 +295,7 @@ namespace LunkerLoginServer.src.workers
             {
                 try
                 {
+                    
                     //Console.WriteLine("[LoginServer][HandleRequest()] handle client request start");
                     logger.Debug("[LoginServer][HandleRequest()] handle client request start");
                     // 정상 연결상태 
@@ -307,7 +315,8 @@ namespace LunkerLoginServer.src.workers
                     {
                         case MessageType.FENotice:
                             Console.WriteLine("[LoginServer][HandleRequest()] FENotice.");
-                            await HandleFENoticeAsync(peer, header);
+                            //await HandleFENoticeAsync(peer, header);
+                             HandleFENotice(peer, header);
                             break;
 
                         case MessageType.Signin:
@@ -335,6 +344,7 @@ namespace LunkerLoginServer.src.workers
                             await HandleErrorAsync(peer, header);
                             break;
                     }
+                    peer.Blocking = true;
                     logger.Debug("[LoginServer][HandleRequest()] handle client request end");
                     Console.WriteLine("[LoginServer][HandleRequest()] handle client request end");
 

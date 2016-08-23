@@ -215,6 +215,11 @@ namespace LunkerChatWebServer.src.utils
             chattingRoomJoinInfo.Add(id, room);
         }
 
+        public bool CheckChattingRoomJoinInfo(string id)
+        {
+            return chattingRoomJoinInfo.ContainsKey(id);
+        }
+
         public void DeleteChattingRoomJoinInfo(string id)
         {
             chattingRoomJoinInfo.Remove(id);

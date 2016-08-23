@@ -73,10 +73,18 @@ namespace LunkerLibrary.common.utils
         {
             return Task.Run( async ()=> {
                 Object obj = null;
-                //int rc = 0;
+                int rc = 0;
+
+
                 byte[] buff = new byte[msgLength];
 
                 WebSocketReceiveResult receiveResult = await peer.ReceiveAsync(new ArraySegment<byte>(buff), CancellationToken.None);
+
+                rc = receiveResult.Count;
+                if (rc == 0)
+                {
+                    throw new NoMessageException();
+                }
 
                 if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {
@@ -105,21 +113,40 @@ namespace LunkerLibrary.common.utils
         public static async Task<byte[]> ReadAsync(WebSocket peer, int msgLength)
         {
             return await Task.Run(async () => {
-                int rc = 0;
+
                 byte[] buff = new byte[msgLength];
-                WebSocketReceiveResult receiveResult = await peer.ReceiveAsync(new ArraySegment<byte>(buff), CancellationToken.None);
-
-                if (receiveResult.MessageType == WebSocketMessageType.Close)
+                try
                 {
-                    await peer.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                    int rc = 0;
+                    
 
+                    WebSocketReceiveResult receiveResult = await peer.ReceiveAsync(new ArraySegment<byte>(buff), CancellationToken.None);
+
+                    if (receiveResult.MessageType == WebSocketMessageType.Close)
+                    {
+                        await peer.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+
+                    }
+                    else if (receiveResult.MessageType == WebSocketMessageType.Text)
+                    {
+                        await peer.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Cannot accept text frame", CancellationToken.None);
+
+                    }
+
+                    rc = receiveResult.Count;
+                    if (rc == 0)
+                    {
+                        throw new NoMessageException();
+                    }
+                    else if (rc < 0)
+                    {
+                        return null;
+                    }
                 }
-                else if (receiveResult.MessageType == WebSocketMessageType.Text)
+                catch (Exception e)
                 {
-                    await peer.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Cannot accept text frame", CancellationToken.None);
-
+                    return null;
                 }
-
                 return buff;
             });
         }

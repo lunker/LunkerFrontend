@@ -13,6 +13,7 @@ namespace LunkerChatServer
     {
         static void Main(string[] args)
         {
+            Console.Title = "Socket Chatting Server";
             Power.On();
         }// end method
     }// end class

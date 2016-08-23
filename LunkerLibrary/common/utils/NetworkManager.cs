@@ -177,6 +177,7 @@ namespace LunkerLibrary.common.Utils
             return Task.Run(()=>Read(peer, msgLength));
         }
 
+        // obj: header, body 구조체 
         public static void Send(Socket peer, Object obj)
         {
             int rc = default(int);

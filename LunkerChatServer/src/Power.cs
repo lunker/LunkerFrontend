@@ -36,14 +36,7 @@ namespace LunkerChatServer.src
                 {
                     Console.Clear();
                     Console.Write("어플리케이션을 종료중입니다 . . .");
-
-                    /*
-                    chatServer.Stop();
-                    appState = Constants.AppStop;
-
-                    logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
-                    Environment.Exit(0);
-                    */
+                  
                     Off(MessageType.ShutdownApp);
                 }
                 else
@@ -77,9 +70,6 @@ namespace LunkerChatServer.src
                 MessageBroker.GetInstance().Publish(new AAHeader(MessageType.RestartApp, MessageState.Success, Constants.None));
                 MessageBroker.GetInstance().Release();
             }
-
-
-           
 
             logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
             Environment.Exit(0);

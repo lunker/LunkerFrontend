@@ -35,10 +35,7 @@ namespace LunkerLoginServer.src.workers
         private Socket feListener = null;
         private Socket beSocket = null;
 
-
         private Dictionary<Socket, Task> socketTaskPair = null;
-
-
 
         private MainWorker() { }
         public static MainWorker GetInstance()
@@ -50,18 +47,13 @@ namespace LunkerLoginServer.src.workers
             return instance;
         }
 
-        public async void Start()
+        public void Start()
         {
             Console.WriteLine("login: start");
             logger.Debug("[LoginServer][MainWorker][Start()] start");
 
             Initialize();
 
-            // parallel
-            ConnectBEAsync();
-            //AcceptFEConnectAsync();
-
-            // request initial FE Info
             MainProcess(); 
 
             logger.Debug("[LoginServer][MainWorker][Start()] end");
@@ -92,10 +84,6 @@ namespace LunkerLoginServer.src.workers
             writeSocketList = new List<Socket>();
             errorSocketList = new List<Socket>();
 
-            // initialiize client socket listener
-            //IPEndPoint clientListenEndPoint = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().ClientListenEndPoint);
-            //IPEndPoint clientListenEndPoint = new IPEndPoint(IPAddress.Any, 43310);
-            //IPEndPoint feListenEndPoint = new IPEndPoint(IPAddress.Any, AppConfig.GetInstance().FrontListenEndPoint);
             IPEndPoint clientListenEndPoint = new IPEndPoint(IPAddress.Any, 43310);
             clientListener = new Socket(SocketType.Stream, ProtocolType.Tcp);
             clientListener.Bind(clientListenEndPoint);
@@ -107,14 +95,13 @@ namespace LunkerLoginServer.src.workers
             feListener.Bind(feListenEndPoint);
             feListener.Listen(AppConfig.GetInstance().Backlog);
 
-
             Console.WriteLine("loginserver : fe socket listen");
         }
 
         /// <summary>
-        /// Connect to BE Server
+        /// Task that connect be async
         /// </summary>
-        public Task ConnectBEAsync()
+        public Task HandleBEConnectAsnyc()
         {
             return Task.Run(()=> 
             {
@@ -151,7 +138,78 @@ namespace LunkerLoginServer.src.workers
  
             });
         }// end method 
-       
+
+        /// <summary>
+        /// Task that accept Chatting Client Connect Request async
+        /// </summary>
+        /// <returns></returns>
+        public Task HandleClientAcceptAsync()
+        {
+            return Task.Run(() => {
+
+                while (true)
+                {
+                    try
+                    {
+                        if (clientListener != null)
+                        {
+                            if (clientListener.IsBound)
+                            {
+                                Socket client = clientListener.Accept();
+                                Console.WriteLine("loginserver : client connected!!");
+                                logger.Debug("[ChatServer][HandleClientAcceptAsync()] Accept Client Connect");
+
+                                // Add accepted connections
+                                clientConnection.Add(client);
+                                socketTaskPair.Add(client, Task.Run(() => { }));
+                            }
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        Console.WriteLine("loginserver : client listener disconnected!!");
+                        continue;
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Task that accept FE Connect Request async
+        /// </summary>
+        /// <returns></returns>
+        public Task HandleFEAcceptAsync()
+        {
+            return Task.Run(() => {
+                //feListenr = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+                while (true)
+                {
+                    if (feListener != null)
+                    {
+                        if (feListener.IsBound)
+                        {
+                            Socket socket = feListener.Accept();
+                            logger.Debug("[ChatServer][HandleFEAcceptAsync()] complete accept task. Restart");
+
+                            // Add accepted connections
+                            //clientConnection.Add(socket);
+                            feConnectionDic.Add(socket, default(ServerInfo));
+                            socketTaskPair.Add(socket, Task.Run(() => { }));
+                            // Request FE Server Info 
+                            // await 할 필요가 있나 ?
+                            RequestFEInfoAsync(socket);
+
+                            // add fe count
+                            LoadBalancer.AddFE();
+                        }
+
+                    }
+                }
+
+            });
+        }
+
         public void MainProcess()
         {
             Console.WriteLine("[LoginServer][MainProcess()] start");
@@ -159,6 +217,7 @@ namespace LunkerLoginServer.src.workers
 
             HandleClientAcceptAsync();
             HandleFEAcceptAsync();
+            HandleBEConnectAsnyc();
 
             while (threadState)
             {
@@ -202,51 +261,6 @@ namespace LunkerLoginServer.src.workers
                         }
                     }// end if
                     readSocketList.Clear();
-
-                    /*
-
-                    // check fe socket connection for read
-                    if (0 != feConnectionDic.Count)
-                    {
-                        foreach(Socket tmp in feConnectionDic.Keys.ToArray())
-                        {
-                            readSocketList.Add(tmp); // 
-                        }
-                    }
-
-                    if(beSocket!=null && beSocket.Connected)
-                    {
-                        readSocketList.Add(beSocket);
-                    }
-
-                    // 접속한 client가 있을 경우에만 수행.
-                    if (0 != clientConnection.Count)
-                    {
-                        foreach(Socket client in clientConnection.ToList())
-                        {
-                            readSocketList.Add(client);
-                        }
-                        //readSocketList = clientConnection.ToList();
-                    }// end if
-
-                    if(0 != readSocketList.Count)
-                    {
-                        Socket.Select(readSocketList, writeSocketList, errorSocketList, 300);
-
-                        // Request가 들어왔을 경우 
-                        
-                        foreach (Socket peer in readSocketList)
-                        {
-                            if (peer.Blocking)
-                            {
-                                peer.Blocking = false;
-                                Task.Run(()=> { HandleRequest(peer); }); 
-                            }
-                        }
-                    }
-                    readSocketList.Clear();
-                    */
-
                 }
                 catch (SocketException se)
                 {
@@ -255,76 +269,12 @@ namespace LunkerLoginServer.src.workers
                 }
             }// end loop 
         }// end method
-        
-        public Task HandleClientAcceptAsync()
-        {
-            return Task.Run(()=> {
 
-                while (true)
-                {
-                    try
-                    {
-                        if (clientListener != null)
-                        {
-                            if (clientListener.IsBound)
-                            {
-                                Socket client = clientListener.Accept();
-                                Console.WriteLine("loginserver : client connected!!");
-                                logger.Debug("[ChatServer][HandleClientAcceptAsync()] Accept Client Connect");
-
-                                // Add accepted connections
-                                clientConnection.Add(client);
-                                socketTaskPair.Add(client, Task.Run(()=> { }));
-                            }
-                        }
-                    }
-                    catch (SocketException se)
-                    {
-                        Console.WriteLine("loginserver : client listener disconnected!!");
-                        continue;
-                    }
-                }
-            });
-        }
-        
-        public Task HandleFEAcceptAsync()
-        {
-            return Task.Run(()=> {
-                //feListenr = new Socket(SocketType.Stream, ProtocolType.Tcp);
-
-                while (true)
-                {
-                    if (feListener != null)
-                    {
-                        if (feListener.IsBound)
-                        {
-                            Socket socket = feListener.Accept();
-                            logger.Debug("[ChatServer][HandleFEAcceptAsync()] complete accept task. Restart");
-
-                            // Add accepted connections
-                            //clientConnection.Add(socket);
-                            feConnectionDic.Add(socket, default(ServerInfo));
-                            socketTaskPair.Add(socket, Task.Run(() => { }));
-                            // Request FE Server Info 
-                            // await 할 필요가 있나 ?
-                            RequestFEInfoAsync(socket);
-
-                            // add fe count
-                            LoadBalancer.AddFE();
-                        }
-
-                    }
-                }
-
-            });
-        }
-        
-
-            /// <summary>
-            ///// chat
-            /// </summary>
-            /// <param name="feSocket"></param>
-            /// <returns></returns>
+        /// <summary>
+        /// chat
+        /// </summary>
+        /// <param name="feSocket"></param>
+        /// <returns></returns>
         public Task RequestFEInfoAsync(Socket feSocket)
         {
             return Task.Run(() => {
@@ -334,8 +284,11 @@ namespace LunkerLoginServer.src.workers
                 NetworkManager.SendAsync(feSocket, requestHeader);
             });
         }
-        // 요청을 읽고, 작업을 처리하는 비동기 작업을 만들어야함!!!
-        // 여기에서 case나눠서 처리 !!!!
+       
+        /// <summary>
+        /// Handle Chatting Client && ChatServer Request 
+        /// </summary>
+        /// <param name="peer"></param>
         public async void HandleRequest(Socket peer)
         {
             // peer : client 
@@ -469,7 +422,6 @@ namespace LunkerLoginServer.src.workers
             Console.WriteLine("[LoginServer][HandleFENotice()] fenotice end");
         }
 
-
         public Task HandleFENoticeAsync(Socket peer, CommonHeader header)
         {
             return Task.Run(()=>HandleFENotice(peer, header));
@@ -544,15 +496,7 @@ namespace LunkerLoginServer.src.workers
              NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
              NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
 
-            /*
-            LCUserAuthRequestBody clientResponseBdoy = new LCUserAuthRequestBody();
-            clientResponseBdoy.Cookie
-            byte[] bodyArr = NetworkManager.StructureToByte(clientResponseBdoy);
-            CommonHeader clientResponseHeader = new CommonHeader(MessageType.Signin, MessageState.Response, bodyArr.Length, new Cookie(), new UserInfo());
-            */
-
             // select FE Server to connect with client
-
 
             logger.Debug("[LoginServer][HandleSignin()] signin end");
             Console.WriteLine("[LoginServer][HandleSignin()] signin end");

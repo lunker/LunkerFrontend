@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--<AppConfig>
+
+  <clientListenEndPoint>43310</clientListenEndPoint>
+  <backport>43330</backport>
+  <backlog>10</backlog>
+
+  <backendserverip>10.100.58.3</backendserverip>
+  <backendserverport>43350</backendserverport>
+  <frontendListenEndPoint>43340</frontendListenEndPoint>
+</AppConfig>-->
+
+<AppConfig>
+
+  <clientListenEndPoint>43310</clientListenEndPoint>
+  <backport>43330</backport>
+  <backlog>10</backlog>
+
+  <backendserverip>10.100.58.3</backendserverip>
+  <backendserverport>43350</backendserverport>
+  <frontendListenEndPoint>43340</frontendListenEndPoint>
+</AppConfig>
+

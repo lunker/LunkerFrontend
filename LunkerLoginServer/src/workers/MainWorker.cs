@@ -228,14 +228,15 @@ namespace LunkerLoginServer.src.workers
                 {
                     if (socketTaskPair.Count != 0)
                     {
-                        foreach (Socket peer in socketTaskPair.Keys.ToList())
+                        for(int idx=0; idx< socketTaskPair.Count; idx++)
                         {
-                            readSocketList.Add(peer);
+                            readSocketList.Add(socketTaskPair.ElementAt(idx).Key);
                         }
 
                         Task tmp = null;
-                        foreach (Socket peer in readSocketList)
+                        for(int idx=0; idx< readSocketList.Count; idx++)
                         {
+                            Socket peer = readSocketList[idx];
                             try
                             {
 
@@ -261,7 +262,8 @@ namespace LunkerLoginServer.src.workers
                             {
                                 continue;
                             }
-                        }
+                        } 
+                        
                     }// end if
                     readSocketList.Clear();
                 }
@@ -463,10 +465,10 @@ namespace LunkerLoginServer.src.workers
                     CLSigninResponseBody body = new CLSigninResponseBody(header.Cookie, serverInfo);
                     CommonHeader responseHeader = new CommonHeader(MessageType.Signin, MessageState.Success, Marshal.SizeOf(body), header.Cookie, header.UserInfo);
 
-                    //NetworkManager.Send(client, responseHeader);
-                    //NetworkManager.Send(client, body);
+                    NetworkManager.Send(client, responseHeader);
+                    NetworkManager.Send(client, body);
 
-                    NetworkManager.Send(client, responseHeader, body);
+                    //NetworkManager.Send(client, responseHeader, body);
 
                     Console.WriteLine("[loginserver][HandleNoticeUserAuth()] auth success.");
                     Console.WriteLine("[loginserver][HandleNoticeUserAuth()] Login Finally Success.");

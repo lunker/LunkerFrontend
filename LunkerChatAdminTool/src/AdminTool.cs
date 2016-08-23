@@ -77,6 +77,10 @@ namespace LunkerChatAdminTool.src
                     tmp.Blocking = false;
                     Console.WriteLine("[Admin] Agent Connected");
 
+                    Task.Run(()=> {
+                        HandleAgentResponse(tmp);
+                    });
+
                     agentSocketList.Add(tmp, default(AgentInfo));
                 }
             });
@@ -95,6 +99,7 @@ namespace LunkerChatAdminTool.src
             //=======================================================================
             //================================================== handle Agent request
             //=======================================================================
+            /*
             Task.Run(()=> {
 
                 while (true)
@@ -135,6 +140,7 @@ namespace LunkerChatAdminTool.src
                 
                 }
             });
+            */
 
             // Print UI
             while (true)
@@ -435,71 +441,75 @@ namespace LunkerChatAdminTool.src
         /// <param name="agentSocket"></param>
         public async void HandleAgentResponse(Socket agentSocket)
         {
-            //Console.WriteLine("[Admin][HandleAgentResponse()] start");
-            //logger.Debug("[Admin][HandleAgentResponse()] start");
-            // read response form agent
-            try
-            {
-                AAHeader responseHeader = (AAHeader) NetworkManager.Read(agentSocket, Constants.AdminHeaderSize, typeof(AAHeader));
 
-                switch (responseHeader.Type)
+            while (true)
+            {
+
+                try
                 {
-                    // agent
-                    case MessageType.AgentInfo:
-                        await HandleAgentInfoResponseAsync(agentSocket, responseHeader);
-                        //PrintAdminModeUI();
-                        break;
-                    case MessageType.StartApp:
-                        await HandleStartAppResponseAsync(agentSocket, responseHeader);
-                        //PrintAdminModeUI();
-                        break;
-                    case MessageType.ShutdownApp:
-                        await HandleShutdownAppResponseAsync(agentSocket, responseHeader);
-                        //PrintAdminModeUI();
-                        break;
+                    AAHeader responseHeader = (AAHeader)NetworkManager.Read(agentSocket, Constants.AdminHeaderSize, typeof(AAHeader));
 
-                    case MessageType.RestartApp:
-                        await HandleReStartAppResponseAsync(agentSocket, responseHeader);
-                        //PrintAdminModeUI();
-                        break;
+                    switch (responseHeader.Type)
+                    {
+                        // agent
+                        case MessageType.AgentInfo:
+                            await HandleAgentInfoResponseAsync(agentSocket, responseHeader);
+                            //PrintAdminModeUI();
+                            break;
+                        case MessageType.StartApp:
+                            await HandleStartAppResponseAsync(agentSocket, responseHeader);
+                            //PrintAdminModeUI();
+                            break;
+                        case MessageType.ShutdownApp:
+                            await HandleShutdownAppResponseAsync(agentSocket, responseHeader);
+                            //PrintAdminModeUI();
+                            break;
 
-                    // monitoring
-                    case MessageType.Total_Room_Count:
-                        break;
+                        case MessageType.RestartApp:
+                            await HandleReStartAppResponseAsync(agentSocket, responseHeader);
+                            //PrintAdminModeUI();
+                            break;
 
-                    case MessageType.FE_User_Status:
-                        break;
-                    case MessageType.Chat_Ranking:
-                        break;
+                        // monitoring
+                        case MessageType.Total_Room_Count:
+                            break;
 
-                    default:
-                        break;
-                }// end switch
-                //logger.Debug("[Admin][HandleAgentResponse()] end");
-                Console.WriteLine("[Admin][HandleAgentResponse()] end");
-            }
-            catch (NoMessageException nme)
-            {
-                Console.WriteLine("no message");
-                return;
-            }
-            catch (SocketException se)
-            {
-                // connection disconnected.
-                // 해당 socket 닫아야 . . . 
-                agentSocketList.Remove(agentSocket);
-                agentSocket.Close();
+                        case MessageType.FE_User_Status:
+                            break;
+                        case MessageType.Chat_Ranking:
+                            break;
+
+                        default:
+                            break;
+                    }// end switch
+                     //logger.Debug("[Admin][HandleAgentResponse()] end");
+                    Console.WriteLine("[Admin][HandleAgentResponse()] end");
+                }
+                catch (NoMessageException nme)
+                {
+                    Console.WriteLine("no message");
+                    continue;
+                }
+                catch (SocketException se)
+                {
+                    // connection disconnected.
+                    // 해당 socket 닫아야 . . . 
+                    agentSocketList.Remove(agentSocket);
+                    agentSocket.Close();
+
+
+                    Console.WriteLine("[Admin][HandleAgentResponse()] agent disconnected . . . ");
+                    return;
+
+                }
+                finally
+                {
+                    if (AdminMode == Constants.Admin)
+                        PrintAdminModeUI();
+                }
                 
-               
-                Console.WriteLine("[Admin][HandleAgentResponse()] agent disconnected . . . ");
-                
             }
-            finally
-            {
-                if (AdminMode == Constants.Admin)
-                    PrintAdminModeUI();
-            }
-            return;
+
         }
 
         public void HandleStartAppRequestAsync(Socket agentSocket)

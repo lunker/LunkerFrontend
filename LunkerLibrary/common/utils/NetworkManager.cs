@@ -184,7 +184,7 @@ namespace LunkerLibrary.common.Utils
 
             byte[] headerArr = null; 
             byte[] bodyArr = null;
-            byte[] packetArr = new byte[headerArr.Length + bodyArr.Length];
+            
 
             try
             {
@@ -202,7 +202,8 @@ namespace LunkerLibrary.common.Utils
                 }
                 else
                     bodyArr = (byte[])body;
-                
+
+                byte[] packetArr = new byte[headerArr.Length + bodyArr.Length];
                 Buffer.BlockCopy(headerArr, 0, packetArr, 0, headerArr.Length);
                 Buffer.BlockCopy(bodyArr, 0, packetArr, headerArr.Length, bodyArr.Length);
 

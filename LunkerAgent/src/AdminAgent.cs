@@ -115,7 +115,6 @@ namespace LunkerAgent.src
                         else
                         {
                             adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                            adminSocket.Blocking = false;
                         }
                     }
                     catch (InvalidOperationException ioe)
@@ -144,11 +143,14 @@ namespace LunkerAgent.src
 
             while (appState)
             {
+
+
+                
                 //logger.Debug("[AdminAgent][SendServerInfo()] 1");
                 // read 
                 if (adminSocket!=null && adminSocket.Connected)
                 {
-                    if (adminSocket.Poll(0, SelectMode.SelectRead))
+                    if (adminSocket.Poll(500, SelectMode.SelectRead))
                     {
                         // read
                         try
@@ -205,49 +207,47 @@ namespace LunkerAgent.src
         /// <param name="peer"></param>
         public void HandleRequestAsync(Socket peer)
         {
-            logger.Debug("[AdminAgent][SendServerInfo()] end");
-            //AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
-            try
+            while (true)
             {
-                AAHeader requestHeader = (AAHeader) NetworkManager.Read(peer, Constants.AdminHeaderSize, typeof(AAHeader));
-                switch (requestHeader.Type)
+                logger.Debug("[AdminAgent][SendServerInfo()] end");
+                //AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
+                try
                 {
-                    case MessageType.RestartApp:
-                        HandleRestartApp();
-                        break;
-                    case MessageType.ShutdownApp:
-                        HandleShutdownApp();
-                        break;
-                    case MessageType.StartApp:
-                        HandleStartApp();
-                        break;
-                    default:
-                        break;
+                    AAHeader requestHeader = (AAHeader)NetworkManager.Read(peer, Constants.AdminHeaderSize, typeof(AAHeader));
+                    switch (requestHeader.Type)
+                    {
+                        case MessageType.RestartApp:
+                            HandleRestartApp();
+                            break;
+                        case MessageType.ShutdownApp:
+                            HandleShutdownApp();
+                            break;
+                        case MessageType.StartApp:
+                            HandleStartApp();
+                            break;
+                        default:
+                            break;
+                    }
                 }
-            }
-            catch (NoMessageException ne)
-            {
-                Console.WriteLine("no message read");
-
-                if (peer != null)
+                catch (NoMessageException ne)
                 {
-                    peer.Close();
-                    peer = null;
+                    Console.WriteLine("no message read");
+
+                    return;
                 }
-                return;
-            }
-            catch (ObjectDisposedException ode)
-            {
-                return;
-            }
-            catch (SocketException se)
-            {
-                logger.Debug("[AdminAgent][HandleRequestAsync] socket disconnected");
+                catch (ObjectDisposedException ode)
+                {
+                    return;
+                }
+                catch (SocketException se)
+                {
+                    logger.Debug("[AdminAgent][HandleRequestAsync] socket disconnected");
 
-                if(peer!=null)
-                    peer.Close();
+                    if (peer != null)
+                        peer.Close();
 
-                return;
+                    return;
+                }
             }
         }// end method 
 

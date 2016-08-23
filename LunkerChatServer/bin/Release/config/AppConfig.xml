@@ -6,7 +6,7 @@
   
   <backlog>10</backlog>
 
-  <loginServerIp>10.10.0.160</loginServerIp>
+  <loginServerIp>10.100.58.3</loginServerIp>
   <loginServerPort>43340</loginServerPort>
 
   <backendServerIp>10.100.58.3</backendServerIp>
@@ -23,7 +23,7 @@
 
   <backlog>10</backlog>
  
-  <loginServerIp>10.100.58.7</loginServerIp>
+  <loginServerIp>10.100.58.3</loginServerIp>
   <loginServerPort>43340</loginServerPort>
 
   <backendServerIp>10.100.58.3</backendServerIp>

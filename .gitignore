@@ -13,7 +13,7 @@
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
-
+[Bb]in/[Dd]ebug/
 [Xx]64/
 [Xx]86/
 [Bb]uild/

@@ -465,38 +465,47 @@ namespace LunkerLoginServer.src.workers
             //CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader) );
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
-            // =====================READ COOKIE FROM BE
-            // cookie in body 
-            //LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-            LBSigninResponseBody responseBody = (LBSigninResponseBody) NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-            cookie = responseBody.Cookie;
+            if (responseHeader.State == MessageState.Success)
+            {
+                // =====================READ COOKIE FROM BE
+                // cookie in body 
+                //LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
+                LBSigninResponseBody responseBody = (LBSigninResponseBody)NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
+                cookie = responseBody.Cookie;
 
-            // LoadBalancing
-            // pick FE 
-            int index = LoadBalancer.RoundRobin();
+                // LoadBalancing
+                // pick FE 
+                int index = LoadBalancer.RoundRobin();
 
-            responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
+                responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
 
-            Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
-            // send result to client
-             NetworkManager.Send(client, responseHeader);
-             NetworkManager.Send(client, responseBody);
+                Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
+                // send result to client
+                NetworkManager.Send(client, responseHeader);
+                NetworkManager.Send(client, responseBody);
 
-            // !!!!!! loadbalancing 
-            // send auth to Chat Server
-            
-            LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
-            //byte[] bodyArr = NetworkManager.StructureToByte(feRequestBody);
-            CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Marshal.SizeOf(feRequestBody) , cookie, responseHeader.UserInfo);
-            
 
-            //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
-            //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);
+                // !!!!!! loadbalancing 
+                // send auth to Chat Server
 
-             NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
-             NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
+                LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
+                //byte[] bodyArr = NetworkManager.StructureToByte(feRequestBody);
+                CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Marshal.SizeOf(feRequestBody), cookie, responseHeader.UserInfo);
 
-            // select FE Server to connect with client
+
+                //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
+                //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);
+
+                NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
+                NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
+
+                // select FE Server to connect with client
+
+            }
+            else
+            {
+                NetworkManager.Send(client, responseHeader);
+            }
 
             logger.Debug("[LoginServer][HandleSignin()] signin end");
             Console.WriteLine("[LoginServer][HandleSignin()] signin end");

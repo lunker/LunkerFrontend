@@ -37,7 +37,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>C:\chatserver%28web%29\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -92,6 +92,7 @@
     <Compile Include="src\MainWorker.cs" />
     <Compile Include="src\Power.cs" />
     <Compile Include="src\utils\AppConfig.cs" />
+    <Compile Include="src\utils\WebConnectionManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

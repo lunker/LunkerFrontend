@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LunkerLibrary.common.utils
@@ -65,18 +67,32 @@ namespace LunkerLibrary.common.utils
 
             return data; // 배열을 리턴
         }
-    
-        public static async Task<Object> ReadAsync(HttpListenerRequest request, int msgLength, Type type)
+
+
+        public static async Task<Object> ReadAsync(WebSocket peer, int msgLength, Type type)
         {
             return Task.Run( async ()=> {
                 Object obj = null;
                 //int rc = 0;
                 byte[] buff = new byte[msgLength];
 
-                await request.InputStream.ReadAsync(buff, 0, msgLength);
+                WebSocketReceiveResult receiveResult = await peer.ReceiveAsync(new ArraySegment<byte>(buff), CancellationToken.None);
 
+                if (receiveResult.MessageType == WebSocketMessageType.Close)
+                {
+                    await peer.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+
+                }
+                else if (receiveResult.MessageType == WebSocketMessageType.Text)
+                {
+                    await peer.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Cannot accept text frame", CancellationToken.None);
+
+                }
+                else
+                {
+                    obj = ByteToStructure(buff, type);
+                }
                 // read success
-                obj = ByteToStructure(buff, type);
                 return obj;
             });
         }
@@ -86,20 +102,44 @@ namespace LunkerLibrary.common.utils
         /// <param name="request"></param>
         /// <param name="msgLength"></param>
         /// <returns></returns>
-        public static async Task<byte[]> ReadAsync(HttpListenerRequest request, int msgLength)
+        public static async Task<byte[]> ReadAsync(WebSocket peer, int msgLength)
         {
             return await Task.Run(async () => {
                 int rc = 0;
                 byte[] buff = new byte[msgLength];
+                WebSocketReceiveResult receiveResult = await peer.ReceiveAsync(new ArraySegment<byte>(buff), CancellationToken.None);
 
-                await request.InputStream.ReadAsync(buff, 0, msgLength);
+                if (receiveResult.MessageType == WebSocketMessageType.Close)
+                {
+                    await peer.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+
+                }
+                else if (receiveResult.MessageType == WebSocketMessageType.Text)
+                {
+                    await peer.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Cannot accept text frame", CancellationToken.None);
+
+                }
+
                 return buff;
             });
         }
     
-        public static void Send(HttpListenerResponse response, Object obj)
+        /*
+        public static void Send(WebSocket peer, Object obj)
         {
+            int rc = 0;
+            byte[] buff = null;
 
+            if (obj is byte[])
+            {
+                buff = (byte[])obj;
+            }
+            else
+            {
+                buff = StructureToByte(obj);
+            }
+            
+            await webSocket.SendAsync(new ArraySegment<byte>(buff, 0, buff.Length), WebSocketMessageType.Binary, true, CancellationToken.None);
         }
 
         public static  Task SendAsync(HttpListenerResponse response, Object obj)
@@ -117,5 +157,23 @@ namespace LunkerLibrary.common.utils
             return response.OutputStream.WriteAsync(buff, 0, buff.Length);
         }// end method
   
+        */
+
+        public static Task SendAsync(WebSocket peer, Object obj)
+        {
+            int rc = 0;
+            byte[] buff = null;
+
+            if (obj is byte[])
+            {
+                buff = (byte[])obj;
+            }
+            else
+            {
+                buff = StructureToByte(obj);
+            }
+
+            return peer.SendAsync(new ArraySegment<byte>(buff, 0, buff.Length), WebSocketMessageType.Binary, true, CancellationToken.None);
+        }
     }// end class
 }

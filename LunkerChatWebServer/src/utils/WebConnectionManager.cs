@@ -1,22 +1,25 @@
 ﻿
 using LunkerLibrary.common.protocol;
+using LunkerLibrary.common.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace LunkerLibrary.common.Utils
+namespace LunkerChatWebServer.src.utils
 {
 
     /// <summary>
     /// Connection Manager for Socket Connection.
     /// connections : client, 
     /// </summary>
-    public class ConnectionManager
+    public class WebConnectionManager
     {
-        private static ConnectionManager instance = null;
+        private static WebConnectionManager instance = null;
 
         private Dictionary<string, UserInfo> clientInfos = null;// ip:port - user Id 
 
@@ -27,7 +30,7 @@ namespace LunkerLibrary.common.Utils
         // client가 id, cookie를 보내어 인증을 거친다.
         // 그 후에 완료된 client를 자료구조에 저장!!! 
         // 저장할때에는 사용자id, socket으로!
-        private Dictionary<string, Socket> clientConnections = null;// user id - socket
+        private Dictionary<string, WebSocket> clientConnections = null;// user id - socket
 
         private Dictionary<string, Cookie> authInfos = null;// user id - cookie
 
@@ -35,9 +38,9 @@ namespace LunkerLibrary.common.Utils
 
         private Dictionary<ChattingRoom, HashSet<string>> chattingRoomListInfo = null;// roominfo ~ entered user info 
 
-        public ConnectionManager()
+        public WebConnectionManager()
         {
-            clientConnections = new Dictionary<string, Socket>();
+            clientConnections = new Dictionary<string, WebSocket>();
             clientInfos = new Dictionary<string, UserInfo>();
             authInfos = new Dictionary<string, Cookie>();
 
@@ -45,11 +48,11 @@ namespace LunkerLibrary.common.Utils
             chattingRoomListInfo = new Dictionary<ChattingRoom, HashSet<string>>();
         }
 
-        public static ConnectionManager GetInstance()
+        public static WebConnectionManager GetInstance()
         {
             if (instance == null)
             {
-                instance = new ConnectionManager();
+                instance = new WebConnectionManager();
             }
             return instance;
         }
@@ -64,9 +67,9 @@ namespace LunkerLibrary.common.Utils
             }
             */
 
-            foreach (Socket key in clientConnections.Values)
+            foreach (WebSocket key in clientConnections.Values)
             {
-                key.Disconnect(false);
+                key.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                 key.Dispose();
             }
             clientConnections.Clear();
@@ -88,10 +91,10 @@ namespace LunkerLibrary.common.Utils
             string userId = new string(userInfo.Id);
 
             // 2) 
-            Socket clientSocket = null;
+            WebSocket clientSocket = null;
             clientConnections.TryGetValue(userId, out clientSocket);
-            if (clientSocket.Connected)
-                clientSocket.Close();
+            if (clientSocket.State == WebSocketState.Open)
+                clientSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None );
             clientSocket.Dispose();
             clientSocket = null;
             //clientConnections.Remove(userId);        
@@ -147,12 +150,12 @@ namespace LunkerLibrary.common.Utils
          * Client Connection 
          * 
          */
-        public Dictionary<string, Socket> GetClientConnectionDic()
+        public Dictionary<string, WebSocket> GetClientConnectionDic()
         {
             return clientConnections;
         }
 
-        public void AddClientConnection(string id, Socket peer)
+        public void AddClientConnection(string id, WebSocket peer)
         {
             clientConnections.Add(id, peer);
         }
@@ -162,9 +165,9 @@ namespace LunkerLibrary.common.Utils
             clientConnections.Remove(id);
         }
 
-        public Socket GetClientConnection(string id)
+        public WebSocket GetClientConnection(string id)
         {
-            Socket tmp = null;
+            WebSocket tmp = null;
             clientConnections.TryGetValue(id, out tmp);
             return tmp;
         }

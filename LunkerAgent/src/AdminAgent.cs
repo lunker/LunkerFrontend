@@ -134,7 +134,7 @@ namespace LunkerAgent.src
                         //adminSocket.Blocking = false;
                         continue;
                     }
-                }
+                }// end loop
             });
         }
 

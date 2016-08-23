@@ -61,19 +61,19 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>dqszhDRwwAc/hYALY6slapW7ST4ry0QjIkC5labwIIY=</dsig:DigestValue>
+        <dsig:DigestValue>Y4V2+LS0xS2f6kY9ovks5/IwDBT8XZ0dRrY29jHvaCI=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerLoginServer.exe" size="26536">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerLoginServer.exe" size="25088">
       <assemblyIdentity name="LunkerLoginServer" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>L/OOjFnliXs2awig+RdOUTYDGXqW7uZqGjAlnrJUq70=</dsig:DigestValue>
+        <dsig:DigestValue>45QDwO3X3gAfymtyNZdxpHy1euXiUG/XO3BvlPwquzE=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

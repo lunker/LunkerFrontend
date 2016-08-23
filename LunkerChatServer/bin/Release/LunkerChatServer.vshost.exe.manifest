@@ -54,14 +54,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerChatServer.exe" size="32680">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerChatServer.exe" size="30720">
       <assemblyIdentity name="LunkerChatServer" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>VLvRAkKDQbWGZ2C2vnm6pv/qovI5o6nC9p0mT3R/mCg=</dsig:DigestValue>
+        <dsig:DigestValue>IQHNhAE9UocoLL9UWYQFnNXSEy/fmWtb4aAbxpYJTfs=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -73,7 +73,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>dqszhDRwwAc/hYALY6slapW7ST4ry0QjIkC5labwIIY=</dsig:DigestValue>
+        <dsig:DigestValue>Y4V2+LS0xS2f6kY9ovks5/IwDBT8XZ0dRrY29jHvaCI=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

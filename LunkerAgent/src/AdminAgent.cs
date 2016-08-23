@@ -100,27 +100,38 @@ namespace LunkerAgent.src
                         {
                             if (!adminSocket.Connected)
                             {
-                                adminSocket.Connect(endPoint);
-                                SendServerInfo();
-                                Console.WriteLine("[AdminAgent][Initialize()] connect success");
-                                logger.Debug("[AdminAgent][Initialize()] connect success");
+                                //adminSocket.Connect(endPoint);
+                                var result = adminSocket.BeginConnect(endPoint, null, null);
+
+                                bool success = result.AsyncWaitHandle.WaitOne(1000, true);
+                                if (success)
+                                {
+                                    adminSocket.EndConnect(result);
+                                    SendServerInfo();
+                                    Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] connect success");
+                                }                     
                             }
                         }
                         else
                         {
                             adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                            adminSocket.Blocking = false;
                         }
                     }
                     catch (InvalidOperationException ioe)
                     {
-                        adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . admin tool  . . . retry");
+                        //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        adminSocket = null;
+                        //adminSocket.Blocking = false;
+                        Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] Disconnected . . . admin tool  . . . retry");
                         continue;
                     }
                     catch (SocketException se)
                     {
-                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . admin tool . . . retry");
+                        Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] socketexception");
                         //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        //adminSocket.Blocking = false;
                         continue;
                     }
                 }
@@ -129,18 +140,20 @@ namespace LunkerAgent.src
 
         public async void MainProcess()
         {
+            HandleAdminConnectAsync();
+
             while (appState)
             {
                 //logger.Debug("[AdminAgent][SendServerInfo()] 1");
                 // read 
                 if (adminSocket!=null && adminSocket.Connected)
                 {
-                    if (adminSocket.Poll(300, SelectMode.SelectRead))
+                    if (adminSocket.Poll(0, SelectMode.SelectRead))
                     {
                         // read
                         try
                         {
-                            Console.WriteLine("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
+                            //Console.WriteLine("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
                             //logger.Debug("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
                             HandleRequestAsync(adminSocket);
                         }
@@ -156,18 +169,25 @@ namespace LunkerAgent.src
 
         public async void SendServerInfo()
         {
-            logger.Debug("[AdminAgent][SendServerInfo()] start");
-            logger.Debug("[AdminAgent][SendServerInfo()]" + hostIP);
+            Console.WriteLine("[AdminAgent][SendServerInfo()]" + hostIP);
+            
             ServerInfo serverInfo = new ServerInfo(hostIP,43320);
             AgentInfo agentInfo = new AgentInfo(serverInfo, new ServerState());
 
             AAAgentInfoRequestBody requestBody = new AAAgentInfoRequestBody(agentInfo);
             byte[] bodyArr = NetworkManager.StructureToByte(requestBody); 
             AAHeader requestHeader = new AAHeader(MessageType.AgentInfo, MessageState.Request, bodyArr.Length);
-            logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
-            NetworkManager.Send(adminSocket, requestHeader);
-             NetworkManager.Send(adminSocket, bodyArr);
-            logger.Debug("[AdminAgent][SendServerInfo()] end");
+
+            //logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
+            Console.WriteLine("[AdminAgent][SendServerInfo()] IP By GetPureIP() : " + agentInfo.ServerInfo.GetPureIp());
+
+            if(adminSocket!=null && adminSocket.Connected)
+            {
+                NetworkManager.Send(adminSocket, requestHeader);
+                NetworkManager.Send(adminSocket, bodyArr);
+            }
+            //logger.Debug("[AdminAgent][SendServerInfo()] end");
+            Console.WriteLine("[AdminAgent][SendServerInfo()] end");
         }
 
         /// <summary>
@@ -196,6 +216,17 @@ namespace LunkerAgent.src
                         break;
                 }
             }
+            catch (NoMessageException ne)
+            {
+                Console.WriteLine("no message read");
+
+                if (peer != null)
+                {
+                    peer.Close();
+                    peer = null;
+                }
+                return;
+            }
             catch (ObjectDisposedException ode)
             {
                 return;
@@ -203,7 +234,9 @@ namespace LunkerAgent.src
             catch (SocketException se)
             {
                 logger.Debug("[AdminAgent][HandleRequestAsync] socket disconnected");
-                peer.Close();
+
+                if(peer!=null)
+                    peer.Close();
 
                 return;
             }

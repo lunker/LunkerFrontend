@@ -255,7 +255,6 @@ namespace LunkerChatServer
 
             while (true)
             {
-                
                 Task tmp = null;
                 if (socketTaskPair.Count != 0)
                 {

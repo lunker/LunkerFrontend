@@ -1,32 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<!--<AppConfig>
-  
-  <backport>43330</backport>
-  <clientListenPort>43320</clientListenPort>
-  
-  <backlog>10</backlog>
-
-  <loginServerIp>10.10.0.160</loginServerIp>
-  <loginServerPort>43340</loginServerPort>
-
-  <backendServerIp>10.100.58.3</backendServerIp>
-  <backendServerPort>43350</backendServerPort>
-  
-</AppConfig>-->
-
-
-
 <AppConfig>
 
-  <backport>43330</backport>
   <clientListenPort>43320</clientListenPort>
 
+  <frontendListenEndPoint>43340</frontendListenEndPoint>
   <backlog>10</backlog>
- 
-  <loginServerIp>10.100.58.7</loginServerIp>
+
+  <loginServerIp>10.100.58.3</loginServerIp>
   <loginServerPort>43340</loginServerPort>
 
   <backendServerIp>10.100.58.3</backendServerIp>
   <backendServerPort>43350</backendServerPort>
 
+
+
+  <chatServerIp>10.100.58.3</chatServerIp>
+
+
 </AppConfig>
+

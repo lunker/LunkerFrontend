@@ -104,7 +104,8 @@ namespace LunkerLibrary.common.Utils
 
                 if (rc == 0)
                 {
-                    throw new SocketException();
+                    //throw new SocketException();
+                    throw new NoMessageException();
                 }
                 else if (rc > 0)
                 {
@@ -123,7 +124,7 @@ namespace LunkerLibrary.common.Utils
             }
             catch (SocketException se)
             {
-                throw ;
+                throw se ;
             }
             return obj;
         }

@@ -89,6 +89,7 @@
     <Compile Include="common\protocol\login-chat\LCUserAuthResponseBody.cs" />
     <Compile Include="common\protocol\MessageState.cs" />
     <Compile Include="common\protocol\MessageType.cs" />
+    <Compile Include="common\protocol\NoMessageException.cs" />
     <Compile Include="common\protocol\Packet.cs" />
     <Compile Include="common\protocol\ServerInfo.cs" />
     <Compile Include="common\protocol\ServerState.cs" />

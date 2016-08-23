@@ -74,6 +74,9 @@ namespace LunkerChatAdminTool.src
                 while (true)
                 {
                     Socket tmp = agentListener.Accept();
+                    tmp.Blocking = false;
+                    Console.WriteLine("[Admin] Agent Connected");
+
                     agentSocketList.Add(tmp, default(AgentInfo));
                 }
             });
@@ -88,32 +91,48 @@ namespace LunkerChatAdminTool.src
         {
             HandleAgentAccpetAsync();
 
+
+            //=======================================================================
+            //================================================== handle Agent request
+            //=======================================================================
             Task.Run(()=> {
+
                 while (true)
                 {
-                    if (0 != agentSocketList.Count)
+                    try
                     {
-                        readSocketList = agentSocketList.Keys.ToList();
-
-                        Socket.Select(readSocketList, writeSocketList, errorSocketList, 0);
-                        // data is ready
-                        if (0 != readSocketList.Count)
+                        if (0 != agentSocketList.Count)
                         {
-                            logger.Debug("[Admin][MainProcess()] socket.select success ");
-                            foreach (Socket agent in readSocketList)
+                            readSocketList = agentSocketList.Keys.ToList();
+
+                            Socket.Select(readSocketList, writeSocketList, errorSocketList, 300);
+
+                            // data is ready
+                            if (0 != readSocketList.Count)
                             {
-                                try
+                                logger.Debug("[Admin][MainProcess()] socket.select success ");
+                                foreach (Socket agent in readSocketList)
                                 {
-                                    HandleAgentResponse(agent);
+                                    try
+                                    {
+                                        HandleAgentResponse(agent);
+                                    }
+                                    catch (SocketException se)
+                                    {
+                                        //logger.Debug("[Admin][MainProcess()]HandleAgentResponse error");
+                                        Console.WriteLine("[Admin][MainProcess()]HandleAgentResponse error");
+                                    }
                                 }
-                                catch (SocketException se)
-                                {
-                                    logger.Debug("[Admin][MainProcess()]HandleAgentResponse error");
-                                    agentSocketList.Remove(agent);
-                                }
+                                readSocketList.Clear();
                             }
-                        }
-                    }// end select read if 
+                        }// end select read if 
+                    }
+                    catch (SocketException se)
+                    {
+                        
+                        continue;
+                    }
+                
                 }
             });
 
@@ -157,6 +176,12 @@ namespace LunkerChatAdminTool.src
             agentListener.Listen(100);
         }
 
+
+        ////====================================================================================================////
+        ////====================================================================================================////
+        ////============================================Print UI====================================================////
+        ////====================================================================================================////
+        ////====================================================================================================////
         public void PrintAgentInfo()
         {
             // index, state, ip, port 
@@ -183,6 +208,7 @@ namespace LunkerChatAdminTool.src
 
         public void PrintAdminModeUI()
         {
+            Console.Clear();
             for (int moveState = 1; moveState <= uiState; moveState = moveState << 1)
             {
                 switch (moveState)
@@ -409,11 +435,12 @@ namespace LunkerChatAdminTool.src
         /// <param name="agentSocket"></param>
         public async void HandleAgentResponse(Socket agentSocket)
         {
-            logger.Debug("[Admin][HandleAgentResponse()] start");
+            //Console.WriteLine("[Admin][HandleAgentResponse()] start");
+            //logger.Debug("[Admin][HandleAgentResponse()] start");
             // read response form agent
             try
             {
-                AAHeader responseHeader = (AAHeader)await NetworkManager.ReadAsync(agentSocket, Constants.AdminHeaderSize, typeof(AAHeader));
+                AAHeader responseHeader = (AAHeader) NetworkManager.Read(agentSocket, Constants.AdminHeaderSize, typeof(AAHeader));
 
                 switch (responseHeader.Type)
                 {
@@ -448,16 +475,31 @@ namespace LunkerChatAdminTool.src
                     default:
                         break;
                 }// end switch
-                if(AdminMode == Constants.Admin)
-                    PrintAdminModeUI();
-                logger.Debug("[Admin][HandleAgentResponse()] end");
+                //logger.Debug("[Admin][HandleAgentResponse()] end");
+                Console.WriteLine("[Admin][HandleAgentResponse()] end");
+            }
+            catch (NoMessageException nme)
+            {
+                Console.WriteLine("no message");
+                return;
             }
             catch (SocketException se)
             {
                 // connection disconnected.
-                return;
+                // 해당 socket 닫아야 . . . 
+                agentSocketList.Remove(agentSocket);
+                agentSocket.Close();
+                
+               
+                Console.WriteLine("[Admin][HandleAgentResponse()] agent disconnected . . . ");
+                
             }
-
+            finally
+            {
+                if (AdminMode == Constants.Admin)
+                    PrintAdminModeUI();
+            }
+            return;
         }
 
         public void HandleStartAppRequestAsync(Socket agentSocket)
@@ -483,8 +525,6 @@ namespace LunkerChatAdminTool.src
             NetworkManager.Send(agentSocket, requestHeader);
         }
       
-        
-        
         
         ////====================================================================================================////
         ////====================================================================================================////
@@ -515,9 +555,11 @@ namespace LunkerChatAdminTool.src
                 {
                     resultAgentInfo.ServerState = ServerState.Stopped;
                 }
+
+                /*
                 agentSocketList.Remove(agentSocket);
                 agentSocketList.Add(agentSocket, resultAgentInfo);
-                
+                */
             });
         }
         public Task HandleShutdownAppResponseAsync(Socket agentSocket, AAHeader header)
@@ -543,9 +585,12 @@ namespace LunkerChatAdminTool.src
                 {
                     // error . . .
                 }
+                /*
                 agentSocketList.Remove(agentSocket);
                 agentSocketList.Add(agentSocket, resultAgentInfo);
                 logger.Debug("[Admin][HandleShutdownAppResponseAsync()] end");
+                */
+
             });
         }
         public Task HandleReStartAppResponseAsync(Socket agentSocket, AAHeader header)
@@ -569,8 +614,10 @@ namespace LunkerChatAdminTool.src
                 {
                     // error . . .
                 }
+                /*
                 agentSocketList.Remove(agentSocket);
                 agentSocketList.Add(agentSocket, resultAgentInfo);
+                */
             });
         }
 
@@ -583,6 +630,7 @@ namespace LunkerChatAdminTool.src
         public Task HandleAgentInfoResponseAsync(Socket agentSocket, AAHeader header)
         {
             return Task.Run(()=> {
+
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] start");
                 AAAgentInfoRequestBody requestBody = (AAAgentInfoRequestBody)NetworkManager.Read(agentSocket, header.BodyLength, typeof(AAAgentInfoRequestBody));
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] ip : " + requestBody.AgentInfo.ServerInfo.GetPureIp());
@@ -600,6 +648,8 @@ namespace LunkerChatAdminTool.src
                     logger.Debug("[Admin][HandleAgentInfoResponseAsync()] no keys");
                 }
                 logger.Debug("[Admin][HandleAgentInfoResponseAsync()] end");
+                Console.WriteLine("[Admin] Connected Agent Info IP: " + requestBody.AgentInfo.ServerInfo.GetPureIp());
+                Console.WriteLine("[Admin] Connected Agent Info port: " + requestBody.AgentInfo.ServerInfo.Port);
             });
         }// end method
     }

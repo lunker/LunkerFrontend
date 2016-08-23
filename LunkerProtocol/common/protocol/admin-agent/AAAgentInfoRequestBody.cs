@@ -1,5 +1,5 @@
 ﻿
-public struct AAAgentInfoRequestBody
+public struct AAAgentInfoRequestBody : Body
 {
     AgentInfo agentInfo;
 

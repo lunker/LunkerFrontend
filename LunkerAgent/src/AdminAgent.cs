@@ -183,8 +183,17 @@ namespace LunkerAgent.src
 
             if(adminSocket!=null && adminSocket.Connected)
             {
-                NetworkManager.Send(adminSocket, requestHeader);
-                NetworkManager.Send(adminSocket, bodyArr);
+                byte[] headerArr = NetworkManager.StructureToByte(requestHeader);
+                byte[] resBodyArr = NetworkManager.StructureToByte(requestBody);
+
+                byte[] packetArr = new byte[headerArr.Length+resBodyArr.Length];
+                Buffer.BlockCopy(headerArr, 0, packetArr, 0, headerArr.Length);
+                Buffer.BlockCopy(resBodyArr, 0, packetArr, headerArr.Length, resBodyArr.Length);
+
+                NetworkManager.Send(adminSocket, packetArr);
+
+                //NetworkManager.Send(adminSocket, requestHeader);
+                //NetworkManager.Send(adminSocket, bodyArr);
             }
             //logger.Debug("[AdminAgent][SendServerInfo()] end");
             Console.WriteLine("[AdminAgent][SendServerInfo()] end");

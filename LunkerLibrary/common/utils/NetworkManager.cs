@@ -178,6 +178,56 @@ namespace LunkerLibrary.common.Utils
             return Task.Run(()=>Read(peer, msgLength));
         }
 
+        public static void Send(Socket peer, Object header, Object body)
+        {
+            int rc = default(int);
+
+            byte[] headerArr = null; 
+            byte[] bodyArr = null;
+            byte[] packetArr = new byte[headerArr.Length + bodyArr.Length];
+
+            try
+            {
+                if (!(header is byte[]))
+                {
+                    headerArr = StructureToByte(header);
+                    
+                }
+                else
+                    headerArr = (byte[]) header;
+
+                if (!(body is byte[]))
+                {
+                    bodyArr = StructureToByte(body);
+                }
+                else
+                    bodyArr = (byte[])body;
+                
+                Buffer.BlockCopy(headerArr, 0, packetArr, 0, headerArr.Length);
+                Buffer.BlockCopy(bodyArr, 0, packetArr, headerArr.Length, bodyArr.Length);
+
+                rc = peer.Send(packetArr);
+
+                if (rc == 0)
+                {
+                    //Console.WriteLine("");
+                    throw new SocketException();
+                }
+                else if (rc > 0)
+                {
+
+                }
+                else
+                {
+
+                }
+            }
+            catch (SocketException se)
+            {
+                throw se;
+            }
+        }
+
         // obj: header, body 구조체 
         public static void Send(Socket peer, Object obj)
         {
@@ -231,5 +281,18 @@ namespace LunkerLibrary.common.Utils
                 throw se;
             }
         }// end method
+
+        public static Task SendAsync(Socket peer, Object header, Object body)
+        {
+            try
+            {
+                return Task.Run(() => Send(peer, header, body));
+            }
+            catch (SocketException se)
+            {
+                throw se;
+            }
+        }
+
     }// end class
 }

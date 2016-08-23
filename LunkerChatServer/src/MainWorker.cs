@@ -452,8 +452,9 @@ namespace LunkerChatServer
 
                 CommonHeader responseHeader = new CommonHeader(MessageType.FENotice, MessageState.Response, Marshal.SizeOf(responseBody), new Cookie(), new UserInfo());
 
-                NetworkManager.Send(peer, responseHeader);
-                NetworkManager.Send(peer, responseBody);
+                NetworkManager.Send(peer, responseHeader, responseBody);
+                //NetworkManager.Send(peer, responseHeader);
+                //NetworkManager.Send(peer, responseBody);
 
             });
         }
@@ -547,9 +548,11 @@ namespace LunkerChatServer
 
                 if (!client.Blocking)
                     client.Blocking = true;
-                // broadcast to each client
-                await NetworkManager.SendAsync(client,header);
-                await NetworkManager.SendAsync(client, messageBuff);
+                // broadcast to each client\
+
+                await NetworkManager.SendAsync(client, header, messageBuff);
+                //await NetworkManager.SendAsync(client,header);
+                //await NetworkManager.SendAsync(client, messageBuff);
             }
 
             // Send chatting to BE 
@@ -618,10 +621,11 @@ namespace LunkerChatServer
             CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody)  NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
 
             Console.WriteLine("[ChatServer][HandleCreateRoom()] end");
-            
+
             // 3) send response(header, body) to client
-             NetworkManager.Send(peer, responseHeader);
-             NetworkManager.Send(peer, responseBody);
+            NetworkManager.Send(peer, responseHeader, responseBody);
+             //NetworkManager.Send(peer, responseHeader);
+             //NetworkManager.Send(peer, responseBody);
 
             // 4) 
             connectionManager.AddChattingRoomListInfoKey(responseBody.ChattingRoom);
@@ -652,9 +656,9 @@ namespace LunkerChatServer
             byte[] responseBody =  NetworkManager.Read(beServerSocket, responseHeader.BodyLength);
 
             // 3) 
-
-             NetworkManager.Send(peer,responseHeader);
-             NetworkManager.Send(peer,responseBody);
+            await NetworkManager.SendAsync(peer, responseHeader, responseBody);
+             //NetworkManager.Send(peer,responseHeader);
+             //NetworkManager.Send(peer,responseBody);
             Console.WriteLine("[ChatServer][HandleListChattingRoom()] end");
         }
 
@@ -684,9 +688,13 @@ namespace LunkerChatServer
             enteredRoom = requestBody.RoomInfo;
             userId = header.UserInfo.GetPureId();
 
+            
+
+            CommonHeader beRequestHeader = new CommonHeader(header.Type, MessageState.Request, header.BodyLength, new Cookie(), new UserInfo());
             // 2) 
-            await NetworkManager.SendAsync(beServerSocket, new CommonHeader(header.Type, MessageState.Request, header.BodyLength, new Cookie(), new UserInfo()));
-            await NetworkManager.SendAsync(beServerSocket, requestBody);
+            await NetworkManager.SendAsync(beServerSocket, beRequestHeader , requestBody);
+            //await NetworkManager.SendAsync(beServerSocket, );
+            //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3) 
             CommonHeader responseHeader = (CommonHeader)  NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
@@ -697,8 +705,9 @@ namespace LunkerChatServer
                 // read body
                 CBJoinRoomResponseBody responseBody = (CBJoinRoomResponseBody)  NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBJoinRoomResponseBody));
 
-                await NetworkManager.SendAsync(peer, responseHeader);
-                await NetworkManager.SendAsync(peer, responseBody);
+                await NetworkManager.SendAsync(peer, responseHeader, responseBody);
+                //await NetworkManager.SendAsync(peer, responseHeader);
+                //await NetworkManager.SendAsync(peer, responseBody);
             }
             else if(responseHeader.State == MessageState.Success)
             {
@@ -745,8 +754,9 @@ namespace LunkerChatServer
             enteredRoom = requestBody.RoomInfo;
 
             // 2) send
-            await NetworkManager.SendAsync(beServerSocket, header);
-            await NetworkManager.SendAsync(beServerSocket, requestBody);
+            await NetworkManager.SendAsync(beServerSocket, header, requestBody);
+            //await NetworkManager.SendAsync(beServerSocket, header);
+            //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));

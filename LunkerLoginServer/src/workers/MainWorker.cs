@@ -463,8 +463,10 @@ namespace LunkerLoginServer.src.workers
                     CLSigninResponseBody body = new CLSigninResponseBody(header.Cookie, serverInfo);
                     CommonHeader responseHeader = new CommonHeader(MessageType.Signin, MessageState.Success, Marshal.SizeOf(body), header.Cookie, header.UserInfo);
 
-                    NetworkManager.Send(client, responseHeader);
-                    NetworkManager.Send(client, body);
+                    //NetworkManager.Send(client, responseHeader);
+                    //NetworkManager.Send(client, body);
+
+                    NetworkManager.Send(client, responseHeader, body);
 
                     Console.WriteLine("[loginserver][HandleNoticeUserAuth()] auth success.");
                     Console.WriteLine("[loginserver][HandleNoticeUserAuth()] Login Finally Success.");
@@ -544,8 +546,10 @@ namespace LunkerLoginServer.src.workers
                 //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
                 //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);
 
-                NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
-                NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
+                NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader, feRequestBody);
+
+                //NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
+                //NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
 
                 // select FE Server to connect with client
                 Console.WriteLine("[LoginServer][HandleSignin()] signin success");
@@ -568,11 +572,12 @@ namespace LunkerLoginServer.src.workers
 
         public void HandleLogout(Socket client, CommonHeader header)
         {
-                NetworkManager.Send(beSocket, header);
 
-                CommonHeader resonseHeader = (CommonHeader)NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader resonseHeader = (CommonHeader)NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
-                NetworkManager.Send(client, resonseHeader);
+            NetworkManager.Send(beSocket, header);
+            NetworkManager.Send(client, resonseHeader);
+
         }
 
         /// <summary>
@@ -670,8 +675,11 @@ namespace LunkerLoginServer.src.workers
             CLModifyRequestBody clRequestBody = (CLModifyRequestBody)  NetworkManager.Read(client, header.BodyLength, typeof(CLModifyRequestBody));
 
             // 2)
-             NetworkManager.Send(beSocket, header);
-             NetworkManager.Send(beSocket, clRequestBody);
+            NetworkManager.Send(beSocket, header, clRequestBody);
+
+            //NetworkManager.Send(beSocket, header);
+
+            //NetworkManager.Send(beSocket, clRequestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));

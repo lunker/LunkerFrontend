@@ -631,10 +631,14 @@ namespace LunkerChatAdminTool.src
         {
             return Task.Run(()=> {
 
-                logger.Debug("[Admin][HandleAgentInfoResponseAsync()] start");
+                //logger.Debug("[Admin][HandleAgentInfoResponseAsync()] start");
+                Console.WriteLine("[Admin][HandleAgentInfoResponseAsync()] start");
                 AAAgentInfoRequestBody requestBody = (AAAgentInfoRequestBody)NetworkManager.Read(agentSocket, header.BodyLength, typeof(AAAgentInfoRequestBody));
-                logger.Debug("[Admin][HandleAgentInfoResponseAsync()] ip : " + requestBody.AgentInfo.ServerInfo.GetPureIp());
-                logger.Debug("[Admin][HandleAgentInfoResponseAsync()] port :" + requestBody.AgentInfo.ServerInfo.Port);
+                Console.WriteLine("[Admin][HandleAgentInfoResponseAsync()] ip : " + requestBody.AgentInfo.ServerInfo.GetPureIp());
+                Console.WriteLine("[Admin][HandleAgentInfoResponseAsync()] port :" + requestBody.AgentInfo.ServerInfo.Port);
+
+                //logger.Debug("[Admin][HandleAgentInfoResponseAsync()] ip : " + requestBody.AgentInfo.ServerInfo.GetPureIp());
+                //logger.Debug("[Admin][HandleAgentInfoResponseAsync()] port :" + requestBody.AgentInfo.ServerInfo.Port);
 
                 if (agentSocketList.ContainsKey(agentSocket))
                 {

@@ -797,8 +797,6 @@ namespace LunkerChatWebServer.src
             if (connectionManager.CheckChattingRoomJoinInfo(userId))
             {
                 // Fail.
-
-
             }
             */
 

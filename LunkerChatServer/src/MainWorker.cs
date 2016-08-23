@@ -287,7 +287,7 @@ namespace LunkerChatServer
                         }
                     }// end loop
                 }// endif 
-            }
+            }// end loop
         }
 
         // 요청을 읽고, 작업을 처리하는 비동기 작업을 만들어야함!!!
@@ -775,6 +775,5 @@ namespace LunkerChatServer
                 NetworkManager.SendAsync(peer, new CommonHeader(header.Type, MessageState.Error, Constants.None, new Cookie(), header.UserInfo));
             });
         }
-
-    }
+    }// end class
 }

@@ -1,7 +1,6 @@
 ﻿using log4net;
-using LunkerChatWebServer.src.utils;
+using LunkerChatServer.src.utils;
 using LunkerLibrary.common.protocol;
-using LunkerLibrary.common.utils;
 using LunkerLibrary.common.Utils;
 using System;
 using System.Collections.Generic;
@@ -10,13 +9,13 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using WebSocketSharp.Server;
 
-namespace LunkerChatWebServer.src
+namespace LunkerChatServer.src
 {
-    class MainWorker
+    public class WebsocketWorker
     {
 
+        /*
         private static MainWorker instance = null;
         private ILog logger = Logger.GetLoggerInstance();
         private bool threadState = Constants.AppRun;
@@ -36,9 +35,8 @@ namespace LunkerChatWebServer.src
 
         private Socket feListener = null;
 
-        private Socket beServerSocket = null;
-        private Socket loginServerSocket = null;
-
+        private Socket beSocket = null;
+        private Socket loginSocket = null;
 
         private HttpListener server = null;
 
@@ -64,13 +62,13 @@ namespace LunkerChatWebServer.src
                 server.Start();
 
                 MainProcess();
-                //Console.WriteLine("complete222");
-            } 
-            catch(ArgumentException ae)
+                Console.WriteLine("complete222");
+            }
+            catch (ArgumentException ae)
             {
                 Console.WriteLine("ae error");
             }
-            catch(HttpListenerException hle)
+            catch (HttpListenerException hle)
             {
                 Console.WriteLine("hle error");
             }
@@ -80,8 +78,8 @@ namespace LunkerChatWebServer.src
                 Console.WriteLine("error");
             }
 
-
             logger.Debug("[ChatServer][MainWorker][Start()] end");
+            Console.ReadKey();
         }
 
         /// <summary>
@@ -105,123 +103,90 @@ namespace LunkerChatWebServer.src
         /// Listen 80 port 
         /// </summary>
         /// <returns></returns>
-       
-
-        public Task HandleLoginServerConnectAsync()
+        public Task BindClientSocketListenerAsync()
         {
             return Task.Run(() => {
-
-                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().LoginServerIp), AppConfig.GetInstance().LoginServerPort);
-
-                while (true)
-                {
-                    try
-                    {
-                        if (loginServerSocket != null)
-                        {
-                            if (!loginServerSocket.Connected)
-                            {
-                                Console.WriteLine("[ChatServer][MainProcess()] 설마....");
+                logger.Debug("[ChatServer][BindClientSocketListenerAsync()] start");
 
 
-                                loginServerSocket.Connect(ep);
-                                Console.WriteLine("[ChatServer][MainProcess()] Connect login Server");
-                                logger.Debug("[ChatServer][MainProcess()] Connect login Server");
-
-                                //socketTaskPair.Add(loginServerSocket, Task.Run(() => { }));
-                            }
-                        }
-                    }
-                    catch (InvalidOperationException ioe)
-                    {
-                        loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
-                        continue;
-                    }
-                    catch (SocketException se)
-                    {
-                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
-                        loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        continue;
-                    }
-                }
-            });
-        }
-
-        public Task HandleBeServerConnectAsync()
-        {
-            return Task.Run(() => {
-
-                IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
-
-                while (true)
-                {
-                    //Task.Delay(500);
-                    try
-                    {
-                        if (beServerSocket != null)
-                        {
-                            if (!beServerSocket.Connected)
-                            {
-                                beServerSocket.Connect(ep);
-                                Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
-                                logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
-                            }
-                        }
-                    }
-                    catch (SocketException se)
-                    {
-                        Console.WriteLine("[ChatServer][MainProcess()] Reconnect . . . Backend Server . . .");
-                        beServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        continue;
-                    }
-                }
-            });
-        }
-
-        public void HandleClientAcceptAsync()
-        {
-            /*
-            return Task.Run(() => {
+                // initialiize client socket listener
+                //IPEndPoint ep = new IPEndPoint(IPAddress.Parse("10.100.58.3"), 80);
                 IPEndPoint ep = new IPEndPoint(IPAddress.Any, 80);
 
-                while (true)
-                {
-                    try
-                    {
-
-                        HttpListenerContext context = await server.GetContextAsync();
-                        context.AcceptWebSocketAsync();
-
-                    }
-                    catch (SocketException se)
-                    {
-                        Console.WriteLine("loginserver : client listener disconnected!!");
-                        clientListener.Close();
-                        continue;
-                    }
-                }
+                
+                clientListener = new Socket(SocketType.Stream, ProtocolType.IP);
+                clientListener.Bind(ep);
+                clientListener.Listen(1000);
+                
+                logger.Debug("[ChatServer][BindClientSocketListenerAsync()] end");
             });
-            */
         }
+
+        public Task ConnectBESocketAsync()
+        {
+            return Task.Run(() => {
+                logger.Debug("[ChatServer][ConnectBESocketAsync()] start");
+                beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+                //IPEndPoint ep = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().BackendServerIp), AppConfig.GetInstance().BackendServerPort);
+                IPEndPoint ep = new IPEndPoint(Dns.GetHostEntry(Constants.BeServer).AddressList[0], AppConfig.GetInstance().BackendServerPort);
+
+                beSocket.Connect(ep);
+                logger.Debug("[ChatServer][ConnectBESocketAsync()] end");
+            });
+        }
+
+        public Task ConnectLoginSocketAsync()
+        {
+            return Task.Run(() => {
+                logger.Debug("[ChatServer][ConnectLoginSocketAsync()] start");
+                loginSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+
+                ;
+                IPEndPoint ep = new IPEndPoint(Dns.GetHostEntry(Constants.LoginServer).AddressList[0], AppConfig.GetInstance().LoginServerPort);
+
+                loginSocket.Connect(ep);
+                logger.Debug("[ChatServer][ConnectLoginSocketAsync()] end");
+            });
+        }
+
 
         public void MainProcess()
         {
-            logger.Debug("[ChatServer][MainProcess()] start");
-            Console.WriteLine("[ChatServer][MainProcess()] start");
+            logger.Debug("[ChatServer][HandleRequest()] start");
 
-            HandleLoginServerConnectAsync();
-
-            HandleBeServerConnectAsync();
-
-            HandleClientAcceptAsync();
-
-            while (true)
+            while (threadState)
             {
+                HandleAcceptClientRequest();
 
-               //
-            }
+            }// end loop 
         }// end method
+
+        public void HandleAcceptClientRequest()
+        {
+            if (clientAcceptTask != null)
+            {
+                if (clientAcceptTask.IsCompleted)
+                {
+                    logger.Debug("[ChatServer][HandleRequest()] complete accept task. Restart");
+
+                    HttpListenerRequest request = clientAcceptTask.Result.Request;
+                    HttpListenerResponse response = clientAcceptTask.Result.Response;
+
+                    Console.WriteLine("whow~!~!~!~!~!~!~!~!");
+                    HandleRequest(request, response);
+                    clientAcceptTask = server.GetContextAsync();
+
+                }
+            }
+            else
+            {
+                logger.Debug("[ChatServer][HandleRequest()] start accept task ");
+
+                clientAcceptTask = server.GetContextAsync();
+            }
+        }// end method 
+
 
         public async void HandleRequest(HttpListenerRequest request, HttpListenerResponse response)
         {
@@ -233,7 +198,7 @@ namespace LunkerChatWebServer.src
             {
                 //CommonHeader header = (CommonHeader)await NetworkManager.ReadAsync(peer, Constants.HeaderSize, typeof(CommonHeader));
 
-                CommonHeader header = (CommonHeader) await WebNetworkManager.ReadAsync(request, Constants.HeaderSize, typeof(CommonHeader));
+                CommonHeader header = (CommonHeader)await WebNetworkManager.ReadAsync(request, Constants.HeaderSize, typeof(CommonHeader));
 
                 switch (header.Type)
                 {
@@ -277,7 +242,17 @@ namespace LunkerChatWebServer.src
             {
                 // errorr
             }
-            
+
         }// end method
+
+        public void HandleConnectionSetupAsync()
+        {
+
+        }
+
+*/
+
     }
+
+
 }

@@ -568,7 +568,7 @@ namespace LunkerChatServer
         {
             Console.WriteLine("[chatserver][HandleNoticeUserAuth()] start");
             // 1)
-            LCUserAuthRequestBody requestBody = (LCUserAuthRequestBody)await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(LCUserAuthRequestBody));
+            LCUserAuthRequestBody requestBody = (LCUserAuthRequestBody) NetworkManager.Read(peer, header.BodyLength, typeof(LCUserAuthRequestBody));
             Console.WriteLine($"[chatserver][HandleNoticeUserAuth()] cookie : ");
             Console.WriteLine($"[chatserver][HandleNoticeUserAuth()] userinfo id: " + requestBody.UserInfo.GetPureId());
             // 2) 
@@ -637,6 +637,7 @@ namespace LunkerChatServer
             Console.WriteLine("[chatserver][HandleChattingRequest()] start");
             byte[] messageBuff = new byte[header.BodyLength];
             messageBuff = await NetworkManager.ReadAsync(peer, header.BodyLength);
+            messageBuff = NetworkManager.Read(peer, header.BodyLength);
             // read message
 
             // Get User Entered Room 
@@ -663,7 +664,7 @@ namespace LunkerChatServer
             // Send chatting to BE 
             //string sendingUser = new string(header.UserInfo.Id);
             CommonHeader responseHeader = new CommonHeader(MessageType.Chatting, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
-            await NetworkManager.SendAsync(beServerSocket, responseHeader);
+            NetworkManager.Send(beServerSocket, responseHeader);
             // worker에게 위임? 
             //beWorker.HandleChatting(header);
             Console.WriteLine("[chatserver][HandleChattingRequest()] end");
@@ -821,7 +822,7 @@ namespace LunkerChatServer
                 responseHeader.BodyLength = 0;
                 connectionManager.AddChattingRoomJoinInfo(userId, enteredRoom);
                 connectionManager.AddChattingRoomListInfoValue(enteredRoom, userId);
-                await NetworkManager.SendAsync(peer, responseHeader);
+                 NetworkManager.Send(peer, responseHeader);
                 // add user info to data structure 
                 //connectionManager.AddChattingRoomListInfoValue(enteredRoom, userId);
             }
@@ -855,7 +856,7 @@ namespace LunkerChatServer
             ChattingRoom enteredRoom = default(ChattingRoom);
             string userId = new string(header.UserInfo.Id);
             // 1) 
-            CCLeaveRequestBody requestBody = (CCLeaveRequestBody) await NetworkManager.ReadAsync(peer, header.BodyLength, typeof(CCLeaveRequestBody));
+            CCLeaveRequestBody requestBody = (CCLeaveRequestBody) NetworkManager.Read(peer, header.BodyLength, typeof(CCLeaveRequestBody));
             enteredRoom = requestBody.RoomInfo;
 
             // 2) send
@@ -864,7 +865,7 @@ namespace LunkerChatServer
             //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3)
-            CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader)  NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
 
             // 4) 
             await NetworkManager.SendAsync(peer, responseHeader);

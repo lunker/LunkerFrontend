@@ -20,6 +20,7 @@ namespace LunkerLoginServer.src.workers
         private bool threadState = Constants.AppRun;
 
         private List<Socket> clientConnection = null;
+        private Dictionary<string, Socket> rawClientSocketDic = null;
 
         //private Dictionary<ServerInfo, Socket> feConnectionDic = null;
         private Dictionary<Socket, ServerInfo> feConnectionDic = null;
@@ -74,7 +75,10 @@ namespace LunkerLoginServer.src.workers
         public void Initialize()
         {
             Console.WriteLine("login 초기화");
+
             clientConnection = new List<Socket>();
+            rawClientSocketDic = new Dictionary<string, Socket>();
+
 
             feConnectionDic = new Dictionary<Socket, ServerInfo>();
 
@@ -206,7 +210,6 @@ namespace LunkerLoginServer.src.workers
 
                     }
                 }
-
             });
         }
 
@@ -225,14 +228,15 @@ namespace LunkerLoginServer.src.workers
                 {
                     if (socketTaskPair.Count != 0)
                     {
-                        foreach (Socket peer in socketTaskPair.Keys.ToList())
+                        for(int idx=0; idx< socketTaskPair.Count; idx++)
                         {
-                            readSocketList.Add(peer);
+                            readSocketList.Add(socketTaskPair.ElementAt(idx).Key);
                         }
 
                         Task tmp = null;
-                        foreach (Socket peer in readSocketList)
+                        for(int idx=0; idx< readSocketList.Count; idx++)
                         {
+                            Socket peer = readSocketList[idx];
                             try
                             {
 
@@ -258,7 +262,8 @@ namespace LunkerLoginServer.src.workers
                             {
                                 continue;
                             }
-                        }
+                        } 
+                        
                     }// end if
                     readSocketList.Clear();
                 }
@@ -320,26 +325,33 @@ namespace LunkerLoginServer.src.workers
                              HandleFENotice(peer, header);
                             break;
 
+                        case MessageType.NoticeUserAuth:
+                            HandleNoticeUserAuth(peer, header);
+                            break;
+
                         case MessageType.Signin:
                             Console.WriteLine("[LoginServer][HandleRequest()] Signin.");
-                            await HandleSigninAsync(peer, header);
+                             HandleSignin(peer, header);
                             break;
 
                         case MessageType.Logout:
                             Console.WriteLine("[LoginServer][HandleRequest()] Logout.");
-                            await HandleLogoutAsnyc(peer, header);
+                             HandleLogout(peer, header);
                             break;
+
                         case MessageType.Signup:
                             Console.WriteLine("[LoginServer][HandleRequest()] Signup.");
-                            await HandleSignupAsync(peer, header);
+                             HandleSignup(peer, header);
                             break;
+
                         case MessageType.Delete:
                             Console.WriteLine("[LoginServer][HandleRequest()] Delete.");
-                            await HandleDeleteAsync(peer, header);
+                             HandleDelete(peer, header);
                             break;
+
                         case MessageType.Modify:
                             Console.WriteLine("[LoginServer][HandleRequest()] Modify.");
-                            await HandleModifyAsync(peer, header);
+                             HandleModify(peer, header);
                             break;
                         // default
                         default:
@@ -428,6 +440,45 @@ namespace LunkerLoginServer.src.workers
         }
 
         /// <summary>
+        /// FE로 부터 사용자 인증 정보를 받았다는걸 받음.
+        /// </summary>
+        /// <param name="feSocket"></param>
+        /// <param name="header"></param>
+        public  void HandleNoticeUserAuth(Socket feSocket, CommonHeader header)
+        {
+            Console.WriteLine("[loginserver][HandleNoticeUserAuth()] start");
+            // find client socket from dictionary
+            Socket client = null;
+            
+            rawClientSocketDic.TryGetValue(header.UserInfo.GetPureId(),out client);
+
+            if (client != null && feSocket !=null )
+            {
+                // LoadBalancing
+                // pick FE 
+                // client에게 login 성공을 보낸다.
+
+                ServerInfo serverInfo = default(ServerInfo);
+                if(feConnectionDic.TryGetValue(feSocket, out serverInfo))
+                {
+                    
+                    CLSigninResponseBody body = new CLSigninResponseBody(header.Cookie, serverInfo);
+                    CommonHeader responseHeader = new CommonHeader(MessageType.Signin, MessageState.Success, Marshal.SizeOf(body), header.Cookie, header.UserInfo);
+
+                    NetworkManager.Send(client, responseHeader);
+                    NetworkManager.Send(client, body);
+
+                    //NetworkManager.Send(client, responseHeader, body);
+
+                    Console.WriteLine("[loginserver][HandleNoticeUserAuth()] auth success.");
+                    Console.WriteLine("[loginserver][HandleNoticeUserAuth()] Login Finally Success.");
+
+                }
+            }
+            Console.WriteLine("[loginserver][HandleNoticeUserAuth()] end");
+        }
+
+        /// <summary>
         /// Handle Login 
         /// <para>1) read signin info from client</para>
         /// <para>2) send signin request to be</para>
@@ -465,38 +516,52 @@ namespace LunkerLoginServer.src.workers
             //CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader) );
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
-            // =====================READ COOKIE FROM BE
-            // cookie in body 
-            //LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-            LBSigninResponseBody responseBody = (LBSigninResponseBody) NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-            cookie = responseBody.Cookie;
+            if (responseHeader.State == MessageState.Success)
+            {
+                // =====================READ COOKIE FROM BE
+                // cookie in body 
+                //LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
+                LBSigninResponseBody responseBody = (LBSigninResponseBody)NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
+                cookie = responseBody.Cookie;
 
-            // LoadBalancing
-            // pick FE 
-            int index = LoadBalancer.RoundRobin();
+                int index = LoadBalancer.RoundRobin();
 
-            responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
+                responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
 
-            Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
-            // send result to client
-             NetworkManager.Send(client, responseHeader);
-             NetworkManager.Send(client, responseBody);
+                Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
 
-            // !!!!!! loadbalancing 
-            // send auth to Chat Server
-            
-            LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
-            //byte[] bodyArr = NetworkManager.StructureToByte(feRequestBody);
-            CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Marshal.SizeOf(feRequestBody) , cookie, responseHeader.UserInfo);
-            
+                /****
+                 * 
+                 * 
+                 * 
+                 */
+                rawClientSocketDic.Add(signinUser.GetPureId(), client);
 
-            //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
-            //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);
+                // !!!!!! loadbalancing 
+                // send auth to Chat Server
 
-             NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
-             NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
+                LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
+                //byte[] bodyArr = NetworkManager.StructureToByte(feRequestBody);
+                CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Marshal.SizeOf(feRequestBody), cookie, responseHeader.UserInfo);
 
-            // select FE Server to connect with client
+
+                //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
+                //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);
+
+                NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader, feRequestBody);
+
+                //NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestHeader);
+                //NetworkManager.Send(feConnectionDic.ElementAt(index).Key, feRequestBody);
+
+                // select FE Server to connect with client
+                Console.WriteLine("[LoginServer][HandleSignin()] signin success");
+                Console.WriteLine("[LoginServer][HandleSignin()] send user auth info to Chat Server");
+            }
+            else
+            {
+                Console.WriteLine("[LoginServer][HandleSignin()] signin fail");
+                NetworkManager.Send(client, responseHeader);
+            }
 
             logger.Debug("[LoginServer][HandleSignin()] signin end");
             Console.WriteLine("[LoginServer][HandleSignin()] signin end");
@@ -505,6 +570,16 @@ namespace LunkerLoginServer.src.workers
         public Task HandleSigninAsync(Socket client, CommonHeader header)
         {
             return Task.Run(()=> HandleSignin(client, header));
+        }
+
+        public void HandleLogout(Socket client, CommonHeader header)
+        {
+
+            CommonHeader resonseHeader = (CommonHeader)NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+
+            NetworkManager.Send(beSocket, header);
+            NetworkManager.Send(client, resonseHeader);
+
         }
 
         /// <summary>
@@ -602,8 +677,11 @@ namespace LunkerLoginServer.src.workers
             CLModifyRequestBody clRequestBody = (CLModifyRequestBody)  NetworkManager.Read(client, header.BodyLength, typeof(CLModifyRequestBody));
 
             // 2)
-             NetworkManager.Send(beSocket, header);
-             NetworkManager.Send(beSocket, clRequestBody);
+            NetworkManager.Send(beSocket, header, clRequestBody);
+
+            //NetworkManager.Send(beSocket, header);
+
+            //NetworkManager.Send(beSocket, clRequestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));

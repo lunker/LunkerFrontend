@@ -14,6 +14,7 @@ namespace LunkerAgent
         private static ILog logger = AgentLogger.GetLoggerInstance();
         static void Main(string[] args)
         {
+            Console.Title = "Agent";
             logger.Debug("----------------------------------------------start-------------------");
             AdminAgent agent = AdminAgent.GetInstance();
             agent.Start();

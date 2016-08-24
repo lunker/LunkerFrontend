@@ -53,10 +53,7 @@ namespace LunkerChatServer
 
         private Dictionary<Socket, Task> socketTaskPair = null;
 
-        //private Hashtable socketTaskPair = null;
-
-        //private ChatWorker chatWorker;
-        private BEWorker beWorker = BEWorker.GetInstance();
+        
 
         private MainWorker(){ }
 
@@ -209,7 +206,7 @@ namespace LunkerChatServer
         /// </summary>
         public void Initialize()
         {
-            connectionManager = ConnectionManager.GetInstance();
+            connectionManager = new ConnectionManager();
 
             readSocketList = new List<Socket>();
             writeSocketList = new List<Socket>();
@@ -294,149 +291,149 @@ namespace LunkerChatServer
         public async void HandleRequest(Socket peer)
         {
             
-                if (peer != null && peer.Connected)
+            if (peer != null && peer.Connected)
+            {
+                // 정상 연결상태 
+                // 일단 CCHeader로 전체 header 사용 
+                try
                 {
-                    // 정상 연결상태 
-                    // 일단 CCHeader로 전체 header 사용 
-                    try
+                    //Console.WriteLine("chatserver: handlerequest");
+                    CommonHeader header = (CommonHeader)NetworkManager.Read(peer, Constants.HeaderSize, typeof(CommonHeader));
+                    Console.WriteLine($"[chat] type : {header.Type}");
+                    Console.WriteLine($"[chat] state : {header.State}");
+                    Console.WriteLine($"[chat] remote IP: { ((IPEndPoint)peer.RemoteEndPoint).Address.ToString()}");
+                    Console.WriteLine($"[chat] remote port: { ((IPEndPoint)peer.RemoteEndPoint).Port}");
+                    Console.WriteLine($"[chat] local port: { ((IPEndPoint)peer.LocalEndPoint).Address.ToString()}");
+
+                    CommonHeader cookieVerifyHeader;
+                    switch (header.Type)
                     {
-                        //Console.WriteLine("chatserver: handlerequest");
-                        CommonHeader header = (CommonHeader)NetworkManager.Read(peer, Constants.HeaderSize, typeof(CommonHeader));
-                        Console.WriteLine($"[chat] type : {header.Type}");
-                        Console.WriteLine($"[chat] state : {header.State}");
-                        Console.WriteLine($"[chat] remote IP: { ((IPEndPoint)peer.RemoteEndPoint).Address.ToString()}");
-                        Console.WriteLine($"[chat] remote port: { ((IPEndPoint)peer.RemoteEndPoint).Port}");
-                        Console.WriteLine($"[chat] local port: { ((IPEndPoint)peer.LocalEndPoint).Address.ToString()}");
+                        // login이 chat에 요청을 보낸다.
+                        // 그거에 대한 응답을 보내준다.
+                        // chat server의 정보를 담아서 보내준다!!
+                        case MessageType.FENotice:
+                            // chat->login에게 fe의 정보를 보내준것에 대한 response
+                            // 
+                            // just Get Response about FE Notice 
+                                HandleFEInfoRequeset(peer, header);
+                            break;
 
-                        CommonHeader cookieVerifyHeader;
-                        switch (header.Type)
-                        {
-                            // login이 chat에 요청을 보낸다.
-                            // 그거에 대한 응답을 보내준다.
-                            // chat server의 정보를 담아서 보내준다!!
-                            case MessageType.FENotice:
-                                // chat->login에게 fe의 정보를 보내준것에 대한 response
-                                // 
-                                // just Get Response about FE Notice 
-                                 HandleFEInfoRequeset(peer, header);
-                                break;
+                        // login -> chat
+                        // notice user Auth Info 
+                        case MessageType.NoticeUserAuth:
+                                HandleNoticeUserAuthAsync(peer, header);
+                            break;
 
-                            // login -> chat
-                            // notice user Auth Info 
-                            case MessageType.NoticeUserAuth:
-                                 HandleNoticeUserAuthAsync(peer, header);
-                                break;
+                        // client -> chatting server. 
+                        // send user auth info
+                        case MessageType.ConnectionSetup:
+                            // 인증된 유저가 들어와야 
+                            // connectionDic에 저장된다. 
+                                HandleConnectionSetupAsync(peer, header);
+                            break;
 
-                            // client -> chatting server. 
-                            // send user auth info
-                            case MessageType.ConnectionSetup:
-                                // 인증된 유저가 들어와야 
-                                // connectionDic에 저장된다. 
-                                 HandleConnectionSetupAsync(peer, header);
-                                break;
+                        // 200: chatting 
+                        // ok 
+                        case MessageType.Chatting:
+                                HandleChattingRequest(peer, header);
+                            break;
 
-                            // 200: chatting 
-                            // ok 
-                            case MessageType.Chatting:
-                                 HandleChattingRequest(peer, header);
-                                break;
+                        // room : 400 
+                        // check cookie available
+                        // ok 
+                        case MessageType.CreateRoom:
+                            /*
+                            cookieVerifyHeader = (CommonHeader) await HandleCookieVerifyAsync(header);
+                            if(cookieVerifyHeader.State == MessageState.Success)
+                            {
+                                await HandleCreateRoomAsync(peer, header);
+                            }
+                            else
+                            {
+                                // error
+                                // not authenticated user
+                            }
+                            */
+                            HandleCreateRoom(peer, header);
+                            break;
 
-                            // room : 400 
-                            // check cookie available
-                            // ok 
-                            case MessageType.CreateRoom:
-                                /*
-                                cookieVerifyHeader = (CommonHeader) await HandleCookieVerifyAsync(header);
-                                if(cookieVerifyHeader.State == MessageState.Success)
-                                {
-                                    await HandleCreateRoomAsync(peer, header);
-                                }
-                                else
-                                {
-                                    // error
-                                    // not authenticated user
-                                }
-                                */
-                                HandleCreateRoom(peer, header);
-                                break;
+                        // ok 
+                        case MessageType.JoinRoom:
+                            /*
+                            cookieVerifyHeader = (CommonHeader)await HandleCookieVerifyAsync(header);
+                            if (cookieVerifyHeader.State == MessageState.Success)
+                            {
+                                await HandleJoinRoomAsync(peer, header);
+                            }
+                            else
+                            {
+                                // error
+                                // not authenticated user
+                            }
 
-                            // ok 
-                            case MessageType.JoinRoom:
-                                /*
-                                cookieVerifyHeader = (CommonHeader)await HandleCookieVerifyAsync(header);
-                                if (cookieVerifyHeader.State == MessageState.Success)
-                                {
-                                    await HandleJoinRoomAsync(peer, header);
-                                }
-                                else
-                                {
-                                    // error
-                                    // not authenticated user
-                                }
+                            */
+                            HandleJoinRoom(peer, header);
+                            break;
 
-                                */
-                                HandleJoinRoom(peer, header);
-                                break;
+                        // ok
+                        case MessageType.LeaveRoom:
+                            //await HandleCookieVerifyAsync(header);
+                                HandleLeaveRoom(peer, header);
+                            break;
 
-                            // ok
-                            case MessageType.LeaveRoom:
-                                //await HandleCookieVerifyAsync(header);
-                                 HandleLeaveRoom(peer, header);
-                                break;
-
-                            // ok
-                            // not yet 
-                            case MessageType.ListRoom:
-                                //await HandleCookieVerifyAsync(header);
-                                HandleListChattingRoom(peer, header);
-                                break;
-                            // ok
-                            // default
-                            default:
-                                //await HandleErrorAsync(peer, header);
-                                break;
-                        }// end switch
-                        //peer.Blocking = true;
-                    }
-                    catch (SocketException se)
-                    {
-                        //peer.Blocking = true;
-                        // error
-                        // Get rid of client 
-                        Console.WriteLine(se.StackTrace);
-                        Console.WriteLine(se.SocketErrorCode);
-                        if (se.SocketErrorCode == SocketError.WouldBlock)
-                        {
-                            Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
-
-
-                        }
-                        else
-                        {
-                            Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
-                            peer.Close();
-                        }
-                        return;
-                    }
+                        // ok
+                        // not yet 
+                        case MessageType.ListRoom:
+                            //await HandleCookieVerifyAsync(header);
+                            HandleListChattingRoom(peer, header);
+                            break;
+                        // ok
+                        // default
+                        default:
+                            //await HandleErrorAsync(peer, header);
+                            break;
+                    }// end switch
+                    //peer.Blocking = true;
                 }
-                else
+                catch (SocketException se)
                 {
-                    // clear connection infos 
-                    // delete socket in connection list 
-                    /*
-                    IPEndPoint endPoint = (IPEndPoint)peer.RemoteEndPoint;
-                    string ip = endPoint.Address.ToString();
-                    int port = endPoint.Port;
-                    string key = ip + ":" + port;
-
-                    UserInfo userInfo = connectionManager.GetClientInfo(key);
-
-                    if (!userInfo.Equals(default(UserInfo)))
+                    //peer.Blocking = true;
+                    // error
+                    // Get rid of client 
+                    Console.WriteLine(se.StackTrace);
+                    Console.WriteLine(se.SocketErrorCode);
+                    if (se.SocketErrorCode == SocketError.WouldBlock)
                     {
-                        connectionManager.LogoutClient(key);
+                        Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
+
+
                     }
-                    */
+                    else
+                    {
+                        Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
+                        peer.Close();
+                    }
+                    return;
                 }
+            }
+            else
+            {
+                // clear connection infos 
+                // delete socket in connection list 
+                /*
+                IPEndPoint endPoint = (IPEndPoint)peer.RemoteEndPoint;
+                string ip = endPoint.Address.ToString();
+                int port = endPoint.Port;
+                string key = ip + ":" + port;
+
+                UserInfo userInfo = connectionManager.GetClientInfo(key);
+
+                if (!userInfo.Equals(default(UserInfo)))
+                {
+                    connectionManager.LogoutClient(key);
+                }
+                */
+            }
         }// end method  
 
 
@@ -455,8 +452,9 @@ namespace LunkerChatServer
 
                 CommonHeader responseHeader = new CommonHeader(MessageType.FENotice, MessageState.Response, Marshal.SizeOf(responseBody), new Cookie(), new UserInfo());
 
-                NetworkManager.Send(peer, responseHeader);
-                NetworkManager.Send(peer, responseBody);
+                NetworkManager.Send(peer, responseHeader, responseBody);
+                //NetworkManager.Send(peer, responseHeader);
+                //NetworkManager.Send(peer, responseBody);
 
             });
         }
@@ -550,9 +548,11 @@ namespace LunkerChatServer
 
                 if (!client.Blocking)
                     client.Blocking = true;
-                // broadcast to each client
-                await NetworkManager.SendAsync(client,header);
-                await NetworkManager.SendAsync(client, messageBuff);
+                // broadcast to each client\
+
+                await NetworkManager.SendAsync(client, header, messageBuff);
+                //await NetworkManager.SendAsync(client,header);
+                //await NetworkManager.SendAsync(client, messageBuff);
             }
 
             // Send chatting to BE 
@@ -621,10 +621,11 @@ namespace LunkerChatServer
             CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody)  NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
 
             Console.WriteLine("[ChatServer][HandleCreateRoom()] end");
-            
+
             // 3) send response(header, body) to client
-             NetworkManager.Send(peer, responseHeader);
-             NetworkManager.Send(peer, responseBody);
+            NetworkManager.Send(peer, responseHeader, responseBody);
+             //NetworkManager.Send(peer, responseHeader);
+             //NetworkManager.Send(peer, responseBody);
 
             // 4) 
             connectionManager.AddChattingRoomListInfoKey(responseBody.ChattingRoom);
@@ -655,9 +656,9 @@ namespace LunkerChatServer
             byte[] responseBody =  NetworkManager.Read(beServerSocket, responseHeader.BodyLength);
 
             // 3) 
-
-             NetworkManager.Send(peer,responseHeader);
-             NetworkManager.Send(peer,responseBody);
+            await NetworkManager.SendAsync(peer, responseHeader, responseBody);
+             //NetworkManager.Send(peer,responseHeader);
+             //NetworkManager.Send(peer,responseBody);
             Console.WriteLine("[ChatServer][HandleListChattingRoom()] end");
         }
 
@@ -687,9 +688,13 @@ namespace LunkerChatServer
             enteredRoom = requestBody.RoomInfo;
             userId = header.UserInfo.GetPureId();
 
+            
+
+            CommonHeader beRequestHeader = new CommonHeader(header.Type, MessageState.Request, header.BodyLength, new Cookie(), new UserInfo());
             // 2) 
-            await NetworkManager.SendAsync(beServerSocket, new CommonHeader(header.Type, MessageState.Request, header.BodyLength, new Cookie(), new UserInfo()));
-            await NetworkManager.SendAsync(beServerSocket, requestBody);
+            await NetworkManager.SendAsync(beServerSocket, beRequestHeader , requestBody);
+            //await NetworkManager.SendAsync(beServerSocket, );
+            //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3) 
             CommonHeader responseHeader = (CommonHeader)  NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
@@ -700,8 +705,9 @@ namespace LunkerChatServer
                 // read body
                 CBJoinRoomResponseBody responseBody = (CBJoinRoomResponseBody)  NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBJoinRoomResponseBody));
 
-                await NetworkManager.SendAsync(peer, responseHeader);
-                await NetworkManager.SendAsync(peer, responseBody);
+                await NetworkManager.SendAsync(peer, responseHeader, responseBody);
+                //await NetworkManager.SendAsync(peer, responseHeader);
+                //await NetworkManager.SendAsync(peer, responseBody);
             }
             else if(responseHeader.State == MessageState.Success)
             {
@@ -748,8 +754,9 @@ namespace LunkerChatServer
             enteredRoom = requestBody.RoomInfo;
 
             // 2) send
-            await NetworkManager.SendAsync(beServerSocket, header);
-            await NetworkManager.SendAsync(beServerSocket, requestBody);
+            await NetworkManager.SendAsync(beServerSocket, header, requestBody);
+            //await NetworkManager.SendAsync(beServerSocket, header);
+            //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));

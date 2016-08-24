@@ -74,7 +74,7 @@ namespace LunkerChatAdminTool.src
                 while (true)
                 {
                     Socket tmp = agentListener.Accept();
-                    tmp.Blocking = false;
+                    //tmp.Blocking = false;
                     Console.WriteLine("[Admin] Agent Connected");
 
                     Task.Run(()=> {
@@ -352,6 +352,16 @@ namespace LunkerChatAdminTool.src
             });
         }
 
+        public void RefreshUI()
+        {
+            if (AdminMode == Constants.Admin)
+                PrintAdminModeUI();
+            else if(AdminMode == Constants.Lobby)
+            {
+                PrintLobbyUI();
+            }
+        }
+
         /// <summary>
         /// ReadLine with key event
         /// </summary>
@@ -441,7 +451,6 @@ namespace LunkerChatAdminTool.src
         /// <param name="agentSocket"></param>
         public async void HandleAgentResponse(Socket agentSocket)
         {
-
             while (true)
             {
 
@@ -492,25 +501,18 @@ namespace LunkerChatAdminTool.src
                 }
                 catch (SocketException se)
                 {
-                    // connection disconnected.
-                    // 해당 socket 닫아야 . . . 
                     agentSocketList.Remove(agentSocket);
                     agentSocket.Close();
 
-
                     Console.WriteLine("[Admin][HandleAgentResponse()] agent disconnected . . . ");
                     return;
-
                 }
                 finally
                 {
-                    if (AdminMode == Constants.Admin)
-                        PrintAdminModeUI();
+                    RefreshUI();
                 }
-                
             }
-
-        }
+        }// end method
 
         public void HandleStartAppRequestAsync(Socket agentSocket)
         {
@@ -541,6 +543,29 @@ namespace LunkerChatAdminTool.src
         ////============================================Response====================================================////
         ////====================================================================================================////
         ////====================================================================================================////
+
+        public void HandleStartAppResponse(Socket agentSocket, AAHeader header)
+        {
+            AgentInfo resultAgentInfo = default(AgentInfo);
+
+            if (agentSocketList.TryGetValue(agentSocket, out resultAgentInfo))
+            {
+                if (header.State == MessageState.Success)
+                {
+                    resultAgentInfo.ServerState = ServerState.Running;
+                }
+                else
+                    resultAgentInfo.ServerState = ServerState.Stopped;
+            }
+            else
+            {
+                resultAgentInfo.ServerState = ServerState.Stopped;
+            }
+            
+            agentSocketList.Remove(agentSocket);
+            agentSocketList.Add(agentSocket, resultAgentInfo);
+        }
+
         /// <summary>
         ///  update Server State
         /// </summary>
@@ -566,10 +591,10 @@ namespace LunkerChatAdminTool.src
                     resultAgentInfo.ServerState = ServerState.Stopped;
                 }
 
-                /*
+                
                 agentSocketList.Remove(agentSocket);
                 agentSocketList.Add(agentSocket, resultAgentInfo);
-                */
+                
             });
         }
         public Task HandleShutdownAppResponseAsync(Socket agentSocket, AAHeader header)
@@ -595,11 +620,11 @@ namespace LunkerChatAdminTool.src
                 {
                     // error . . .
                 }
-                /*
+                
                 agentSocketList.Remove(agentSocket);
                 agentSocketList.Add(agentSocket, resultAgentInfo);
                 logger.Debug("[Admin][HandleShutdownAppResponseAsync()] end");
-                */
+                
 
             });
         }
@@ -624,10 +649,10 @@ namespace LunkerChatAdminTool.src
                 {
                     // error . . .
                 }
-                /*
+                
                 agentSocketList.Remove(agentSocket);
                 agentSocketList.Add(agentSocket, resultAgentInfo);
-                */
+                
             });
         }
 

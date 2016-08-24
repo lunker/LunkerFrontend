@@ -69,6 +69,14 @@
       <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="LunkerLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\LunkerLibrary\bin\Release\LunkerLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="LunkerProtocol, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\LunkerLibrary\bin\Release\LunkerProtocol.dll</HintPath>
+    </Reference>
     <Reference Include="RabbitMQ.Client, Version=3.6.5.0, Culture=neutral, PublicKeyToken=89e7d7c5feba84ce, processorArchitecture=MSIL">
       <HintPath>..\packages\RabbitMQ.Client.3.6.5\lib\net45\RabbitMQ.Client.dll</HintPath>
       <Private>True</Private>
@@ -93,16 +101,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\LunkerLibrary\LunkerLibrary.csproj">
-      <Project>{79ae82ed-b2aa-410b-8099-248b5493d276}</Project>
-      <Name>LunkerLibrary</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\LunkerProtocol\LunkerProtocol.csproj">
-      <Project>{2bc1f17f-4f41-4d18-b31e-61d1ebab65a9}</Project>
-      <Name>LunkerProtocol</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="config\AppConfig.xml" />

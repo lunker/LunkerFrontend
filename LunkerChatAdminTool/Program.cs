@@ -15,7 +15,7 @@ namespace LunkerChatAdminTool
 
         static void Main(string[] args)
         {
-            
+            Console.Title="Admin Tool";
             Power.On();
             //Console.ReadLine();
         }

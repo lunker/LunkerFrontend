@@ -54,14 +54,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerChatAdminTool.exe" size="17920">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerChatAdminTool.exe" size="18432">
       <assemblyIdentity name="LunkerChatAdminTool" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>CO9gEIvNT29WKGCezc6ZF26fA5LYJNDc1LhLjjTsEjg=</dsig:DigestValue>
+        <dsig:DigestValue>dU7vLMYY1+9VBdK2gmMRDdCgoie6YfNqQddauD2376s=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -73,19 +73,19 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>dePymtC+z/m/ikuUKNtGcGJV9HiFeN1HLVW4r6W9wxQ=</dsig:DigestValue>
+        <dsig:DigestValue>rudgYxxV3ODbF62xiQRQNw26NrQfIsKd+MCVpzWi+EQ=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerProtocol.dll" size="15872">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerProtocol.dll" size="16384">
       <assemblyIdentity name="LunkerProtocol" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>nl2YgIIztQvdWa9DnkNRWLNCAcAeFX0d9Pzno+NEMaM=</dsig:DigestValue>
+        <dsig:DigestValue>cGxXlRtbWEJcX6lB5aC78rreb6ARgIXcVsDiiS/35lE=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

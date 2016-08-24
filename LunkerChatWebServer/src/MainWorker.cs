@@ -194,10 +194,13 @@ namespace LunkerChatWebServer.src
                                 }
                                 */
 
-
+                                /*
                                 Task.Run(()=> {
                                     HandleBE(beServerSocket);
                                 });
+                                */
+                                HandleFEServiceInfo(beServerSocket);
+
                                 Console.WriteLine("[ChatServer][HandleBeServerConnectAsync()] Connect Backend Server");
                                 logger.Debug("[ChatServer][HandleBeServerConnectAsync()] Connect Backend Server");
                             }
@@ -216,7 +219,7 @@ namespace LunkerChatWebServer.src
                 }// end loop
             });
         }
-
+        /*
         public void HandleBE(Socket beSocket)
         {
             while (true)
@@ -232,15 +235,19 @@ namespace LunkerChatWebServer.src
                 }
             }
         }
+        */
 
         public void HandleFEServiceInfo(Socket beSocket)
         {
             Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . .");
 
+            CommonHeader reponseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            
+
             CBServerInfoNoticeResponseBody requestBody = new CBServerInfoNoticeResponseBody(new ServerInfo(hostIP, 80));
             CommonHeader requestHeader = new CommonHeader();
             requestHeader.Type = MessageType.BENotice;
-            requestHeader.State = MessageState.Response;
+            requestHeader.State = MessageState.Success;
             requestHeader.BodyLength = Marshal.SizeOf(requestBody);
             requestHeader.Cookie = new Cookie();
 
@@ -751,7 +758,7 @@ namespace LunkerChatWebServer.src
             NetworkManager.Send(beServerSocket, header);
 
             // 2) read response(header, body) from BE
-            CommonHeader responseHeader = (CommonHeader)NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
+            CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
             CBCreateRoomResponseBody responseBody = (CBCreateRoomResponseBody)NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBCreateRoomResponseBody));
 
             Console.WriteLine("[ChatServer][HandleCreateRoom()] end");

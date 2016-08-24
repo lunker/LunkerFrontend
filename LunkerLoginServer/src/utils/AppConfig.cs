@@ -33,7 +33,7 @@ namespace LunkerLoginServer.src.utils
             //StringBuilder sb = new StringBuilder();
             //chatServerInfo.Select();
 
-            XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backlog"))

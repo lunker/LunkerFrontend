@@ -152,7 +152,8 @@ namespace LunkerChatServer
                                 Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
                                 logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
                                 //SendFEServiceInfo(beServerSocket);
-                                Task.Run(()=> { HandleBE(beServerSocket); });
+                                HandleFEServiceInfo(beServerSocket);
+                                //Task.Run(()=> { HandleBE(beServerSocket); });
                                 Console.WriteLine("[ChatServer][MainProcess()] Send Chat Server");
                             }
                         }
@@ -173,8 +174,7 @@ namespace LunkerChatServer
 
         public void HandleBE(Socket beSocket)
         {
-            while (true)
-            {
+           
                 CommonHeader requestHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize ,typeof(CommonHeader));
 
                 switch (requestHeader.Type)
@@ -184,17 +184,19 @@ namespace LunkerChatServer
                         break;
 
                 }
-            }
+            
         }
 
         public void HandleFEServiceInfo(Socket beSocket)
         {
             Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . .");
 
+            CommonHeader reponseHeader = (CommonHeader)NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+
             CBServerInfoNoticeResponseBody requestBody = new CBServerInfoNoticeResponseBody(new ServerInfo(hostIP, AppConfig.GetInstance().ClientListenPort));
             CommonHeader requestHeader = new CommonHeader();
             requestHeader.Type = MessageType.BENotice;
-            requestHeader.State = MessageState.Response;
+            requestHeader.State = MessageState.Success;
             requestHeader.BodyLength = Marshal.SizeOf(requestBody);
             requestHeader.Cookie = new Cookie();
 

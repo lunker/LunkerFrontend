@@ -18,6 +18,7 @@ namespace LunkerLoginServer.src.workers
         private static MainWorker instance = null;
         private ILog logger = LoginLogger.GetLoggerInstance();
         private bool threadState = Constants.AppRun;
+        private string hostIP = "";
 
         private List<Socket> clientConnection = null;
         private Dictionary<string, Socket> rawClientSocketDic = null;
@@ -99,6 +100,19 @@ namespace LunkerLoginServer.src.workers
             feListener.Bind(feListenEndPoint);
             feListener.Listen(AppConfig.GetInstance().Backlog);
 
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    if (ip.ToString().Split('.')[0].Equals("10"))
+                    {
+                        hostIP = ip.ToString();
+                        logger.Debug("[chatserver][Initialize()] host ip : " + hostIP);
+                    }
+                }
+            }
+
             Console.WriteLine("loginserver : fe socket listen");
         }
 
@@ -124,25 +138,50 @@ namespace LunkerLoginServer.src.workers
                                 beSocket.Connect(beEndPoint);
                                 Console.WriteLine("loginserver : BE connect success");
                                 // send 
+                                HandleBERequest(beSocket);
+                                Console.WriteLine("loginserver : handle be request");
                             }
                         }
                         else
                         {
                             beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                            IPEndPoint beEndPoint = new IPEndPoint(IPAddress.Parse(AppConfig.GetInstance().Backendserverip), AppConfig.GetInstance().Backendserverport);
-                            beSocket.Connect(beEndPoint);
-                            Console.WriteLine("loginserver : BE connect success");
+                            
                         }
                         
                     }
                     catch (SocketException se)
                     {
+                        Console.WriteLine("[ChatServer][MainProcess()] Reconnect . . . Backend Server . . .");
                         continue;
                     }
                 }// end loop
  
             });
         }// end method 
+
+        public void HandleBERequest(Socket beSocket)
+        {
+            
+            CommonHeader requestHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            Console.WriteLine("read be request");
+            requestHeader.State = MessageState.Fail;
+            NetworkManager.Send(beSocket, requestHeader);
+            Console.WriteLine("send be  res");
+            
+            /*
+            Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . .");
+
+            CBServerInfoNoticeResponseBody requestBody = new CBServerInfoNoticeResponseBody(new ServerInfo(hostIP, 80));
+            CommonHeader requestHeader = new CommonHeader();
+            requestHeader.Type = MessageType.BENotice;
+            requestHeader.State = MessageState.Success;
+            requestHeader.BodyLength = Marshal.SizeOf(requestBody);
+            requestHeader.Cookie = new Cookie();
+
+            NetworkManager.Send(beSocket, requestHeader, requestBody);
+            Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . . complete");
+            */
+        }
 
         /// <summary>
         /// Task that accept Chatting Client Connect Request async
@@ -476,7 +515,6 @@ namespace LunkerLoginServer.src.workers
                                 await HandleErrorAsync(peer, header);
                                 break;
                         }
-                        peer.Blocking = true;
                         logger.Debug("[LoginServer][HandleRequest()] handle client request end");
                         Console.WriteLine("[LoginServer][HandleRequest()] handle client request end");
 

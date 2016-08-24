@@ -17,7 +17,7 @@ namespace LunkerAgent.src.utils
         private AppConfig()
         {
 #if DEBUG
-               XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
+               XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("adminIp"))
@@ -37,7 +37,7 @@ namespace LunkerAgent.src.utils
                 }
             }
 #else
-            XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("adminIp"))

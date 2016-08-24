@@ -4,11 +4,13 @@ public struct AgentInfo
 {
     ServerInfo serverInfo;
     ServerState serverState;
+    ServerType serverType;
 
-    public AgentInfo(ServerInfo serverInfo, ServerState serverState)
+    public AgentInfo(ServerInfo serverInfo, ServerState serverState, ServerType serverType)
     {
         this.serverInfo = serverInfo;
         this.serverState = serverState;
+        this.serverType = serverType;
     }
 
     public ServerState ServerState
@@ -23,5 +25,12 @@ public struct AgentInfo
         set { serverInfo = value; }
     }
 
+    public ServerType ServerType
+    {
+        get { return serverType; }
+        set {
+            serverType = value;
+        }
+    }
 
 }

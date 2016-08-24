@@ -91,7 +91,7 @@ namespace LunkerAgent.src
             */
 
             socketChatServer.CreateNoWindow = false;
-            socketChatServer.FileName = "..\\..\\..\\LunkerChatServer\\bin\\Release\\LunkerChatServer.exe";
+            socketChatServer.FileName = "..\\..\\..\\LunkerChatWebServer\\bin\\Release\\LunkerChatWebServer.exe";
 
 
             /*

@@ -151,6 +151,9 @@ namespace LunkerChatServer
                                 beServerSocket.Connect(ep);
                                 Console.WriteLine("[ChatServer][MainProcess()] Connect Backend Server");
                                 logger.Debug("[ChatServer][MainProcess()] Connect Backend Server");
+                                //SendFEServiceInfo(beServerSocket);
+                                Task.Run(()=> { HandleBE(beServerSocket); });
+                                Console.WriteLine("[ChatServer][MainProcess()] Send Chat Server");
                             }
                         }
                         else
@@ -168,6 +171,37 @@ namespace LunkerChatServer
             });
         }
 
+        public void HandleBE(Socket beSocket)
+        {
+            while (true)
+            {
+                CommonHeader requestHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize ,typeof(CommonHeader));
+
+                switch (requestHeader.Type)
+                {
+                    case MessageType.BENotice:
+                        HandleFEServiceInfo(beSocket);
+                        break;
+
+                }
+            }
+        }
+
+        public void HandleFEServiceInfo(Socket beSocket)
+        {
+            Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . .");
+
+            CBServerInfoNoticeResponseBody requestBody = new CBServerInfoNoticeResponseBody(new ServerInfo(hostIP, AppConfig.GetInstance().ClientListenPort));
+            CommonHeader requestHeader = new CommonHeader();
+            requestHeader.Type = MessageType.BENotice;
+            requestHeader.State = MessageState.Response;
+            requestHeader.BodyLength = Marshal.SizeOf(requestBody);
+            requestHeader.Cookie = new Cookie();
+
+            NetworkManager.Send(beSocket, requestHeader, requestBody);
+            Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . . complete");
+
+        }
         public Task HandleClientAcceptAsync()
         {
             return Task.Run(() => {

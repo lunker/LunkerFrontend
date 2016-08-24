@@ -36,6 +36,8 @@ public enum MessageType : short
     */
     // chat -> login 
     FENotice = 610,
+    // chat -> BE
+    BENotice = 650,
 
     // login -> chat 
     NoticeUserAuth = 640,

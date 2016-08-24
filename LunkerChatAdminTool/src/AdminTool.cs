@@ -31,7 +31,7 @@ namespace LunkerChatAdminTool.src
 
         private Dictionary<Socket, AgentInfo> agentSocketList = null;
 
-        private Dictionary<Socket, List<AgentInfo>> 
+        
 
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;

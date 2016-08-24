@@ -150,7 +150,7 @@ namespace LunkerChatWebServer.src
                     catch (InvalidOperationException ioe)
                     {
                         //loginServerSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        //loginServerSocket = null;
+                        loginServerSocket = null;
 
                         Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
                         continue;
@@ -309,10 +309,18 @@ namespace LunkerChatWebServer.src
 
             while (true)
             {
-                if (loginServerSocket!=null && loginServerSocket.Poll(0, SelectMode.SelectRead))
+                try
                 {
-                    HandleFERequest(loginServerSocket);
+                    if (loginServerSocket != null && loginServerSocket.Poll(0, SelectMode.SelectRead))
+                    {
+                        HandleFERequest(loginServerSocket);
+                    }
                 }
+                catch (ObjectDisposedException ode)
+                {
+                    continue;
+                }
+                
                 /*
                 if (socketTaskPair.Count != 0)
                 {
@@ -504,9 +512,11 @@ namespace LunkerChatWebServer.src
                     catch (WebSocketException wse)
                     {
 
-                        Console.WriteLine("[chatserver][handlerequest()] websocketexception");
+                        Console.WriteLine("[chatserver][handlerequest()] disconnected");
                         Console.WriteLine(wse.WebSocketErrorCode);
                         Console.WriteLine(wse.StackTrace);
+
+                        return;
                     }
                     catch (NoMessageException nme)
                     {

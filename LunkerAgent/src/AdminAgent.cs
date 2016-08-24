@@ -93,8 +93,13 @@ namespace LunkerAgent.src
             socketChatServer.CreateNoWindow = false;
             socketChatServer.FileName = "..\\..\\..\\LunkerChatServer\\bin\\Release\\LunkerChatServer.exe";
 
+
+            /*
+             * 
             websocketChatServer.CreateNoWindow = false;
             websocketChatServer.FileName = "..\\..\\..\\LunkerChatWebServer\\bin\\Release\\LunkerChatWebServer.exe";
+
+            */
         }
         public Task HandleAdminConnectAsync()
         {

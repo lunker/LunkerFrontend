@@ -42,6 +42,7 @@
     <Compile Include="common\KeyType.cs" />
     <Compile Include="common\protocol\admin-agent\AAAgentInfoRequestBody.cs" />
     <Compile Include="common\protocol\admin-agent\AAAgentInfoResponseBody.cs" />
+    <Compile Include="common\protocol\admin-agent\AACommandRequestBody.cs" />
     <Compile Include="common\protocol\admin-agent\AAHeader.cs" />
     <Compile Include="common\protocol\AgentInfo.cs" />
     <Compile Include="common\protocol\CBHeader.cs" />

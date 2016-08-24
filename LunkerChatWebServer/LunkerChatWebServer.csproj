@@ -88,6 +88,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\agent\MessageBroker.cs" />
     <Compile Include="src\ChatWebServer.cs" />
     <Compile Include="src\MainWorker.cs" />
     <Compile Include="src\Power.cs" />

@@ -121,7 +121,9 @@ namespace LunkerChatServer
                     catch (InvalidOperationException ioe)
                     {
                         Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . login Server . . . retry");
+                        loginServerSocket = null;
                         continue;
+
                     }
                     catch (SocketException se)
                     {
@@ -296,13 +298,19 @@ namespace LunkerChatServer
 
             while (true)
             {
-
-
-                if (loginServerSocket != null && loginServerSocket.Poll(0, SelectMode.SelectRead))
+                try
                 {
-                    HandleFERequest(loginServerSocket);
+                    if (loginServerSocket != null && loginServerSocket.Poll(0, SelectMode.SelectRead))
+                    {
+                        HandleFERequest(loginServerSocket);
+                    }
+                }
+                catch (ObjectDisposedException ode)
+                {
+                    continue;
                 }
 
+                
                 /*
                 if (socketTaskPair.Count != 0)
                 {
@@ -542,6 +550,13 @@ namespace LunkerChatServer
                         // Get rid of client 
                         Console.WriteLine(se.StackTrace);
                         Console.WriteLine(se.SocketErrorCode);
+
+                        
+                        connectionManager.LogoutClient(((IPEndPoint)peer.RemoteEndPoint).Address + ":" + ((IPEndPoint)peer.RemoteEndPoint).Port);
+                        /*
+                        connectionManager.AddClientConnection(header.UserInfo.GetPureId(), peer);
+                        connectionManager.DeleteClientConnection();
+                        */
                         if (se.SocketErrorCode == SocketError.WouldBlock)
                         {
                             Console.WriteLine("[chatserver][HandleRequest()] socket exception b b ");
@@ -573,6 +588,10 @@ namespace LunkerChatServer
                         connectionManager.LogoutClient(key);
                     }
                     */
+
+                    
+
+
                 }
             }
         }// end method  

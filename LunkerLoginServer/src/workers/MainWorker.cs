@@ -155,32 +155,16 @@ namespace LunkerLoginServer.src.workers
                         continue;
                     }
                 }// end loop
- 
             });
         }// end method 
 
         public void HandleBERequest(Socket beSocket)
         {
-            
             CommonHeader requestHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
             Console.WriteLine("read be request");
             requestHeader.State = MessageState.Fail;
             NetworkManager.Send(beSocket, requestHeader);
             Console.WriteLine("send be  res");
-            
-            /*
-            Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . .");
-
-            CBServerInfoNoticeResponseBody requestBody = new CBServerInfoNoticeResponseBody(new ServerInfo(hostIP, 80));
-            CommonHeader requestHeader = new CommonHeader();
-            requestHeader.Type = MessageType.BENotice;
-            requestHeader.State = MessageState.Success;
-            requestHeader.BodyLength = Marshal.SizeOf(requestBody);
-            requestHeader.Cookie = new Cookie();
-
-            NetworkManager.Send(beSocket, requestHeader, requestBody);
-            Console.WriteLine("[ChatServer][SendFEServiceInfo()] Send Chat Server Info to Backend Server . . . complete");
-            */
         }
 
         /// <summary>
@@ -269,60 +253,6 @@ namespace LunkerLoginServer.src.workers
             HandleFEAcceptAsync();
             HandleBEConnectAsnyc();
 
-            /*
-            while (threadState)
-            {
-                try
-                {
-                    if (socketTaskPair.Count != 0)
-                    {
-                        for(int idx=0; idx< socketTaskPair.Count; idx++)
-                        {
-                            readSocketList.Add(socketTaskPair.ElementAt(idx).Key);
-                        }
-
-                        Task tmp = null;
-                        for(int idx=0; idx< readSocketList.Count; idx++)
-                        {
-                            Socket peer = readSocketList[idx];
-                            try
-                            {
-
-                                tmp = (Task)socketTaskPair[peer];
-
-                                if (tmp != null)
-                                {
-                                    if (tmp.IsCompleted)
-                                    {
-                                        //Console.WriteLine("오ㅓㅏㄴ료ㅕ?");
-                                        tmp = Task.Run(() => HandleRequest(peer));
-                                        socketTaskPair[peer] = tmp;
-                                    }
-                                }
-                                else
-                                {
-                                    tmp = Task.Run(() => HandleRequest(peer));
-                                    socketTaskPair[peer] = tmp;
-                                }
-
-                            }
-                            catch (KeyNotFoundException knf)
-                            {
-                                continue;
-                            }
-                        } 
-                        
-                    }// end if
-                    readSocketList.Clear();
-                }
-                catch (SocketException se)
-                {
-                    Console.WriteLine("socket select error~!");
-                    continue;
-                }
-            }// end loop 
-            */
-
         }// end method
 
         public void HandleChatServer(Socket feSocket)
@@ -402,6 +332,7 @@ namespace LunkerLoginServer.src.workers
 
                         // 1) client connection 이거나 
                         // 2) fe connection 이거나 
+                        Console.WriteLine("[LoginServer][HandleRequest()] disconnected . . .");
                         logger.Debug("[LoginServer][HandleRequest()] socket exception . . .");
 
                         socketTaskPair.Remove(feSocket);
@@ -476,6 +407,11 @@ namespace LunkerLoginServer.src.workers
 
                         switch (header.Type)
                         {
+
+                            case MessageType.ConnectionPassing:
+                                HandleConnectionPassing(peer, header);
+                                break;
+
                             case MessageType.FENotice:
                                 Console.WriteLine("[LoginServer][HandleRequest()] FENotice.");
                                 //await HandleFENoticeAsync(peer, header);
@@ -527,7 +463,7 @@ namespace LunkerLoginServer.src.workers
                         // 1) client connection 이거나 
                         // 2) fe connection 이거나 
                         logger.Debug("[LoginServer][HandleRequest()] socket exception . . .");
-
+                        Console.WriteLine("[LoginServer] Client Disconnected . . .");
                         socketTaskPair.Remove(peer);
 
                         if (clientConnection.Contains(peer))
@@ -551,8 +487,37 @@ namespace LunkerLoginServer.src.workers
 
                 }
             }
-          
         }// end method
+
+        public void HandleConnectionPassing(Socket peer, CommonHeader header)
+        {
+            Console.WriteLine("loginserver[HandleConnectionPassing]  start");
+            CLConnectionPassingRequestBody body = (CLConnectionPassingRequestBody) NetworkManager.Read(peer, Constants.HeaderSize, typeof(CLConnectionPassingRequestBody));
+            Console.WriteLine("loginserver[HandleConnectionPassing]  read client requeset body");
+
+            Socket connectingChatServerSocket = null;
+
+            for(int idx=0; idx<feConnectionDic.Count; idx++)
+            {
+                if (feConnectionDic.ElementAt(idx).Value.Equals(body.ServerInfo))
+                {
+                    connectingChatServerSocket = feConnectionDic.ElementAt(idx).Key;
+                }
+            }
+
+            CommonHeader chatAuthRequestHeader = new CommonHeader(MessageType.ConnectionSetup, MessageState.Request, Constants.None, header.Cookie, header.UserInfo);
+
+            NetworkManager.Send(connectingChatServerSocket, chatAuthRequestHeader);
+            Console.WriteLine("loginserver[HandleConnectionPassing] send user auth info to chatting server");
+
+
+            CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(connectingChatServerSocket, Constants.HeaderSize, typeof(CommonHeader));
+            Console.WriteLine("loginserver[HandleConnectionPassing] read user auth info response from chatting server");
+            responseHeader.Type = MessageType.ConnectionPassing;
+
+            NetworkManager.Send(peer, responseHeader);
+            Console.WriteLine("loginserver[HandleConnectionPassing]  start");
+        }
 
         /// <summary>
         /// <para>Handle Chat Service Info</para>
@@ -726,11 +691,15 @@ namespace LunkerLoginServer.src.workers
         public void HandleLogout(Socket client, CommonHeader header)
         {
 
+            NetworkManager.Send(beSocket, header);
+
             CommonHeader resonseHeader = (CommonHeader)NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
 
-            NetworkManager.Send(beSocket, header);
+            //NetworkManager.Send(beSocket, header);
+            // ++ login server에서 해당 유저 delete
             NetworkManager.Send(client, resonseHeader);
-
+            //rawClientSocketDic.Add(signinUser.GetPureId(), client);
+            rawClientSocketDic.Remove(header.UserInfo.GetPureId());
         }
 
         /// <summary>

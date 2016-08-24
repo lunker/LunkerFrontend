@@ -5,7 +5,7 @@ public enum MessageType : short
 
     // connection setup between client ~ chat server 
     ConnectionSetup = 100,
-
+    ConnectionPassing = 101,
     // chatting 
     Chatting = 200,
 
@@ -22,6 +22,8 @@ public enum MessageType : short
     LeaveRoom = 420,
     CreateRoom = 430,
 
+    
+
     // Admin tool : 500번대 
     StartApp = 500,
     ShutdownApp = 510,
@@ -36,6 +38,8 @@ public enum MessageType : short
     */
     // chat -> login 
     FENotice = 610,
+    // chat -> BE
+    BENotice = 650,
 
     // login -> chat 
     NoticeUserAuth = 640,

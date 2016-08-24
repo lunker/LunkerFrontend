@@ -16,7 +16,7 @@ namespace LunkerLoginServer
 
         static void Main(string[] args)
         {
-            
+            Console.Title = "Login Server";
             logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
             bool appState = Constants.AppRun;
 

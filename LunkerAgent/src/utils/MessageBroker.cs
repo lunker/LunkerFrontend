@@ -47,14 +47,14 @@ namespace LunkerAgent.src.utils
             ConnectionFactory factory = new ConnectionFactory() { HostName = "localhost" };
             channel = factory.CreateConnection().CreateModel();
 
-            /*
+            
             channel.QueueDeclare(queue: agentQueueName,
                durable: false,
                exclusive: false,
                autoDelete: false,
                arguments: null);
 
-    */
+    
 
    
 

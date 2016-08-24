@@ -54,38 +54,38 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerChatAdminTool.exe" size="19368">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerChatAdminTool.exe" size="18432">
       <assemblyIdentity name="LunkerChatAdminTool" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>SkeS7MpDTQIZ+b+JWM4eWWLhpgR4Z+8ObGqOGbk3vWM=</dsig:DigestValue>
+        <dsig:DigestValue>dU7vLMYY1+9VBdK2gmMRDdCgoie6YfNqQddauD2376s=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerLibrary.dll" size="14848">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerLibrary.dll" size="16384">
       <assemblyIdentity name="LunkerLibrary" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>dqszhDRwwAc/hYALY6slapW7ST4ry0QjIkC5labwIIY=</dsig:DigestValue>
+        <dsig:DigestValue>rudgYxxV3ODbF62xiQRQNw26NrQfIsKd+MCVpzWi+EQ=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerProtocol.dll" size="15360">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerProtocol.dll" size="16384">
       <assemblyIdentity name="LunkerProtocol" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>U+h9pxi4jNYx0KYjo6ZiaDe7EiFfgoZP+umG21Lz2OA=</dsig:DigestValue>
+        <dsig:DigestValue>cGxXlRtbWEJcX6lB5aC78rreb6ARgIXcVsDiiS/35lE=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -101,13 +101,13 @@
       </hash>
     </dependentAssembly>
   </dependency>
-  <file name="config\AppConfig.xml" size="115" writeableType="applicationData">
+  <file name="config\AppConfig.xml" size="528" writeableType="applicationData">
     <hash>
       <dsig:Transforms>
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-      <dsig:DigestValue>Wpy0R+bTgpoHdPCOyNjo296GK9P3OwpAbI/eRAdk3Ys=</dsig:DigestValue>
+      <dsig:DigestValue>SRTlHkmj1deSd2xXXRqkCFwukAGdA2vzPBw1DkvQCZ0=</dsig:DigestValue>
     </hash>
   </file>
   <file name="config\DebugLogconfig.xml" size="836" writeableType="applicationData">

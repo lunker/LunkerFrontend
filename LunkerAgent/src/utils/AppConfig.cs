@@ -17,16 +17,16 @@ namespace LunkerAgent.src.utils
         private AppConfig()
         {
 #if DEBUG
-             XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerAgent\\config\\AppConfig.xml");
+               XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
             while (reader.Read())
             {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("ip"))
+                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("adminIp"))
                 {
                     reader.Read();
                     ip = reader.Value;
                     reader.Read(); // delete close element
                 }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("port"))
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("adminListenPort"))
                 {
                     reader.Read();
                     if (Int32.TryParse(reader.Value, out port))
@@ -35,19 +35,18 @@ namespace LunkerAgent.src.utils
                     }
                     reader.Read(); // delete close element
                 }
-
             }
 #else
-            XmlTextReader reader = new XmlTextReader("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerAgent\\config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
             while (reader.Read())
             {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("ip"))
+                if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("adminIp"))
                 {
                     reader.Read();
                     ip = reader.Value;
                     reader.Read(); // delete close element
                 }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("port"))
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("adminListenPort"))
                 {
                     reader.Read();
                     if (Int32.TryParse(reader.Value, out port))

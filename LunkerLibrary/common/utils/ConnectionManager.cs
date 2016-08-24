@@ -35,7 +35,7 @@ namespace LunkerLibrary.common.Utils
 
         private Dictionary<ChattingRoom, HashSet<string>> chattingRoomListInfo = null;// roominfo ~ entered user info 
 
-        private ConnectionManager()
+        public ConnectionManager()
         {
             clientConnections = new Dictionary<string, Socket>();
             clientInfos = new Dictionary<string, UserInfo>();
@@ -90,19 +90,26 @@ namespace LunkerLibrary.common.Utils
             // 2) 
             Socket clientSocket = null;
             clientConnections.TryGetValue(userId, out clientSocket);
-            if (clientSocket.Connected)
-                clientSocket.Close();
-            clientSocket.Dispose();
-            clientSocket = null;
+            if (clientSocket!=null)
+            {
+                if (clientSocket.Connected){
+                    clientSocket.Close();
+                    clientSocket.Dispose();
+                    //clientSocket = null;
+                }
+            }
+
             //clientConnections.Remove(userId);        
             DeleteClientConnection(userId);
 
             // 3) 
-            DeleteClientConnection(userId);
+            //DeleteClientConnection(userId);
 
+            /*
             // 4)
             ChattingRoom enteredRoom = GetChattingRoomJoinInfo(userId);
 
+            
             DeleteChattingRoomListInfoValue(enteredRoom, userId);
             // delete room 
             if (GetChattingRoomListInfoCount(enteredRoom) == 0)
@@ -111,7 +118,8 @@ namespace LunkerLibrary.common.Utils
             }
 
             DeleteChattingRoomJoinInfo(userId);
-   
+        */
+
         }
 
     /**

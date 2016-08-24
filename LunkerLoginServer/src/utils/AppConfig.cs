@@ -27,14 +27,13 @@ namespace LunkerLoginServer.src.utils
         private int clientListenEndPoint = 0;
         private int frontendListenEndPoint = 0;
 
-
         private AppConfig()
         {
             // read config xml 
             //StringBuilder sb = new StringBuilder();
             //chatServerInfo.Select();
 
-            XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backlog"))
@@ -50,14 +49,14 @@ namespace LunkerLoginServer.src.utils
                     }
                     reader.Read(); // delete close element
                 }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverip"))
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendServerIp"))
                 {
                     reader.Read();
                     backendserverip = reader.Value;
 
                     reader.Read(); // delete close element
                 }
-                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendserverport"))
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name.Equals("backendServerPort"))
                 {
                     reader.Read();
                     if (Int32.TryParse(reader.Value, out backendserverport))

@@ -1,4 +1,4 @@
-﻿public struct AAHeader
+﻿public struct AAHeader : Header
 {
     MessageType type;
     MessageState state;

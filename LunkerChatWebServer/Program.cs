@@ -10,6 +10,7 @@ namespace LunkerChatWebServer
     {
         static void Main(string[] args)
         {
+            Console.Title = "Websocket Chatting Server";
             Power.On();
         }
     }

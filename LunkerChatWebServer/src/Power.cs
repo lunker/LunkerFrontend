@@ -1,4 +1,5 @@
 ﻿using log4net;
+using LunkerChatWebServer.src.agent;
 using LunkerLibrary.common.Utils;
 using System;
 using System.Collections.Generic;
@@ -8,18 +9,16 @@ using System.Threading.Tasks;
 
 namespace LunkerChatWebServer.src
 {
-    /// <summary>
-    /// application start/shutdown 
-    /// </summary>
+
     public static class Power
     {
-        private static ILog logger = Logger.GetLoggerInstance();
         private static bool appState = Constants.AppRun;
         private static ChatWebServer chatServer = null;
+        private static MessageBroker mBroker = MessageBroker.GetInstance();
 
         public static void On()
         {
-            logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
+            
 
 
             chatServer = ChatWebServer.GetInstance();
@@ -33,11 +32,8 @@ namespace LunkerChatWebServer.src
                 {
                     Console.Clear();
                     Console.Write("어플리케이션을 종료중입니다 . . .");
-                    chatServer.Stop();
-                    appState = Constants.AppStop;
 
-                    logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
-                    Environment.Exit(0);
+                    Off(MessageType.ShutdownApp);
                 }
                 else
                 {
@@ -53,15 +49,26 @@ namespace LunkerChatWebServer.src
         /// <para></para>
         /// <para></para>
         /// </summary>
-        public static void Off()
+        public static void Off(MessageType type)
         {
             chatServer.Stop();
             appState = Constants.AppStop;
-            // 종료 알림.
-            //MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success));
-            //MessageBroker.GetInstance().Release();
 
-            logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
+            //====================================나눌 필요가 있나 ? 
+            if (type == MessageType.ShutdownApp)
+            {
+                // 종료 알림.
+                
+                MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success, Constants.None));
+                MessageBroker.GetInstance().Release();
+            }
+            else
+            {
+                MessageBroker.GetInstance().Publish(new AAHeader(MessageType.RestartApp, MessageState.Success, Constants.None));
+                MessageBroker.GetInstance().Release();
+            }
+
+            
             Environment.Exit(0);
         }
     }

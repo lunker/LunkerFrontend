@@ -29,16 +29,19 @@ namespace LunkerAgent.src
 
         private Task socketConnectTask = null;
         private CancellationTokenSource source = new CancellationTokenSource();
-         
+
         private MessageBroker broker = MessageBroker.GetInstance();
 
-        private ProcessStartInfo info = new ProcessStartInfo();
         
+        private ProcessStartInfo socketChatServer = new ProcessStartInfo();
+        private ProcessStartInfo websocketChatServer = new ProcessStartInfo();
+
+
         private AdminAgent() { }
 
         public static AdminAgent GetInstance()
         {
-            if(instance == null)
+            if (instance == null)
             {
                 instance = new AdminAgent();
             }
@@ -82,9 +85,21 @@ namespace LunkerAgent.src
             readSocket = new List<Socket>();
             //broker.RegisterSubscribe();
 
+            /*
             info.CreateNoWindow = false;
             info.FileName = "C:\\chatserver(socket)\\LunkerChatServer.exe";
+            */
 
+            socketChatServer.CreateNoWindow = false;
+            socketChatServer.FileName = "..\\..\\..\\LunkerChatWebServer\\bin\\Release\\LunkerChatWebServer.exe";
+
+
+            /*
+             * 
+            websocketChatServer.CreateNoWindow = false;
+            websocketChatServer.FileName = "..\\..\\..\\LunkerChatWebServer\\bin\\Release\\LunkerChatWebServer.exe";
+
+            */
         }
         public Task HandleAdminConnectAsync()
         {
@@ -100,10 +115,14 @@ namespace LunkerAgent.src
                         {
                             if (!adminSocket.Connected)
                             {
+                                Task.Delay(1000);
                                 adminSocket.Connect(endPoint);
-                                SendServerInfo();
-                                Console.WriteLine("[AdminAgent][Initialize()] connect success");
-                                logger.Debug("[AdminAgent][Initialize()] connect success");
+                                //SendServerInfo();
+                                SendSocketServerInfo();
+                                SendWebSocketServerInfo();
+                                Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] connect success");
+                                Task.Run(() => { HandleRequestAsync(adminSocket); });
+                                Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] start agent handler task ");
                             }
                         }
                         else
@@ -113,34 +132,43 @@ namespace LunkerAgent.src
                     }
                     catch (InvalidOperationException ioe)
                     {
-                        adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . admin tool  . . . retry");
+                        //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        adminSocket = null;
+                        //adminSocket.Blocking = false;
+                        Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] Disconnected . . . admin tool  . . . retry");
                         continue;
                     }
                     catch (SocketException se)
                     {
-                        Console.WriteLine("[ChatServer][MainProcess()] Disconnected . . . admin tool . . . retry");
+                        Console.WriteLine("[AdminAgent][HandleAdminConnectAsync()] socketexception");
                         //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        //adminSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                        //adminSocket.Blocking = false;
                         continue;
                     }
-                }
+                }// end loop
             });
         }
 
         public async void MainProcess()
         {
+            HandleAdminConnectAsync();
+
             while (appState)
             {
+
+
+                /*
                 //logger.Debug("[AdminAgent][SendServerInfo()] 1");
                 // read 
                 if (adminSocket!=null && adminSocket.Connected)
                 {
-                    if (adminSocket.Poll(300, SelectMode.SelectRead))
+                    if (adminSocket.Poll(500, SelectMode.SelectRead))
                     {
                         // read
                         try
                         {
-                            Console.WriteLine("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
+                            //Console.WriteLine("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
                             //logger.Debug("[AdminAgent][Initialize()] before call HandleRequestAsync. .");
                             HandleRequestAsync(adminSocket);
                         }
@@ -149,25 +177,103 @@ namespace LunkerAgent.src
                             continue;
                         }
                     }
-                }
+                }// end if 
+                */
                 // poll admin request
             }// end loop 
         }// end method
-
-        public async void SendServerInfo()
+        public void SendSocketServerInfo()
         {
-            logger.Debug("[AdminAgent][SendServerInfo()] start");
-            logger.Debug("[AdminAgent][SendServerInfo()]" + hostIP);
-            ServerInfo serverInfo = new ServerInfo(hostIP,43320);
-            AgentInfo agentInfo = new AgentInfo(serverInfo, new ServerState());
+            Console.WriteLine("[AdminAgent][SendSocketServerInfo()]" + hostIP);
+
+            ServerInfo serverInfo = new ServerInfo(hostIP, 0);
+            AgentInfo agentInfo = new AgentInfo(serverInfo, ServerState.Stopped, ServerType.Socket);
 
             AAAgentInfoRequestBody requestBody = new AAAgentInfoRequestBody(agentInfo);
-            byte[] bodyArr = NetworkManager.StructureToByte(requestBody); 
+            byte[] bodyArr = NetworkManager.StructureToByte(requestBody);
             AAHeader requestHeader = new AAHeader(MessageType.AgentInfo, MessageState.Request, bodyArr.Length);
-            logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
-            NetworkManager.Send(adminSocket, requestHeader);
-             NetworkManager.Send(adminSocket, bodyArr);
-            logger.Debug("[AdminAgent][SendServerInfo()] end");
+
+            //logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
+            Console.WriteLine("[AdminAgent][SendSocketServerInfo()] IP By GetPureIP() : " + agentInfo.ServerInfo.GetPureIp());
+
+            if (adminSocket != null && adminSocket.Connected)
+            {
+                byte[] headerArr = NetworkManager.StructureToByte(requestHeader);
+                byte[] resBodyArr = NetworkManager.StructureToByte(requestBody);
+
+                byte[] packetArr = new byte[headerArr.Length + resBodyArr.Length];
+                Buffer.BlockCopy(headerArr, 0, packetArr, 0, headerArr.Length);
+                Buffer.BlockCopy(resBodyArr, 0, packetArr, headerArr.Length, resBodyArr.Length);
+
+                NetworkManager.Send(adminSocket, packetArr);
+
+                //NetworkManager.Send(adminSocket, requestHeader);
+                //NetworkManager.Send(adminSocket, bodyArr);
+            }
+            //logger.Debug("[AdminAgent][SendServerInfo()] end");
+            Console.WriteLine("[AdminAgent][SendSocketServerInfo()] end");
+        }
+        public void SendWebSocketServerInfo()
+        {
+            Console.WriteLine("[AdminAgent][SendWebSocketServerInfo()]" + hostIP);
+
+            ServerInfo serverInfo = new ServerInfo(hostIP, 0);
+            AgentInfo agentInfo = new AgentInfo(serverInfo, ServerState.Stopped, ServerType.Websocket);
+
+            AAAgentInfoRequestBody requestBody = new AAAgentInfoRequestBody(agentInfo);
+            byte[] bodyArr = NetworkManager.StructureToByte(requestBody);
+            AAHeader requestHeader = new AAHeader(MessageType.AgentInfo, MessageState.Request, bodyArr.Length);
+
+            //logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
+            Console.WriteLine("[AdminAgent][SendWebSocketServerInfo()] IP By GetPureIP() : " + agentInfo.ServerInfo.GetPureIp());
+
+            if (adminSocket != null && adminSocket.Connected)
+            {
+                byte[] headerArr = NetworkManager.StructureToByte(requestHeader);
+                byte[] resBodyArr = NetworkManager.StructureToByte(requestBody);
+
+                byte[] packetArr = new byte[headerArr.Length + resBodyArr.Length];
+                Buffer.BlockCopy(headerArr, 0, packetArr, 0, headerArr.Length);
+                Buffer.BlockCopy(resBodyArr, 0, packetArr, headerArr.Length, resBodyArr.Length);
+
+                NetworkManager.Send(adminSocket, packetArr);
+            }
+            //logger.Debug("[AdminAgent][SendServerInfo()] end");
+            Console.WriteLine("[AdminAgent][SendWebSocketServerInfo()] end");
+        }
+        public async void SendServerInfo()
+        {
+            Console.WriteLine("[AdminAgent][SendServerInfo()]" + hostIP);
+
+            ServerInfo serverInfo = new ServerInfo(hostIP, 43320);
+            AgentInfo agentInfo = new AgentInfo(serverInfo, ServerState.Stopped, ServerType.Socket);
+
+            AAAgentInfoRequestBody requestBody = new AAAgentInfoRequestBody(agentInfo);
+            byte[] bodyArr = NetworkManager.StructureToByte(requestBody);
+            AAHeader requestHeader = new AAHeader(MessageType.AgentInfo, MessageState.Request, bodyArr.Length);
+
+            //logger.Debug("[AdminAgent][SendServerInfo()] IP By GetPureIP() : "+ agentInfo.ServerInfo.GetPureIp());
+            Console.WriteLine("[AdminAgent][SendServerInfo()] IP By GetPureIP() : " + agentInfo.ServerInfo.GetPureIp());
+
+            if (adminSocket != null && adminSocket.Connected)
+            {
+                byte[] headerArr = NetworkManager.StructureToByte(requestHeader);
+                byte[] resBodyArr = NetworkManager.StructureToByte(requestBody);
+
+                byte[] packetArr = new byte[headerArr.Length + resBodyArr.Length];
+                Buffer.BlockCopy(headerArr, 0, packetArr, 0, headerArr.Length);
+                Buffer.BlockCopy(resBodyArr, 0, packetArr, headerArr.Length, resBodyArr.Length);
+
+                NetworkManager.Send(adminSocket, packetArr);
+
+
+
+
+                //NetworkManager.Send(adminSocket, requestHeader);
+                //NetworkManager.Send(adminSocket, bodyArr);
+            }
+            //logger.Debug("[AdminAgent][SendServerInfo()] end");
+            Console.WriteLine("[AdminAgent][SendServerInfo()] end");
         }
 
         /// <summary>
@@ -176,36 +282,47 @@ namespace LunkerAgent.src
         /// <param name="peer"></param>
         public void HandleRequestAsync(Socket peer)
         {
-            logger.Debug("[AdminAgent][SendServerInfo()] end");
-            //AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
-            try
+            while (true)
             {
-                AAHeader requestHeader = (AAHeader) NetworkManager.Read(peer, Constants.AdminHeaderSize, typeof(AAHeader));
-                switch (requestHeader.Type)
+                logger.Debug("[AdminAgent][SendServerInfo()] end");
+                //AAHeader requestHeader = (AAHeader)NetworkManager.ReadAsync(peer, Constants.AdminHeaderSize, typeof(AAHeader));
+                try
                 {
-                    case MessageType.RestartApp:
-                        HandleRestartApp();
-                        break;
-                    case MessageType.ShutdownApp:
-                        HandleShutdownApp();
-                        break;
-                    case MessageType.StartApp:
-                        HandleStartApp();
-                        break;
-                    default:
-                        break;
+                    AAHeader requestHeader = (AAHeader)NetworkManager.Read(peer, Constants.AdminHeaderSize, typeof(AAHeader));
+                    switch (requestHeader.Type)
+                    {
+                        case MessageType.RestartApp:
+                            HandleRestartApp();
+                            break;
+                        case MessageType.ShutdownApp:
+                            HandleShutdownApp();
+                            break;
+                        case MessageType.StartApp:
+                            HandleStartApp();
+                            break;
+                        default:
+                            break;
+                    }
                 }
-            }
-            catch (ObjectDisposedException ode)
-            {
-                return;
-            }
-            catch (SocketException se)
-            {
-                logger.Debug("[AdminAgent][HandleRequestAsync] socket disconnected");
-                peer.Close();
+                catch (NoMessageException ne)
+                {
+                    Console.WriteLine("no message read");
 
-                return;
+                    return;
+                }
+                catch (ObjectDisposedException ode)
+                {
+                    return;
+                }
+                catch (SocketException se)
+                {
+                    logger.Debug("[AdminAgent][HandleRequestAsync] socket disconnected");
+
+                    if (peer != null)
+                        peer.Close();
+
+                    return;
+                }
             }
         }// end method 
 
@@ -216,7 +333,8 @@ namespace LunkerAgent.src
         public async void HandleResponse(AAHeader responseHeader)
         {
             //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
-            await NetworkManager.SendAsync(adminSocket, responseHeader);
+            NetworkManager.Send(adminSocket, responseHeader);
+            //await NetworkManager.SendAsync(adminSocket, responseHeader);
         }
 
         /// <summary>
@@ -231,19 +349,20 @@ namespace LunkerAgent.src
             if (chatProcess == null)
             {
                 Console.WriteLine("in null");
-               
+
                 //info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
-                chatProcess = Process.Start(info);
+                chatProcess = Process.Start(socketChatServer);
 
                 // send result
                 AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Success, Constants.None);
                 //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
-                await NetworkManager.SendAsync(adminSocket, responseHeader);
+                //await NetworkManager.SendAsync(adminSocket, responseHeader);
+                NetworkManager.Send(adminSocket, responseHeader);
             }
             else
             {
                 Console.WriteLine("not null");
-                if ( chatProcess.HasExited || !chatProcess.Responding)
+                if (chatProcess.HasExited || !chatProcess.Responding)
                 {
                     try
                     {
@@ -251,24 +370,26 @@ namespace LunkerAgent.src
                         //ProcessStartInfo info = new ProcessStartInfo();
                         //info.CreateNoWindow = false;
                         //info.FileName = "D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
-                        chatProcess = Process.Start(info);
+                        chatProcess = Process.Start(socketChatServer);
 
                         Console.WriteLine("not null start!!!");
 
                         // already start
                         AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Success, Constants.None);
                         //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
-                        await NetworkManager.SendAsync(adminSocket, responseHeader);
+                        //await NetworkManager.SendAsync(adminSocket, responseHeader);
+                        NetworkManager.Send(adminSocket, responseHeader);
                     }
                     catch (Exception e)
                     {
                         AAHeader responseHeader = new AAHeader(MessageType.StartApp, MessageState.Fail, Constants.None);
                         //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
-                        await NetworkManager.SendAsync(adminSocket, responseHeader);
+                        //await NetworkManager.SendAsync(adminSocket, responseHeader);
+                        NetworkManager.Send(adminSocket, responseHeader);
                     }
-                  
+
                 }
-                
+
             }
         }
 
@@ -311,7 +432,7 @@ namespace LunkerAgent.src
                 //info.CreateNoWindow = true;
                 //info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
 
-                chatProcess = Process.Start(info);
+                chatProcess = Process.Start(socketChatServer);
             }
             else
             {
@@ -321,13 +442,14 @@ namespace LunkerAgent.src
                     //info.CreateNoWindow = true;
                     //info.FileName = "D:\\workspace\\LunkerFrontend\\LunkerChatServer\\bin\\Debug\\LunkerChatServer.exe";
 
-                    chatProcess = Process.Start(info);
+                    chatProcess = Process.Start(socketChatServer);
                 }
             }
 
             AAHeader responseHeader = new AAHeader(MessageType.RestartApp, MessageState.Success, Constants.None);
             //await NetworkManager.SendAsyncTask(adminSocket, responseHeader);
-            await NetworkManager.SendAsync(adminSocket, responseHeader);
+            //await NetworkManager.SendAsync(adminSocket, responseHeader);
+            NetworkManager.Send(adminSocket, responseHeader);
 
         }// end 
     }

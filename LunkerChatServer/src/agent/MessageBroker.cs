@@ -42,13 +42,12 @@ namespace LunkerChatServer.src.agent
             ConnectionFactory factory = new ConnectionFactory() { HostName = "localhost" };
             channel = factory.CreateConnection().CreateModel();
             
-            /*
             channel.QueueDeclare(queue: agentQueueName,
                durable: false,
                exclusive: false,
                autoDelete: false,
                arguments: null);
-               */
+               
             channel.QueueDeclare(queue: chatQueueName,
                 durable: false,
                 exclusive: false,

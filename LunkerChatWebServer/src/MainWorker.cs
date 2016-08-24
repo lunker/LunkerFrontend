@@ -173,7 +173,6 @@ namespace LunkerChatWebServer.src
 
                 while (true)
                 {
-                    //Task.Delay(500);
                     try
                     {
                         if (beServerSocket != null)
@@ -182,6 +181,7 @@ namespace LunkerChatWebServer.src
                             {
 
                                 beServerSocket.Connect(endPoint);
+
                                 /*
                                 var result = beServerSocket.BeginConnect(endPoint, null, null);
 
@@ -209,7 +209,7 @@ namespace LunkerChatWebServer.src
                         
                         continue;
                     }
-                }
+                }// end loop
             });
         }
 

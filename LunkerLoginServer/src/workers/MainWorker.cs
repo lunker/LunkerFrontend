@@ -301,7 +301,6 @@ namespace LunkerLoginServer.src.workers
             {
                 try
                 {
-                    
                     //Console.WriteLine("[LoginServer][HandleRequest()] handle client request start");
                     logger.Debug("[LoginServer][HandleRequest()] handle client request start");
                     // 정상 연결상태 

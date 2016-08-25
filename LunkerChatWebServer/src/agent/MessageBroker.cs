@@ -20,7 +20,8 @@ namespace LunkerChatWebServer.src.agent
         private static MessageBroker instance = null;
         private string chatQueueName = "WebChatQueue"; // to chatqueue.subscribe. request from agent
         private string agentQueueName = "AgentQueue"; // to agent queue. publish. response to agent.
-        
+        private string webAgentQueueName = "";
+
         private IModel channel = null;
 
         private MessageBroker() { Setup(); }
@@ -77,8 +78,6 @@ namespace LunkerChatWebServer.src.agent
 
         public void RegisterSubscribe()
         {
-            
-
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {

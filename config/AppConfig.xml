@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <AppConfig>
-
   <clientListenPort>43320</clientListenPort>
 
   <frontendListenEndPoint>43340</frontendListenEndPoint>
@@ -16,7 +15,5 @@
   <adminListenPort>43330</adminListenPort>
 
   <chatServerIp>10.100.58.3</chatServerIp>
-
-
 </AppConfig>
 

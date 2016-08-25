@@ -16,7 +16,7 @@ namespace LunkerAgent.src.utils
         {
             if (logger == null)
             {
-                log4net.Config.XmlConfigurator.Configure(new System.IO.FileInfo("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerAgent\\config\\DebugLogconfig.xml"));
+                log4net.Config.XmlConfigurator.Configure(new System.IO.FileInfo("..\\..\\..\\config\\DebugConfig.xml"));
                 logger = LogManager.GetLogger("Logger");
             }
                 

@@ -19,8 +19,9 @@ namespace LunkerAgent.src.utils
 
         private string chatQueueName = "ChatQueue"; // to chatqueue.subscribe. request from agent
         private string agentQueueName = "AgentQueue"; // to agent queue. publish. response to agent.
+        private string webChatQueueName = "WebChatQueue";
 
-        
+
         private IModel channel = null;
 
         private IModel chatQueueChannel = null;
@@ -54,17 +55,21 @@ namespace LunkerAgent.src.utils
                autoDelete: false,
                arguments: null);
 
-    
-
-   
-
             channel.QueueDeclare(queue: chatQueueName,
                 durable: false,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
 
-            
+
+            channel.QueueDeclare(queue: webChatQueueName,
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+
+
             RegisterSubscribe();
             factory = null;
             
@@ -80,17 +85,27 @@ namespace LunkerAgent.src.utils
         /// publish message to agentQueue
         /// </summary>
         /// <param name="message"></param>
-        public void Publish(Object message)
+        public void PublishSocketServer(Object message)
         {
             channel.BasicPublish(exchange: "",
                         routingKey: chatQueueName,
                         basicProperties: null,
                         body: NetworkManager.StructureToByte(message));
-
+            Console.WriteLine($"[MessageBroker][Publish()] publish message : {message}");
             logger.Debug($"[MessageBroker][Publish()] publish message : {message}");
         }// end method
 
-        
+        public void PubishWebSocketServer(Object message)
+        {
+            channel.BasicPublish(exchange: "",
+                       routingKey: webChatQueueName,
+                       basicProperties: null,
+                       body: NetworkManager.StructureToByte(message));
+            Console.WriteLine($"[MessageBroker][Publish()] publish message : {message}");
+
+            //logger.Debug($"[MessageBroker][Publish()] publish message : {message}");
+        }
+
         public void RegisterSubscribe()
         {
             var consumer = new EventingBasicConsumer(channel);
@@ -109,6 +124,12 @@ namespace LunkerAgent.src.utils
                 }
                 else
                 {
+                    // =========================Shutdown
+                    // =================================
+
+                    //AAAgentInfoRequestBody body = new AAAgentInfoRequestBody();
+
+
                     // send result to admin tool 
                     // call send method
                     AdminAgent.GetInstance().HandleResponse(responseHeader);
@@ -118,6 +139,12 @@ namespace LunkerAgent.src.utils
             channel.BasicConsume(queue: agentQueueName,
                                     noAck: true,
                                     consumer: consumer);
+
+
+            channel.BasicConsume(queue: webChatQueueName,
+                                    noAck: true,
+                                    consumer: consumer);
+
         }// end method
        
     }

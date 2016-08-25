@@ -78,6 +78,7 @@ namespace LunkerChatServer.src.agent
 
         public void RegisterSubscribe()
         {
+            Console.WriteLine("[ChatServer][RegisterSubscribe()] Register Subscriber");
             logger.Debug("[ChatServer][RegisterSubscribe()] Register Subscriber");
 
             var consumer = new EventingBasicConsumer(channel);

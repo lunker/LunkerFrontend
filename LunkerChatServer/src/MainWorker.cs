@@ -309,7 +309,6 @@ namespace LunkerChatServer
                 {
                     continue;
                 }
-
                 
                 /*
                 if (socketTaskPair.Count != 0)
@@ -855,7 +854,7 @@ namespace LunkerChatServer
 
             
 
-            CommonHeader beRequestHeader = new CommonHeader(header.Type, MessageState.Request, header.BodyLength, new Cookie(), new UserInfo());
+            CommonHeader beRequestHeader = new CommonHeader(header.Type, MessageState.Request, header.BodyLength, header.Cookie, header.UserInfo);
             // 2) 
              NetworkManager.Send(beServerSocket, beRequestHeader , requestBody);
             //await NetworkManager.SendAsync(beServerSocket, );
@@ -943,7 +942,7 @@ namespace LunkerChatServer
         public Task HandleErrorAsync(Socket peer, CommonHeader header)
         {
             return Task.Run(()=> {
-                NetworkManager.SendAsync(peer, new CommonHeader(header.Type, MessageState.Error, Constants.None, new Cookie(), header.UserInfo));
+                NetworkManager.SendAsync(peer, new CommonHeader(header.Type, MessageState.Error, Constants.None, header.Cookie, header.UserInfo));
             });
         }
     }// end class

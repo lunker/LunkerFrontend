@@ -9,8 +9,8 @@
   <loginServerIp>10.100.58.3</loginServerIp>
   <loginServerPort>43340</loginServerPort>
 
-  <backendServerIp>10.100.58.6</backendServerIp>
-  <backendServerPort>50010</backendServerPort>
+  <backendServerIp>10.100.58.3</backendServerIp>
+  <backendServerPort>43350</backendServerPort>
 
   <adminIp>10.100.58.3</adminIp>
   <adminListenPort>43330</adminListenPort>

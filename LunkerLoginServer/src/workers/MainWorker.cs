@@ -145,9 +145,7 @@ namespace LunkerLoginServer.src.workers
                         else
                         {
                             beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                            
                         }
-                        
                     }
                     catch (SocketException se)
                     {
@@ -347,7 +345,13 @@ namespace LunkerLoginServer.src.workers
                         if (feConnectionDic.Keys.ToList().Contains(feSocket))
                         {
                             feConnectionDic.Remove(feSocket);
+                            if (feSocket.Connected)
+                                feSocket.Close();
+
                             feSocket.Dispose();
+
+                            LoadBalancer.DeleteFE();
+
                             return;
                         }
 
@@ -492,7 +496,7 @@ namespace LunkerLoginServer.src.workers
         public void HandleConnectionPassing(Socket peer, CommonHeader header)
         {
             Console.WriteLine("loginserver[HandleConnectionPassing]  start");
-            CLConnectionPassingRequestBody body = (CLConnectionPassingRequestBody) NetworkManager.Read(peer, Constants.HeaderSize, typeof(CLConnectionPassingRequestBody));
+            CLConnectionPassingRequestBody body = (CLConnectionPassingRequestBody) NetworkManager.Read(peer, header.BodyLength, typeof(CLConnectionPassingRequestBody));
             Console.WriteLine("loginserver[HandleConnectionPassing]  read client requeset body");
 
             Socket connectingChatServerSocket = null;
@@ -516,7 +520,7 @@ namespace LunkerLoginServer.src.workers
             responseHeader.Type = MessageType.ConnectionPassing;
 
             NetworkManager.Send(peer, responseHeader);
-            Console.WriteLine("loginserver[HandleConnectionPassing]  start");
+            Console.WriteLine("loginserver[HandleConnectionPassing]  end");
         }
 
         /// <summary>

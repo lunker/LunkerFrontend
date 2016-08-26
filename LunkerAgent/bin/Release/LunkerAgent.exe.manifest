@@ -54,14 +54,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerAgent.exe" size="16896">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerAgent.exe" size="18944">
       <assemblyIdentity name="LunkerAgent" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>RVzzXCdvXvUWV4z1EjuEPyEj4HzzdSMlT5hI5zQJwDA=</dsig:DigestValue>
+        <dsig:DigestValue>RXBeVjF/LE2ZUf1HrP3BadNZh/eBr3XyO0GGo8zYS/U=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -73,7 +73,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>rudgYxxV3ODbF62xiQRQNw26NrQfIsKd+MCVpzWi+EQ=</dsig:DigestValue>
+        <dsig:DigestValue>7vDf7smeG5UfY6JAjgU3WNkUoAsvjUtZA0rLTGlxxoI=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -85,7 +85,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>cGxXlRtbWEJcX6lB5aC78rreb6ARgIXcVsDiiS/35lE=</dsig:DigestValue>
+        <dsig:DigestValue>++uhI621C8UnFykktoxEe3OE+bjeVNV6BWg5BW9Ve+g=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

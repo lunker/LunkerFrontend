@@ -30,7 +30,7 @@ namespace LunkerChatWebServer.src.utils
 #if DEBUG
             XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
 #else
-            XmlTextReader reader = new XmlTextReader("config\\AppConfig.xml");
+            XmlTextReader reader = new XmlTextReader("..\\..\\..\\config\\AppConfig.xml");
 #endif
 
             while (reader.Read())

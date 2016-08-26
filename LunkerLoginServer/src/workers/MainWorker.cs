@@ -728,11 +728,13 @@ namespace LunkerLoginServer.src.workers
         {
             Console.WriteLine("[LoginServer][HandleSignup()] signup start");
             logger.Debug("[LoginServer][HandleSignup()] signup start");
+
             // read body from client
             //CLSignupRequestBody requestBody = (CLSignupRequestBody) NetworkManager.Read(client, header.BodyLength, typeof(CLSignupRequestBody));
 
             // create request header
             // send request header to be
+
             await NetworkManager.SendAsync(beSocket, header);
 
             // send request body to be 
@@ -802,14 +804,14 @@ namespace LunkerLoginServer.src.workers
 
             // 2)
             NetworkManager.Send(beSocket, header, clRequestBody);
-
+            Console.WriteLine("[LoginServer][HandleModify()] send request to be");
             //NetworkManager.Send(beSocket, header);
 
             //NetworkManager.Send(beSocket, clRequestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
-
+            Console.WriteLine("[LoginServer][HandleModify()] read response from be");
             // 4) 
             await NetworkManager.SendAsync(client, responseHeader);
             logger.Debug("[LoginServer][HandleModify()] modify end");

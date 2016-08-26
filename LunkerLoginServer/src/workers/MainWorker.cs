@@ -657,8 +657,6 @@ namespace LunkerLoginServer.src.workers
 
                 /****
                  * 
-                 * 
-                 * 
                  */
                 rawClientSocketDic.Add(signinUser.GetPureId(), client);
 

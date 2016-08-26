@@ -635,20 +635,25 @@ namespace LunkerLoginServer.src.workers
             // read header from be 
             //CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader) );
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            Console.WriteLine("[LoginServer][HandleSignin()] read response header from be");
 
             if (responseHeader.State == MessageState.Success)
             {
                 // =====================READ COOKIE FROM BE
                 // cookie in body 
                 //LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-                LBSigninResponseBody responseBody = (LBSigninResponseBody)NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-                cookie = responseBody.Cookie;
+                //LBSigninResponseBody responseBody = (LBSigninResponseBody)NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
 
+
+                cookie = responseHeader.Cookie;
+
+
+                // select connecting server info
                 int index = LoadBalancer.RoundRobin();
 
-                responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
+                //responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
 
-                Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
+                //Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
 
                 /****
                  * 
@@ -659,11 +664,9 @@ namespace LunkerLoginServer.src.workers
 
                 // !!!!!! loadbalancing 
                 // send auth to Chat Server
-
                 LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
                 //byte[] bodyArr = NetworkManager.StructureToByte(feRequestBody);
                 CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Marshal.SizeOf(feRequestBody), cookie, responseHeader.UserInfo);
-
 
                 //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
                 //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);

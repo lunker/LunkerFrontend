@@ -23,15 +23,11 @@ namespace LunkerLoginServer.src.workers
         private List<Socket> clientConnection = null;
         private Dictionary<string, Socket> rawClientSocketDic = null;
 
-        //private Dictionary<ServerInfo, Socket> feConnectionDic = null;
         private Dictionary<Socket, ServerInfo> feConnectionDic = null;
 
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
-
-        private Task<Socket> clientAcceptTask = null;
-        private Task<Socket> feAcceptTask = null;
 
         private Socket clientListener = null;
         private Socket feListener = null;

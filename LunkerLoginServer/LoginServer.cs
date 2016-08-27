@@ -27,8 +27,6 @@ namespace LunkerLoginServer
             mainWorker.Stop();
 
             mainWorker = null;
-
-            //appState = Constants.AppStop;
         }
     }// end class 
 }

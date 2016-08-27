@@ -61,31 +61,31 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>dePymtC+z/m/ikuUKNtGcGJV9HiFeN1HLVW4r6W9wxQ=</dsig:DigestValue>
+        <dsig:DigestValue>7vDf7smeG5UfY6JAjgU3WNkUoAsvjUtZA0rLTGlxxoI=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerLoginServer.exe" size="26624">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerLoginServer.exe" size="28160">
       <assemblyIdentity name="LunkerLoginServer" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>Rgmcddm353Net4UOq/ndWfacKtoMrx4KSG2I/wMATx0=</dsig:DigestValue>
+        <dsig:DigestValue>WyVInqummH/iK5zUTJgEksLr3XqD2VssTAlSEgLeI/Q=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerProtocol.dll" size="15872">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="LunkerProtocol.dll" size="16384">
       <assemblyIdentity name="LunkerProtocol" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>nl2YgIIztQvdWa9DnkNRWLNCAcAeFX0d9Pzno+NEMaM=</dsig:DigestValue>
+        <dsig:DigestValue>++uhI621C8UnFykktoxEe3OE+bjeVNV6BWg5BW9Ve+g=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

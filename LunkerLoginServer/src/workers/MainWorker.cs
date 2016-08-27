@@ -23,15 +23,11 @@ namespace LunkerLoginServer.src.workers
         private List<Socket> clientConnection = null;
         private Dictionary<string, Socket> rawClientSocketDic = null;
 
-        //private Dictionary<ServerInfo, Socket> feConnectionDic = null;
         private Dictionary<Socket, ServerInfo> feConnectionDic = null;
 
         private List<Socket> readSocketList = null;
         private List<Socket> writeSocketList = null;
         private List<Socket> errorSocketList = null;
-
-        private Task<Socket> clientAcceptTask = null;
-        private Task<Socket> feAcceptTask = null;
 
         private Socket clientListener = null;
         private Socket feListener = null;
@@ -145,9 +141,7 @@ namespace LunkerLoginServer.src.workers
                         else
                         {
                             beSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                            
                         }
-                        
                     }
                     catch (SocketException se)
                     {
@@ -347,7 +341,13 @@ namespace LunkerLoginServer.src.workers
                         if (feConnectionDic.Keys.ToList().Contains(feSocket))
                         {
                             feConnectionDic.Remove(feSocket);
+                            if (feSocket.Connected)
+                                feSocket.Close();
+
                             feSocket.Dispose();
+
+                            LoadBalancer.DeleteFE();
+
                             return;
                         }
 
@@ -492,7 +492,7 @@ namespace LunkerLoginServer.src.workers
         public void HandleConnectionPassing(Socket peer, CommonHeader header)
         {
             Console.WriteLine("loginserver[HandleConnectionPassing]  start");
-            CLConnectionPassingRequestBody body = (CLConnectionPassingRequestBody) NetworkManager.Read(peer, Constants.HeaderSize, typeof(CLConnectionPassingRequestBody));
+            CLConnectionPassingRequestBody body = (CLConnectionPassingRequestBody) NetworkManager.Read(peer, header.BodyLength, typeof(CLConnectionPassingRequestBody));
             Console.WriteLine("loginserver[HandleConnectionPassing]  read client requeset body");
 
             Socket connectingChatServerSocket = null;
@@ -516,7 +516,7 @@ namespace LunkerLoginServer.src.workers
             responseHeader.Type = MessageType.ConnectionPassing;
 
             NetworkManager.Send(peer, responseHeader);
-            Console.WriteLine("loginserver[HandleConnectionPassing]  start");
+            Console.WriteLine("loginserver[HandleConnectionPassing]  end");
         }
 
         /// <summary>
@@ -631,35 +631,36 @@ namespace LunkerLoginServer.src.workers
             // read header from be 
             //CommonHeader responseHeader = (CommonHeader) await NetworkManager.ReadAsync(beSocket, Constants.HeaderSize, typeof(CommonHeader) );
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
+            Console.WriteLine("[LoginServer][HandleSignin()] read response header from be");
 
             if (responseHeader.State == MessageState.Success)
             {
                 // =====================READ COOKIE FROM BE
                 // cookie in body 
                 //LBSigninResponseBody responseBody = (LBSigninResponseBody) await NetworkManager.ReadAsync(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-                LBSigninResponseBody responseBody = (LBSigninResponseBody)NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
-                cookie = responseBody.Cookie;
+                //LBSigninResponseBody responseBody = (LBSigninResponseBody)NetworkManager.Read(beSocket, responseHeader.BodyLength, typeof(LBSigninResponseBody));
 
+
+                cookie = responseHeader.Cookie;
+
+
+                // select connecting server info
                 int index = LoadBalancer.RoundRobin();
 
-                responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
+                //responseBody.ServerInfo = feConnectionDic.ElementAt(index).Value;
 
-                Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
+                //Console.WriteLine("client에게 보내지는 FE의 정보 : " + responseBody.ServerInfo.GetPureIp() + ":" + responseBody.ServerInfo.Port);
 
                 /****
-                 * 
-                 * 
                  * 
                  */
                 rawClientSocketDic.Add(signinUser.GetPureId(), client);
 
                 // !!!!!! loadbalancing 
                 // send auth to Chat Server
-
                 LCUserAuthRequestBody feRequestBody = new LCUserAuthRequestBody(cookie, signinUser);
                 //byte[] bodyArr = NetworkManager.StructureToByte(feRequestBody);
                 CommonHeader feRequestHeader = new CommonHeader(MessageType.NoticeUserAuth, MessageState.Request, Marshal.SizeOf(feRequestBody), cookie, responseHeader.UserInfo);
-
 
                 //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestHeader);
                 //await NetworkManager.SendAsync(feConnectionDic.ElementAt(index).Key, feRequestBody);
@@ -724,11 +725,13 @@ namespace LunkerLoginServer.src.workers
         {
             Console.WriteLine("[LoginServer][HandleSignup()] signup start");
             logger.Debug("[LoginServer][HandleSignup()] signup start");
+
             // read body from client
             //CLSignupRequestBody requestBody = (CLSignupRequestBody) NetworkManager.Read(client, header.BodyLength, typeof(CLSignupRequestBody));
 
             // create request header
             // send request header to be
+
             await NetworkManager.SendAsync(beSocket, header);
 
             // send request body to be 
@@ -798,14 +801,14 @@ namespace LunkerLoginServer.src.workers
 
             // 2)
             NetworkManager.Send(beSocket, header, clRequestBody);
-
+            Console.WriteLine("[LoginServer][HandleModify()] send request to be");
             //NetworkManager.Send(beSocket, header);
 
             //NetworkManager.Send(beSocket, clRequestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader) NetworkManager.Read(beSocket, Constants.HeaderSize, typeof(CommonHeader));
-
+            Console.WriteLine("[LoginServer][HandleModify()] read response from be");
             // 4) 
             await NetworkManager.SendAsync(client, responseHeader);
             logger.Debug("[LoginServer][HandleModify()] modify end");

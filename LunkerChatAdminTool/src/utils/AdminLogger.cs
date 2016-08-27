@@ -16,7 +16,7 @@ namespace LunkerChatAdminTool.src.utils
         {
             if (logger == null)
             {
-                log4net.Config.XmlConfigurator.Configure(new System.IO.FileInfo("D:\\workspace\\feature-async-without-beginxxxx\\LunkerFrontend\\LunkerChatAdminTool\\config\\DebugLogconfig.xml"));
+                log4net.Config.XmlConfigurator.Configure(new System.IO.FileInfo("..\\..\\..\\config\\AppConfig.xml"));
                 logger = LogManager.GetLogger("Logger");
             }
                 

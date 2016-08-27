@@ -16,8 +16,7 @@ namespace LunkerChatAdminTool.src
         private static ILog logger = Logger.GetLoggerInstance();
         private static bool appState = Constants.AppRun;
         private static AdminTool adminTool = null;
-
-        private static Task startTask = null;
+        
         public static async void On()
         {
             logger.Debug("\n\n\n--------------------------------------------START PROGRAM--------------------------------------------");
@@ -28,7 +27,6 @@ namespace LunkerChatAdminTool.src
 
         /// <summary>
         /// <para>Shutdown Chat server</para>
-        /// <para>publish success message to agent</para>
         /// <para></para>
         /// <para></para>
         /// </summary>
@@ -37,8 +35,6 @@ namespace LunkerChatAdminTool.src
             adminTool.Stop();
             appState = Constants.AppStop;
             // 종료 알림.
-            //MessageBroker.GetInstance().Publish(new AAHeader(MessageType.ShutdownApp, MessageState.Success));
-            //MessageBroker.GetInstance().Release();
 
             logger.Debug("--------------------------------------------Exit Program-----------------------------------------------------");
             Environment.Exit(0);

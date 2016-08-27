@@ -310,42 +310,6 @@ namespace LunkerChatServer
                     continue;
                 }
 
-                
-                /*
-                if (socketTaskPair.Count != 0)
-                {
-                    foreach (Socket peer in socketTaskPair.Keys.ToArray())
-                    {
-                        try
-                        {
-                            tmp = (Task)socketTaskPair[peer];
-
-                            if (tmp != null)
-                            {
-                                if (tmp.IsCompleted)
-                                {
-                                    //Console.WriteLine("오ㅓㅏㄴ료ㅕ?");
-                                    tmp = Task.Run(() => HandleRequest(peer));
-                                    socketTaskPair[peer] = tmp;
-                                }
-                            }
-                            else
-                            {
-                                tmp = Task.Run(() => HandleRequest(peer));
-                                socketTaskPair[peer] = tmp;
-                            }
-
-                        }
-                        catch (KeyNotFoundException knf)
-                        {
-                            continue;
-                        }
-                    }// end loop
-                }// endif 
-
-                */
-
-
             }// end loop
         }
 
@@ -367,7 +331,7 @@ namespace LunkerChatServer
                         Console.WriteLine($"[chat] remote port: { ((IPEndPoint)peer.RemoteEndPoint).Port}");
                         Console.WriteLine($"[chat] local port: { ((IPEndPoint)peer.LocalEndPoint).Address.ToString()}");
 
-                        CommonHeader cookieVerifyHeader;
+                        
                         switch (header.Type)
                         {
                             // login이 chat에 요청을 보낸다.
@@ -445,7 +409,6 @@ namespace LunkerChatServer
                     // 일단 CCHeader로 전체 header 사용 
                     try
                     {
-                        //Console.WriteLine("chatserver: handlerequest");
                         CommonHeader header = (CommonHeader)NetworkManager.Read(peer, Constants.HeaderSize, typeof(CommonHeader));
                         Console.WriteLine($"[chat] type : {header.Type}");
                         Console.WriteLine($"[chat] state : {header.State}");
@@ -461,7 +424,6 @@ namespace LunkerChatServer
                             // chat server의 정보를 담아서 보내준다!!
                             case MessageType.FENotice:
                                 // chat->login에게 fe의 정보를 보내준것에 대한 response
-                                // 
                                 // just Get Response about FE Notice 
                                 HandleFEInfoRequeset(peer, header);
                                 break;
@@ -490,36 +452,13 @@ namespace LunkerChatServer
                             // check cookie available
                             // ok 
                             case MessageType.CreateRoom:
-                                /*
-                                cookieVerifyHeader = (CommonHeader) await HandleCookieVerifyAsync(header);
-                                if(cookieVerifyHeader.State == MessageState.Success)
-                                {
-                                    await HandleCreateRoomAsync(peer, header);
-                                }
-                                else
-                                {
-                                    // error
-                                    // not authenticated user
-                                }
-                                */
+                            
                                 HandleCreateRoom(peer, header);
                                 break;
 
                             // ok 
                             case MessageType.JoinRoom:
-                                /*
-                                cookieVerifyHeader = (CommonHeader)await HandleCookieVerifyAsync(header);
-                                if (cookieVerifyHeader.State == MessageState.Success)
-                                {
-                                    await HandleJoinRoomAsync(peer, header);
-                                }
-                                else
-                                {
-                                    // error
-                                    // not authenticated user
-                                }
-
-                                */
+                               
                                 HandleJoinRoom(peer, header);
                                 break;
 
@@ -677,8 +616,6 @@ namespace LunkerChatServer
                     NetworkManager.SendAsync(peer, responseHeader);
 
                     connectionManager.AddClientConnection(header.UserInfo.GetPureId(), peer);
-                    //socketTaskPair.Add(peer, Task.Run(()=> { }));
-                    //tmpClientSocket.Remove(peer);
                 }
                 Console.WriteLine("[chatserver][HandleConnectionSetupAsync()] end");
             });
@@ -715,17 +652,13 @@ namespace LunkerChatServer
                     client.Blocking = true;
                 // broadcast to each client\
 
-                //NetworkManager.Send(client, header, messageBuff);
                 NetworkManager.Send(client, header);
                 NetworkManager.Send(client, messageBuff);
             }
 
             // Send chatting to BE 
-            //string sendingUser = new string(header.UserInfo.Id);
             CommonHeader responseHeader = new CommonHeader(MessageType.Chatting, MessageState.Request, Constants.None, new Cookie(), header.UserInfo);
             NetworkManager.Send(beServerSocket, responseHeader);
-            // worker에게 위임? 
-            //beWorker.HandleChatting(header);
             Console.WriteLine("[chatserver][HandleChattingRequest()] end");
         }
 
@@ -788,7 +721,6 @@ namespace LunkerChatServer
             Console.WriteLine("[ChatServer][HandleCreateRoom()] end");
 
             // 3) send response(header, body) to client
-            //NetworkManager.Send(peer, responseHeader, responseBody);
             NetworkManager.Send(peer, responseHeader);
             NetworkManager.Send(peer, responseBody);
 
@@ -855,11 +787,9 @@ namespace LunkerChatServer
 
             
 
-            CommonHeader beRequestHeader = new CommonHeader(header.Type, MessageState.Request, header.BodyLength, new Cookie(), new UserInfo());
+            CommonHeader beRequestHeader = new CommonHeader(header.Type, MessageState.Request, header.BodyLength, header.Cookie, header.UserInfo);
             // 2) 
              NetworkManager.Send(beServerSocket, beRequestHeader , requestBody);
-            //await NetworkManager.SendAsync(beServerSocket, );
-            //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3) 
             CommonHeader responseHeader = (CommonHeader)  NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
@@ -870,7 +800,6 @@ namespace LunkerChatServer
                 // read body
                 CBJoinRoomResponseBody responseBody = (CBJoinRoomResponseBody)  NetworkManager.Read(beServerSocket, responseHeader.BodyLength, typeof(CBJoinRoomResponseBody));
 
-                //await NetworkManager.SendAsync(peer, responseHeader, responseBody);
                  NetworkManager.Send(peer, responseHeader);
                  NetworkManager.Send(peer, responseBody);
             }
@@ -881,9 +810,7 @@ namespace LunkerChatServer
                 responseHeader.BodyLength = 0;
                 connectionManager.AddChattingRoomJoinInfo(userId, enteredRoom);
                 connectionManager.AddChattingRoomListInfoValue(enteredRoom, userId);
-                 NetworkManager.Send(peer, responseHeader);
-                // add user info to data structure 
-                //connectionManager.AddChattingRoomListInfoValue(enteredRoom, userId);
+                NetworkManager.Send(peer, responseHeader);
             }
             else
             {
@@ -920,8 +847,6 @@ namespace LunkerChatServer
 
             // 2) send
             await NetworkManager.SendAsync(beServerSocket, header, requestBody);
-            //await NetworkManager.SendAsync(beServerSocket, header);
-            //await NetworkManager.SendAsync(beServerSocket, requestBody);
 
             // 3)
             CommonHeader responseHeader = (CommonHeader)  NetworkManager.Read(beServerSocket, Constants.HeaderSize, typeof(CommonHeader));
@@ -943,7 +868,7 @@ namespace LunkerChatServer
         public Task HandleErrorAsync(Socket peer, CommonHeader header)
         {
             return Task.Run(()=> {
-                NetworkManager.SendAsync(peer, new CommonHeader(header.Type, MessageState.Error, Constants.None, new Cookie(), header.UserInfo));
+                NetworkManager.SendAsync(peer, new CommonHeader(header.Type, MessageState.Error, Constants.None, header.Cookie, header.UserInfo));
             });
         }
     }// end class

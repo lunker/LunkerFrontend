@@ -19,13 +19,9 @@ namespace LunkerAgent.src.utils
 
         private string chatQueueName = "ChatQueue"; // to chatqueue.subscribe. request from agent
         private string agentQueueName = "AgentQueue"; // to agent queue. publish. response to agent.
+        private string webChatQueueName = "WebChatQueue";
 
-        
         private IModel channel = null;
-
-        private IModel chatQueueChannel = null;
-        private IModel agentQueueChannel = null;
-       
 
         private MessageBroker() { Setup(); }
 
@@ -47,16 +43,18 @@ namespace LunkerAgent.src.utils
             ConnectionFactory factory = new ConnectionFactory() { HostName = "localhost" };
             channel = factory.CreateConnection().CreateModel();
 
-            
+            // =======================================================
+            // =========================Declare Queue For Agent App 
+            // =======================================================
             channel.QueueDeclare(queue: agentQueueName,
                durable: false,
                exclusive: false,
                autoDelete: false,
                arguments: null);
 
-    
-
-   
+            // =======================================================
+            // =========================Declare Queue For chat server 
+            // =======================================================
 
             channel.QueueDeclare(queue: chatQueueName,
                 durable: false,
@@ -64,7 +62,17 @@ namespace LunkerAgent.src.utils
                 autoDelete: false,
                 arguments: null);
 
-            
+            // =======================================================
+            // =================Declare Queue For websocket chat server
+            // =======================================================
+            channel.QueueDeclare(queue: webChatQueueName,
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+
+            // Register Subscriber
             RegisterSubscribe();
             factory = null;
             
@@ -80,17 +88,24 @@ namespace LunkerAgent.src.utils
         /// publish message to agentQueue
         /// </summary>
         /// <param name="message"></param>
-        public void Publish(Object message)
+        public void PublishSocketServer(Object message)
         {
             channel.BasicPublish(exchange: "",
                         routingKey: chatQueueName,
                         basicProperties: null,
                         body: NetworkManager.StructureToByte(message));
-
-            logger.Debug($"[MessageBroker][Publish()] publish message : {message}");
+            Console.WriteLine($"[MessageBroker][Publish()] publish message : {message}");
         }// end method
 
-        
+        public void PubishWebSocketServer(Object message)
+        {
+            channel.BasicPublish(exchange: "",
+                       routingKey: webChatQueueName,
+                       basicProperties: null,
+                       body: NetworkManager.StructureToByte(message));
+            Console.WriteLine($"[MessageBroker][Publish()] publish message : {message}");
+        }
+
         public void RegisterSubscribe()
         {
             var consumer = new EventingBasicConsumer(channel);
@@ -109,8 +124,6 @@ namespace LunkerAgent.src.utils
                 }
                 else
                 {
-                    // send result to admin tool 
-                    // call send method
                     AdminAgent.GetInstance().HandleResponse(responseHeader);
                 }
             };
@@ -118,6 +131,11 @@ namespace LunkerAgent.src.utils
             channel.BasicConsume(queue: agentQueueName,
                                     noAck: true,
                                     consumer: consumer);
+
+            channel.BasicConsume(queue: webChatQueueName,
+                                    noAck: true,
+                                    consumer: consumer);
+
         }// end method
        
     }
